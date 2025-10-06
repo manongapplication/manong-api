@@ -1,0 +1,275 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  firstName       String?
+  lastName        String?
+  email           String?
+  emailVerifiedAt DateTime?
+  password        String?
+  role            String    @default("user")
+  isVerified      Boolean   @default(false)
+  phone           String    @unique
+  latitude        Decimal?  @db.Decimal(10, 7)
+  longitude       Decimal?  @db.Decimal(10, 7)
+  lastKnownLat    Decimal?  @db.Decimal(10, 7)
+  lastKnownLng    Decimal?  @db.Decimal(10, 7)
+  fcmToken        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user                  ServiceRequest[]       @relation("UserRequests")
+  manongRequest         ServiceRequest[]       @relation("ManongRequests")
+  manongProfile         ManongProfile[]
+  userPaymentMethod     UserPaymentMethod[]
+  notifications         UserNotification[]
+  providerVerifications ProviderVerification[] @relation("UserProviderVerifications")
+  reviewedVerifications ProviderVerification[] @relation("ReviewerProviderVerifications")
+}
+
+model PasswordResetToken {
+  email     String
+  token     String
+  createdAt DateTime @default(now())
+
+  @@id([email, token])
+}
+
+model ServiceItem {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  priceMin    Int
+  priceMax    Int
+  iconName    String?
+  iconColor   String  @default("#3B82F6")
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subServiceItems SubServiceItem[]
+  serviceRequest  ServiceRequest[]
+}
+
+model SubServiceItem {
+  id            Int      @id @default(autoincrement())
+  serviceItemId Int
+  title         String
+  iconName      String?
+  description   String?
+  cost          Int?
+  fee           Int?
+  gross         Int
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  serviceItem        ServiceItem          @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
+  serviceRequest     ServiceRequest[]
+  manongSpecialities ManongSpecialities[]
+}
+
+model PaymentMethod {
+  id       Int     @id @default(autoincrement())
+  name     String
+  code     String
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceRequest    ServiceRequest[]
+  userPaymentMethod UserPaymentMethod[]
+}
+
+model UrgencyLevel {
+  id    Int      @id @default(autoincrement())
+  level String   @db.VarChar(50)
+  time  String   @db.VarChar(50)
+  price Decimal? @db.Decimal(8, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceRequest ServiceRequest[]
+}
+
+enum PaymentStatus {
+  unpaid
+  pending
+  paid
+  failed
+  refunded
+}
+
+model ServiceRequest {
+  id               Int     @id @default(autoincrement())
+  userId           Int
+  manongId         Int?
+  serviceItemId    Int
+  subServiceItemId Int
+  paymentMethodId  Int?
+  urgencyLevelId   Int
+  otherServiceName String?
+  serviceDetails   String?
+  imagesPath       String?
+
+  customerFullAddress String?
+  customerLat         Decimal @db.Decimal(10, 7)
+  customerLng         Decimal @db.Decimal(10, 7)
+
+  notes                String?
+  rating               Int?          @db.SmallInt
+  status               String?
+  profilePhoto         String?
+  total                Decimal?      @db.Decimal(10, 2)
+  paymentStatus        PaymentStatus @default(unpaid)
+  paymentTransactionId String?       @unique
+  paymentRedirectUrl   String?
+
+  user           User           @relation("UserRequests", fields: [userId], references: [id], onDelete: Cascade)
+  manong         User?          @relation("ManongRequests", fields: [manongId], references: [id], onDelete: Cascade)
+  serviceItem    ServiceItem    @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
+  subServiceItem SubServiceItem @relation(fields: [subServiceItemId], references: [id], onDelete: Cascade)
+  paymentMethod  PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: Cascade)
+  urgencyLevel   UrgencyLevel   @relation(fields: [urgencyLevelId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  arrivedAt DateTime?
+  deletedAt DateTime?
+}
+
+enum ManongStatus {
+  available
+  busy
+  offline
+  inactive
+  suspended
+}
+
+model ManongProfile {
+  id                       Int          @id @default(autoincrement())
+  userId                   Int
+  status                   ManongStatus @default(available)
+  licenseNumber            String?
+  yearsExperience          Int?
+  hourlyRate               Decimal?     @db.Decimal(8, 2)
+  startingPrice            Decimal?     @db.Decimal(8, 2)
+  isProfessionallyVerified Boolean      @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  manongSpecialities ManongSpecialities[]
+}
+
+model ManongSpecialities {
+  id               Int @id @default(autoincrement())
+  manongProfileId  Int
+  subServiceItemId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  manongProfile  ManongProfile  @relation(fields: [manongProfileId], references: [id], onDelete: Cascade)
+  subServiceItem SubServiceItem @relation(fields: [subServiceItemId], references: [id], onDelete: Cascade)
+}
+
+enum VerificationStatus {
+  pending
+  approved
+  rejected
+}
+
+model ProviderVerification {
+  id           Int                @id @default(autoincrement())
+  userId       Int
+  documentType String
+  documentUrl  String
+  status       VerificationStatus @default(pending)
+  reviewedBy   Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User  @relation("UserProviderVerifications", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("ReviewerProviderVerifications", fields: [reviewedBy], references: [id], onDelete: Cascade)
+}
+
+model UserPaymentMethod {
+  id                       Int     @id @default(autoincrement())
+  userId                   Int
+  paymentMethodId          Int // Type: Card, GCash, etc.
+  provider                 String // 'paymongo', 'stripe', etc.
+  paymentMethodIdOnGateway String?
+  last4                    String?
+  expMonth                 Int?
+  expYear                  Int?
+  cardHolderName           String?
+  billingEmail             String?
+  customerId               String?
+  isDefault                Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider, paymentMethodIdOnGateway])
+}
+
+model Message {
+  id        Int    @id @default(autoincrement())
+  sender_id String
+  room_id   String
+  content   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachment Attachment[]
+}
+
+model Attachment {
+  id         Int    @id @default(autoincrement())
+  message_id Int
+  type       String
+  url        String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  message Message @relation(fields: [message_id], references: [id], onDelete: Cascade)
+}
+
+model UserNotification {
+  id     Int     @id @default(autoincrement())
+  title  String
+  body   String
+  data   String?
+  userId Int
+
+  seenAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

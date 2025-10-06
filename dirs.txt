@@ -1,0 +1,33 @@
+# Create directories
+md src\auth\dto, src\auth\guard, src\users, src\service-requests\dto, src\payment, src\chat, src\realtime, src\prisma, src\adapters
+
+# Create main files
+New-Item -Path "src\main.ts" -ItemType File
+New-Item -Path "src\app.module.ts" -ItemType File
+New-Item -Path "src\app.controller.ts" -ItemType File
+New-Item -Path "src\prisma\prisma.service.ts" -ItemType File
+New-Item -Path "src\prisma\prisma.module.ts" -ItemType File
+New-Item -Path ".env" -ItemType File
+New-Item -Path "docker-compose.yml" -ItemType File
+
+
+# Core NestJS dependencies
+npm install @nestjs/core @nestjs/common @nestjs/platform-express @nestjs/config @nestjs/jwt @nestjs/passport @nestjs/websockets @nestjs/platform-socket.io @nestjs/swagger @nestjs/bull
+
+# Database & ORM
+npm install prisma @prisma/client pg
+
+# Authentication & Security  
+npm install passport passport-jwt passport-local bcrypt jsonwebtoken class-validator class-transformer
+
+# Real-time & Cache
+npm install socket.io redis ioredis
+
+# Payment Processing
+npm install stripe paymongo
+
+# Utilities
+npm install rxjs reflect-metadata
+
+# Development Dependencies
+npm install -D @types/node typescript ts-node @types/bcrypt @types/passport-jwt @types/socket.io @types/pg nodemon prisma
