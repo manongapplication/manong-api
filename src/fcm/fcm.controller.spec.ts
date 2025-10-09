@@ -1,14 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { FcmController } from './fcm.controller';
+import { createTestingModule } from 'test/utils/create-testing-module';
 
 describe('FcmController', () => {
   let controller: FcmController;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [FcmController],
-    }).compile();
-
+    const module = await createTestingModule([FcmController]);
     controller = module.get<FcmController>(FcmController);
   });
 

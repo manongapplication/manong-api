@@ -1,14 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { FirebaseController } from './firebase.controller';
+import { createTestingModule } from 'test/utils/create-testing-module';
 
 describe('FirebaseController', () => {
   let controller: FirebaseController;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [FirebaseController],
-    }).compile();
-
+    const module = await createTestingModule([FirebaseController]);
     controller = module.get<FirebaseController>(FirebaseController);
   });
 

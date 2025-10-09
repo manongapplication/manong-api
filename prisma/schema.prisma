@@ -122,7 +122,7 @@ model ServiceRequest {
   userId           Int
   manongId         Int?
   serviceItemId    Int
-  subServiceItemId Int
+  subServiceItemId Int?
   paymentMethodId  Int?
   urgencyLevelId   Int
   otherServiceName String?
@@ -142,12 +142,12 @@ model ServiceRequest {
   paymentTransactionId String?       @unique
   paymentRedirectUrl   String?
 
-  user           User           @relation("UserRequests", fields: [userId], references: [id], onDelete: Cascade)
-  manong         User?          @relation("ManongRequests", fields: [manongId], references: [id], onDelete: Cascade)
-  serviceItem    ServiceItem    @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
-  subServiceItem SubServiceItem @relation(fields: [subServiceItemId], references: [id], onDelete: Cascade)
-  paymentMethod  PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: Cascade)
-  urgencyLevel   UrgencyLevel   @relation(fields: [urgencyLevelId], references: [id], onDelete: Cascade)
+  user           User            @relation("UserRequests", fields: [userId], references: [id], onDelete: Cascade)
+  manong         User?           @relation("ManongRequests", fields: [manongId], references: [id], onDelete: Cascade)
+  serviceItem    ServiceItem     @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
+  subServiceItem SubServiceItem? @relation(fields: [subServiceItemId], references: [id], onDelete: Cascade)
+  paymentMethod  PaymentMethod?  @relation(fields: [paymentMethodId], references: [id], onDelete: Cascade)
+  urgencyLevel   UrgencyLevel    @relation(fields: [urgencyLevelId], references: [id], onDelete: Cascade)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

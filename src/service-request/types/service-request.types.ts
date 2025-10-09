@@ -7,7 +7,7 @@ export interface CompleteServiceRequest {
   userId: number;
   manongId: number | null;
   serviceItemId: number;
-  subServiceItemId: number;
+  subServiceItemId?: number | null;
   paymentMethodId: number | null;
   urgencyLevelId: number;
   otherServiceName: string | null;

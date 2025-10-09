@@ -1,14 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { GoogleGeocodingService } from './google-geocoding.service';
+import { createTestingModule } from 'test/utils/create-testing-module';
 
 describe('GoogleGeocodingService', () => {
   let service: GoogleGeocodingService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [GoogleGeocodingService],
-    }).compile();
-
+    const module = await createTestingModule([GoogleGeocodingService]);
     service = module.get<GoogleGeocodingService>(GoogleGeocodingService);
   });
 

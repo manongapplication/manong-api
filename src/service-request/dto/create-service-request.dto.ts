@@ -10,6 +10,7 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 import { Exists } from 'src/common/validators/exists.validator';
 import { Type } from 'class-transformer';
@@ -31,12 +32,17 @@ export class CreateServiceRequestDto {
   })
   serviceItemId: number;
 
+  @ValidateIf((o) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const val = o.subServiceItemId;
+    return val !== null && val !== undefined && val !== 'null';
+  })
   @Type(() => Number)
   @IsInt()
   @Exists('subServiceItem', 'id', {
     message: 'subServiceItemId must reference an existing subServiceItem',
   })
-  subServiceItemId: number;
+  subServiceItemId?: number | null;
 
   @IsOptional()
   @Type(() => Number)

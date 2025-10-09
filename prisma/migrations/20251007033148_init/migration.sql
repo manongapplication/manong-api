@@ -101,7 +101,7 @@ CREATE TABLE "ServiceRequest" (
     "userId" INTEGER NOT NULL,
     "manongId" INTEGER,
     "serviceItemId" INTEGER NOT NULL,
-    "subServiceItemId" INTEGER NOT NULL,
+    "subServiceItemId" INTEGER,
     "paymentMethodId" INTEGER,
     "urgencyLevelId" INTEGER NOT NULL,
     "otherServiceName" TEXT,

@@ -1,14 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { TrackingGateway } from './tracking.gateway';
+import { createTestingModule } from 'test/utils/create-testing-module';
 
 describe('TrackingGateway', () => {
   let gateway: TrackingGateway;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [TrackingGateway],
-    }).compile();
-
+    const module = await createTestingModule([TrackingGateway]);
     gateway = module.get<TrackingGateway>(TrackingGateway);
   });
 

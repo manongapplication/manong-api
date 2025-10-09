@@ -1,14 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { FcmService } from './fcm.service';
+import { createTestingModule } from '../../test/utils/create-testing-module';
 
 describe('FcmService', () => {
   let service: FcmService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [FcmService],
-    }).compile();
-
+    const module = await createTestingModule([FcmService]);
     service = module.get<FcmService>(FcmService);
   });
 

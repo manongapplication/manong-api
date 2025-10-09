@@ -3,12 +3,8 @@ import { Controller, Get } from '@nestjs/common';
 @Controller()
 export class AppController {
   @Get()
-  getHello(): object {
-    return {
-      message: 'Manong API is running! 🚀',
-      platform: 'Windows',
-      timestamp: new Date().toISOString(),
-    };
+  getHello(): string {
+    return 'Hello World!';
   }
 
   @Get('health')

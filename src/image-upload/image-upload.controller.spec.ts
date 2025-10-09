@@ -1,14 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ImageUploadController } from './image-upload.controller';
+import { createTestingModule } from 'test/utils/create-testing-module';
 
 describe('ImageUploadController', () => {
   let controller: ImageUploadController;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [ImageUploadController],
-    }).compile();
-
+    const module = await createTestingModule([ImageUploadController]);
     controller = module.get<ImageUploadController>(ImageUploadController);
   });
 

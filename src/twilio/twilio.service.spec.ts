@@ -1,14 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { TwilioService } from './twilio.service';
+import { createTestingModule } from 'test/utils/create-testing-module';
 
 describe('TwilioService', () => {
   let service: TwilioService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [TwilioService],
-    }).compile();
-
+    const module = await createTestingModule([TwilioService]);
     service = module.get<TwilioService>(TwilioService);
   });
 

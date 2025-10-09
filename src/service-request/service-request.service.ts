@@ -46,7 +46,7 @@ export class ServiceRequestService {
         where: { id },
       });
     } catch {
-      throw new NotFoundException(`Servcice with id ${id} not found`);
+      throw new NotFoundException(`Service with id ${id} not found`);
     }
   }
 
@@ -225,8 +225,8 @@ export class ServiceRequestService {
     userId: number,
     updateData: UpdateDataServiceRequestDto,
     dto: CompleteServiceRequestDto,
-    subServiceItemTitle: string,
     serviceRequestId: number,
+    subServiceItemTitle?: string | null,
   ) {
     try {
       const description = `Service Request ${subServiceItemTitle} with an amount of ${updateData.total}`;
@@ -321,8 +321,8 @@ export class ServiceRequestService {
             userId,
             updateData,
             dto,
-            exists.subServiceItem.title,
             exists.id,
+            exists.subServiceItem?.title,
           );
         }
 
@@ -333,8 +333,8 @@ export class ServiceRequestService {
             userId,
             updateData,
             dto,
-            exists.subServiceItem.title,
             exists.id,
+            exists.subServiceItem?.title,
           );
           this.logger.debug('Gcash payment!');
         }
@@ -361,7 +361,7 @@ export class ServiceRequestService {
     const notificationDto: CreateNotificationDto = {
       token: updated.manong?.fcmToken ?? '',
       title: `You've got a ${updated?.serviceItem?.title ?? 'service'} request!`,
-      body: `A customer has requested your ${updated?.subServiceItem.title} service. Please check the app for details.`,
+      body: `A customer has requested your ${updated?.subServiceItem?.title} service. Please check the app for details.`,
       userId: updated.manongId!,
       serviceRequestId: updated.id.toString(),
       paymentStatus: updated.paymentStatus,

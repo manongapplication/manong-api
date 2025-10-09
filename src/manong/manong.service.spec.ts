@@ -1,14 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ManongService } from './manong.service';
+import { createTestingModule } from 'test/utils/create-testing-module';
 
 describe('ManongService', () => {
   let service: ManongService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [ManongService],
-    }).compile();
-
+    const module = await createTestingModule([ManongService]);
     service = module.get<ManongService>(ManongService);
   });
 
