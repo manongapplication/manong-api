@@ -19,10 +19,10 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Generate Prisma Client
-        run: npx prisma generate
+        run: npx prisma generate --schema=prisma/schema.prisma
 
       - name: Run Lint
         run: npm run lint
