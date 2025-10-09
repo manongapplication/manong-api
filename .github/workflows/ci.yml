@@ -64,4 +64,4 @@ jobs:
             npm run build
 
             # Start or restart app
-            pm2 start dist/main.js --name manong-api || pm2 restart all
+            pm2 start dist/main.js --name manong-api --update-env || pm2 restart manong-api --update-env
