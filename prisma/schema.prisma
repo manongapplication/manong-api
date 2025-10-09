@@ -172,6 +172,8 @@ model ManongProfile {
   hourlyRate               Decimal?     @db.Decimal(8, 2)
   startingPrice            Decimal?     @db.Decimal(8, 2)
   isProfessionallyVerified Boolean      @default(false)
+  dailyServiceLimit        Int          @default(5)
+  experienceDescription    String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

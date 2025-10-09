@@ -136,6 +136,8 @@ CREATE TABLE "ManongProfile" (
     "hourlyRate" DECIMAL(8,2),
     "startingPrice" DECIMAL(8,2),
     "isProfessionallyVerified" BOOLEAN NOT NULL DEFAULT false,
+    "dailyServiceLimit" INTEGER NOT NULL DEFAULT 5,
+    "experienceDescription" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
