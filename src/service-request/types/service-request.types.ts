@@ -1,5 +1,5 @@
 import { $Enums } from '@prisma/client';
-import { Decimal, JsonValue } from 'generated/prisma/runtime/library';
+import { Decimal, JsonValue } from '@prisma/client/runtime/library';
 
 export interface CompleteServiceRequest {
   id: number;
