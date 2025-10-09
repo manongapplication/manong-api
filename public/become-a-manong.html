@@ -183,6 +183,7 @@
 
   document.addEventListener('DOMContentLoaded', async () => {
     fetchServiceType();
+    initMap();
   });
 
   let serviceItems = [];
@@ -418,8 +419,6 @@
       document.getElementById('longitude').value = pos.lng();
     });
   }
-
-  window.initMap = initMap;
 
   document.getElementById('registrationForm').addEventListener('submit', function(event) {
     event.preventDefault();
