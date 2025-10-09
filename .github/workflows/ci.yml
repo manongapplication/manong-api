@@ -41,13 +41,27 @@ jobs:
           key: ${{ secrets.VPS_PRIVATE_KEY }}
           port: 22
           script: |
-            # Go to project folder or clone if it doesn't exist
-            if [ ! -d "/root/manong-api" ]; then
+            # Ensure folder is clean and clone if necessary
+            if [ ! -d "/root/manong-api/.git" ]; then
+              rm -rf /root/manong-api
               git clone https://github.com/manongapplication/manong-api.git /root/manong-api
             fi
             cd /root/manong-api
+            git reset --hard
             git pull origin main
-            npm ci
+
+            # Install dependencies
+            if [ ! -f "package-lock.json" ]; then
+              npm install
+            else
+              npm ci
+            fi
+
+            # Generate Prisma Client
             npx prisma generate --schema=prisma/schema.prisma
+
+            # Build
             npm run build
+
+            # Start or restart app
             pm2 start dist/main.js --name manong-api || pm2 restart all
