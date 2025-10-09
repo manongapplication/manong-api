@@ -32,3 +32,22 @@ jobs:
 
       - name: Build App
         run: npm run build
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # Go to project folder or clone if it doesn't exist
+            if [ ! -d "/root/manong-api" ]; then
+              git clone https://github.com/manongapplication/manong-api.git /root/manong-api
+            fi
+            cd /root/manong-api
+            git pull origin main
+            npm ci
+            npx prisma generate --schema=prisma/schema.prisma
+            npm run build
+            pm2 start dist/main.js --name manong-api || pm2 restart all
