@@ -28,4 +28,7 @@ async function bootstrap() {
   console.log(`🗄️  PgAdmin: http://localhost:8080`);
   console.log(`📡 Redis Commander: http://localhost:8082`);
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('❌ Error starting the app:', err);
+  process.exit(1);
+});
