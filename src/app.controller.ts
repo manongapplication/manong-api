@@ -21,7 +21,7 @@ export class AppController {
     };
   }
 
-  @Get('register')
+  @Get('become-a-manong')
   getRegister(@Res() res: Response) {
     res.sendFile(join(__dirname, '..', 'public', 'become-a-manong.html'));
   }
