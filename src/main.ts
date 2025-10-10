@@ -7,6 +7,11 @@ async function bootstrap() {
   const server = express();
   const app = await NestFactory.create(AppModule);
 
+  app.use(
+    express.json({ limit: '20mb' }),
+    express.urlencoded({ limit: '20mb', extended: true }),
+  );
+
   server.set('trust proxy', 1);
 
   // Enable CORS for Flutter app
