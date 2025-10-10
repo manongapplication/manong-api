@@ -1,463 +1,617 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Become a Manong Registration</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDtLQ72B5P83ub6NVTvNHM_sYcMSH3ygY&libraries=places"></script>
-</head>
-<body class="bg-gray-100 p-6">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Become a Manong Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDtLQ72B5P83ub6NVTvNHM_sYcMSH3ygY&libraries=places"></script>
+  </head>
+  <body class="bg-gray-100 p-6">
+    <div class="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-2xl font-semibold text-center mb-6">Become a Manong</h2>
 
-<div class="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md">
-  <h2 class="text-2xl font-semibold text-center mb-6">Become a Manong</h2>
-  
-  <form id="registrationForm" class="space-y-4">
-    <div class="flex gap-2">
-      <div class="flex-1">
-        <label for="firstName" class="block mb-1 font-medium">First Name</label>
-        <input type="text" id="firstName" name="firstName" required class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D]">
-      </div>
+      <form id="registrationForm" class="space-y-4">
+        <div class="flex gap-2">
+          <div class="flex-1">
+            <label for="firstName" class="block mb-1 font-medium"
+              >First Name</label
+            >
+            <input
+              type="text"
+              id="firstName"
+              name="firstName"
+              required
+              class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D]"
+            />
+          </div>
 
-      <div class="flex-1">
-        <label for="lastName" class="block mb-1 font-medium">Last Name</label>
-        <input type="text" id="lastName" name="lastName" required class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D]">
-      </div>
-    </div>
-
-    <div>
-      <label for="email" class="block mb-1 font-medium">Email Address</label>
-      <input type="email" id="email" name="email" required class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D]">
-    </div>
-
-    <div>
-      <label for="phone" class="block mb-1 font-medium">Phone Number</label>
-      <input type="tel" id="phone" name="phone" required class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D]">
-    </div>
-
-    <div class="flex flex-col gap-4">
-      <label class="block mb-1 font-medium">Select Services Type</label>
-      <div id="serviceTypeArea">
-        <div class="flex justify-center items-center h-32">
-          <div class="w-12 h-12 border-4 border-t-[#04697D] border-gray-200 rounded-full animate-spin"></div>
+          <div class="flex-1">
+            <label for="lastName" class="block mb-1 font-medium"
+              >Last Name</label
+            >
+            <input
+              type="text"
+              id="lastName"
+              name="lastName"
+              required
+              class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D]"
+            />
+          </div>
         </div>
-      </div>
+
+        <div>
+          <label for="email" class="block mb-1 font-medium"
+            >Email Address</label
+          >
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D]"
+          />
+        </div>
+
+        <div>
+          <label for="phone" class="block mb-1 font-medium">Phone Number</label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            required
+            class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D]"
+          />
+        </div>
+
+        <div class="flex flex-col gap-4">
+          <label class="block mb-1 font-medium">Select Services Type</label>
+          <div id="serviceTypeArea">
+            <div class="flex justify-center items-center h-32">
+              <div
+                class="w-12 h-12 border-4 border-t-[#04697D] border-gray-200 rounded-full animate-spin"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block mb-1 font-medium"
+            >Select your Service Specialities</label
+          >
+          <div id="subServiceItemsArea">
+            <p class="text-center text-gray-500 italic">
+              Please choose a Service Type above to see available Specialities.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <label for="yearsExperience" class="block mb-1 font-medium">Years of Experience</label>
+          <input
+            type="number"
+            id="yearsExperience"
+            name="yearsExperience"
+            min="0"
+            placeholder="e.g. 5"
+            class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D]"
+          />
+        </div>
+
+        <div>
+          <label for="experienceDescription" class="block mb-1 font-medium"
+            >Short Description or Experience</label
+          >
+          <textarea
+            id="experienceDescription"
+            name="experienceDescription"
+            rows="4"
+            required
+            class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D]"
+          ></textarea>
+        </div>
+
+        <div class="max-w-md mx-auto mt-6 space-y-6">
+          <!-- Government ID Upload -->
+          <div>
+            <label class="block mb-2 font-semibold"
+              >Upload Government ID <span class="text-red-500">*</span></label
+            >
+            <div
+              id="govIdDropzone"
+              class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500"
+            >
+              <p id="govIdText">
+                Drag & drop your Government ID here, or click to select
+              </p>
+              <input
+                type="file"
+                id="govIdInput"
+                class="hidden"
+                accept=".pdf,.jpg,.png"
+                required
+              />
+            </div>
+            <p id="govIdFileName" class="mt-2 text-sm text-gray-600"></p>
+          </div>
+
+          <!-- NBI Clearance Upload -->
+          <div>
+            <label class="block mb-2 font-semibold"
+              >Upload NBI Clearance <span class="text-red-500">*</span></label
+            >
+            <div
+              id="nbiDropzone"
+              class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500"
+            >
+              <p id="nbiText">
+                Drag & drop your NBI Clearance here, or click to select
+              </p>
+              <input
+                type="file"
+                id="nbiInput"
+                class="hidden"
+                accept=".pdf,.jpg,.png"
+                required
+              />
+            </div>
+            <p id="nbiFileName" class="mt-2 text-sm text-gray-600">
+              Valid within 6 months
+            </p>
+          </div>
+
+          <!-- Proof of Skill Upload -->
+          <div class="max-w-md mx-auto mt-6">
+            <label class="block mb-2 font-semibold"
+              >Upload Proof of Skill / Qualification
+              <span class="text-red-500">*</span></label
+            >
+            <div
+              id="skillDropzone"
+              class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500"
+            >
+              <p id="skillText">
+                Drag & drop your Proof of Skill or Qualification here, or click to upload
+              </p>
+              <input
+                type="file"
+                id="skillInput"
+                class="hidden"
+                accept=".pdf,.jpg,.png"
+                required
+              />
+            </div>
+            <p id="skillFileName" class="mt-2 text-sm text-gray-600"></p>
+          </div>
+
+          <div class="max-w-md mx-auto mt-6">
+            <label class="block mb-2 font-semibold">Address</label>
+            <input
+              type="text"
+              id="addressInput"
+              placeholder="Enter your address"
+              class="w-full border border-gray-300 rounded-lg p-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <div
+              id="map"
+              class="w-full h-64 rounded-lg border border-gray-300"
+            ></div>
+
+            <input type="hidden" id="latitude" name="latitude" />
+            <input type="hidden" id="longitude" name="longitude" />
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label for="password" class="block mb-1 font-medium">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            minlength="6"
+            placeholder="Enter your password"
+            class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D]"
+          />
+        </div>
+
+        <!-- Confirm Password -->
+        <div>
+          <label for="confirmPassword" class="block mb-1 font-medium">Confirm Password</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            required
+            placeholder="Re-enter your password"
+            class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D]"
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="w-full bg-[#04697D] text-white p-3 rounded-md hover:bg-[#034B57] transition-colors"
+        >
+          Submit
+        </button>
+      </form>
+
+      <div id="message" class="text-center mt-4 text-gray-700"></div>
     </div>
 
-    <div>
-      <label class="block mb-1 font-medium">Select your Service Specialities</label>
-      <div id="subServiceItemsArea">
-        <p class="text-center text-gray-500 italic">Please choose a Service Type above to see available Specialities.</p>
-      </div>
-    </div>
+    <script>
+      const iconLibrary = {
+        // Plumbing
+        water_drop:
+          '<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C10 6 6 10 6 14a6 6 0 0012 0c0-4-4-8-6-12z"/></svg>',
+        plumbing: '<i class="fa-solid fa-wrench"></i>',
+        wc: '<i class="fa-solid fa-toilet"></i>',
+        thermostat: '<i class="fa-solid fa-temperature-half"></i>',
+        water_damage: '<i class="fa-solid fa-droplet"></i>',
+        tap: '<i class="fa-solid fa-faucet"></i>',
+        search: '<i class="fa-solid fa-magnifying-glass"></i>',
+        shower: '<i class="fa-solid fa-shower"></i>',
+        delete: '<i class="fa-solid fa-trash"></i>',
 
-    <div>
-      <label for="experience" class="block mb-1 font-medium">Short Description or Experience</label>
-      <textarea id="experience" name="experience" rows="4" required class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D]"></textarea>
-    </div>
+        // Electrical
+        power: '<i class="fa-solid fa-power-off"></i>',
+        lightbulb: '<i class="fa-solid fa-lightbulb"></i>',
+        electrical_services: '<i class="fa-solid fa-bolt"></i>',
+        flash_on: '<i class="fa-solid fa-bolt"></i>',
 
-    <div class="max-w-md mx-auto mt-6 space-y-6">
+        // Carpentry
+        door_front: '<i class="fa-solid fa-door-closed"></i>',
+        shelves: '<i class="fa-solid fa-shelves"></i>',
+        chair: '<i class="fa-solid fa-chair"></i>',
+        format_shapes: '<i class="fa-solid fa-ruler-combined"></i>',
+        handyman: '<i class="fa-solid fa-hammer"></i>',
+        door_sliding: '<i class="fa-solid fa-door-open"></i>',
 
-    <!-- Government ID Upload -->
-    <div>
-      <label class="block mb-2 font-semibold">Upload Government ID <span class="text-red-500">*</span></label>
-      <div id="govIdDropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500">
-        <p id="govIdText">Drag & drop your Government ID here, or click to select</p>
-        <input type="file" id="govIdInput" class="hidden" accept=".pdf,.jpg,.png" required />
-      </div>
-      <p id="govIdFileName" class="mt-2 text-sm text-gray-600"></p>
-    </div>
+        // Painting
+        brush: '<i class="fa-solid fa-brush"></i>',
+        format_paint: '<i class="fa-solid fa-paint-roller"></i>',
 
-    <!-- NBI Clearance Upload -->
-    <div>
-      <label class="block mb-2 font-semibold">Upload NBI Clearance <span class="text-red-500">*</span></label>
-      <div id="nbiDropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500">
-        <p id="nbiText">Drag & drop your NBI Clearance here, or click to select</p>
-        <input type="file" id="nbiInput" class="hidden" accept=".pdf,.jpg,.png" required />
-      </div>
-      <p id="nbiFileName" class="mt-2 text-sm text-gray-600">Valid within 6 months</p>
-    </div>
+        // Appliance & HVAC
+        ac_unit: '<i class="fa-solid fa-fan"></i>',
+        kitchen: '<i class="fa-solid fa-kitchen-set"></i>',
+        settings: '<i class="fa-solid fa-gear"></i>',
 
-    <!-- Proof of Skill Upload -->
-    <div class="max-w-md mx-auto mt-6">
-      <label class="block mb-2 font-semibold">Upload Proof of Skill / Qualification <span class="text-red-500">*</span></label>
-      <div id="skillDropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500">
-        <p id="skillText">Drag & drop your certificates here, or click to select (you can upload multiple files)</p>
-        <input type="file" id="skillInput" class="hidden" accept=".pdf,.jpg,.png" multiple required />
-      </div>
-      <p id="skillFileName" class="mt-2 text-sm text-gray-600"></p>
-    </div>
+        // Security
+        videocam: '<i class="fa-solid fa-video"></i>',
+        security: '<i class="fa-solid fa-shield-alt"></i>',
+        lock: '<i class="fa-solid fa-lock"></i>',
+        shield: '<i class="fa-solid fa-shield"></i>',
 
-    <div class="max-w-md mx-auto mt-6">
-      <label class="block mb-2 font-semibold">Address</label>
-      <input type="text" id="addressInput" placeholder="Enter your address" 
-            class="w-full border border-gray-300 rounded-lg p-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        // Home Maintenance
+        air: '<i class="fa-solid fa-wind"></i>',
+        fireplace: '<i class="fa-solid fa-fire"></i>',
+        build: '<i class="fa-solid fa-tools"></i>',
+        cleaning_services: '<i class="fa-solid fa-broom"></i>',
+        home_repair_service: '<i class="fa-solid fa-house"></i>',
+        water: '<i class="fa-solid fa-water"></i>',
+        window: '<i class="fa-solid fa-window-maximize"></i>',
+        inventory_2: '<i class="fa-solid fa-boxes"></i>',
+        garage: '<i class="fa-solid fa-warehouse"></i>',
+        fence: '<i class="fa-solid fa-fence"></i>',
+        deck: '<i class="fa-solid fa-layer-group"></i>',
+        pool: '<i class="fa-solid fa-water-ladder"></i>',
+        smoke_detector: '<i class="fa-solid fa-smoke"></i>',
+        smart_home: '<i class="fa-solid fa-home"></i>',
 
-      <div id="map" class="w-full h-64 rounded-lg border border-gray-300"></div>
+        // Payment
+        cash: '<i class="fa-solid fa-money-bill"></i>',
+        card: '<i class="fa-solid fa-credit-card"></i>',
+        gcash: '<i class="fa-solid fa-wallet"></i>',
+        paypal: '<i class="fa-brands fa-paypal"></i>',
+        maya: '<i class="fa-solid fa-money-check"></i>',
 
-      <input type="hidden" id="latitude" name="latitude" />
-      <input type="hidden" id="longitude" name="longitude" />
-    </div>
+        // Fallback
+        default: '<i class="fa-solid fa-cogs"></i>',
+      };
 
-  </div>
+      function getIconHtml(iconName) {
+        return iconLibrary[iconName] || iconLibrary['default'];
+      }
 
-    <button type="submit" class="w-full bg-[#04697D] text-white p-3 rounded-md hover:bg-[#034B57] transition-colors">Submit</button>
-  </form>
-
-  <div id="message" class="text-center mt-4 text-gray-700"></div>
-</div>
-
-<script>
-  const iconLibrary = {
-    // Plumbing
-    water_drop: '<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C10 6 6 10 6 14a6 6 0 0012 0c0-4-4-8-6-12z"/></svg>',
-    plumbing: '<i class="fa-solid fa-wrench"></i>',
-    wc: '<i class="fa-solid fa-toilet"></i>',
-    thermostat: '<i class="fa-solid fa-temperature-half"></i>',
-    water_damage: '<i class="fa-solid fa-droplet"></i>',
-    tap: '<i class="fa-solid fa-faucet"></i>',
-    search: '<i class="fa-solid fa-magnifying-glass"></i>',
-    shower: '<i class="fa-solid fa-shower"></i>',
-    delete: '<i class="fa-solid fa-trash"></i>',
-
-    // Electrical
-    power: '<i class="fa-solid fa-power-off"></i>',
-    lightbulb: '<i class="fa-solid fa-lightbulb"></i>',
-    electrical_services: '<i class="fa-solid fa-bolt"></i>',
-    flash_on: '<i class="fa-solid fa-bolt"></i>',
-
-    // Carpentry
-    door_front: '<i class="fa-solid fa-door-closed"></i>',
-    shelves: '<i class="fa-solid fa-shelves"></i>',
-    chair: '<i class="fa-solid fa-chair"></i>',
-    format_shapes: '<i class="fa-solid fa-ruler-combined"></i>',
-    handyman: '<i class="fa-solid fa-hammer"></i>',
-    door_sliding: '<i class="fa-solid fa-door-open"></i>',
-
-    // Painting
-    brush: '<i class="fa-solid fa-brush"></i>',
-    format_paint: '<i class="fa-solid fa-paint-roller"></i>',
-
-    // Appliance & HVAC
-    ac_unit: '<i class="fa-solid fa-fan"></i>',
-    kitchen: '<i class="fa-solid fa-kitchen-set"></i>', 
-    settings: '<i class="fa-solid fa-gear"></i>',
-
-    // Security
-    videocam: '<i class="fa-solid fa-video"></i>',
-    security: '<i class="fa-solid fa-shield-alt"></i>',
-    lock: '<i class="fa-solid fa-lock"></i>',
-    shield: '<i class="fa-solid fa-shield"></i>',
-
-    // Home Maintenance
-    air: '<i class="fa-solid fa-wind"></i>',
-    fireplace: '<i class="fa-solid fa-fire"></i>',
-    build: '<i class="fa-solid fa-tools"></i>',
-    cleaning_services: '<i class="fa-solid fa-broom"></i>',
-    home_repair_service: '<i class="fa-solid fa-house"></i>',
-    water: '<i class="fa-solid fa-water"></i>',
-    window: '<i class="fa-solid fa-window-maximize"></i>',
-    inventory_2: '<i class="fa-solid fa-boxes"></i>',
-    garage: '<i class="fa-solid fa-warehouse"></i>',
-    fence: '<i class="fa-solid fa-fence"></i>',
-    deck: '<i class="fa-solid fa-layer-group"></i>',
-    pool: '<i class="fa-solid fa-water-ladder"></i>',
-    smoke_detector: '<i class="fa-solid fa-smoke"></i>',
-    smart_home: '<i class="fa-solid fa-home"></i>',
-
-    // Payment
-    cash: '<i class="fa-solid fa-money-bill"></i>',
-    card: '<i class="fa-solid fa-credit-card"></i>',
-    gcash: '<i class="fa-solid fa-wallet"></i>',
-    paypal: '<i class="fa-brands fa-paypal"></i>',
-    maya: '<i class="fa-solid fa-money-check"></i>',
-
-    // Fallback
-    default: '<i class="fa-solid fa-cogs"></i>'
-  };
-
-  function getIconHtml(iconName) {
-    return iconLibrary[iconName] || iconLibrary['default'];
-  }
-
-  document.addEventListener('DOMContentLoaded', async () => {
-    fetchServiceType();
-    initMap();
-  });
-
-  let serviceItems = [];
-
-  const fetchServiceType = async () => {
-    try {
-      const response = await fetch('http://31.97.71.80/api/service-items', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        }
+      document.addEventListener('DOMContentLoaded', async () => {
+        fetchServiceType();
+        initMap();
       });
 
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-      const jsonData = await response.json();
-      const data = jsonData.data;
-      serviceItems = data;
+      let serviceItems = [];
 
-      const serviceTypeArea = document.getElementById('serviceTypeArea');
-      serviceTypeArea.className = 'grid grid-cols-4 gap-2';
-      serviceTypeArea.innerHTML = '';
+      const fetchServiceType = async () => {
+        try {
+          const response = await fetch('http://31.97.71.80/api/service-items', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+          });
 
-      data.forEach(item => {
-        const iconColor = item.iconColor;
-        const label = document.createElement('label');
-        label.className = 'block cursor-pointer';
-        const div = document.createElement('div');
-        div.className = 'flex flex-col gap-2 items-center';
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.name = 'services';
-        checkbox.value = item.id;
-        checkbox.className = 'peer hidden';
-        const chip = document.createElement('div');
-        chip.className = `bg-[${iconColor}] border rounded-2xl p-4 text-center 
+          if (!response.ok)
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          const jsonData = await response.json();
+          const data = jsonData.data;
+          serviceItems = data;
+
+          const serviceTypeArea = document.getElementById('serviceTypeArea');
+          serviceTypeArea.className = 'grid grid-cols-4 gap-2';
+          serviceTypeArea.innerHTML = '';
+
+          data.forEach((item) => {
+            const iconColor = item.iconColor;
+            const label = document.createElement('label');
+            label.className = 'block cursor-pointer';
+            const div = document.createElement('div');
+            div.className = 'flex flex-col gap-2 items-center';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = 'services';
+            checkbox.value = item.id;
+            checkbox.className = 'peer hidden';
+            const chip = document.createElement('div');
+            chip.className = `bg-[${iconColor}] border rounded-2xl p-4 text-center 
                 transition-all peer-checked:border-[#034B57] 
                 peer-checked:bg-[#04697D] hover:border-[#04697D] 
                 w-14 text-white`;
-        const title = document.createElement('p');
-        title.className = 'text-center';
-        title.textContent = item.title;
-        
-        label.appendChild(div);
-        div.appendChild(checkbox);
-        chip.innerHTML = getIconHtml(item.iconName);
-        div.appendChild(chip);
-        div.appendChild(title);
+            const title = document.createElement('p');
+            title.className = 'text-center';
+            title.textContent = item.title;
 
-        serviceTypeArea.appendChild(label);
-        checkbox.addEventListener('change', handleServiceChange);
-      });
-    } catch (e) {
-      console.error('Error fetching service items:', e);
-    }
-  };
+            label.appendChild(div);
+            div.appendChild(checkbox);
+            chip.innerHTML = getIconHtml(item.iconName);
+            div.appendChild(chip);
+            div.appendChild(title);
 
-  function handleServiceChange() {
-    const selectedIds = Array.from(document.querySelectorAll('input[name="services"]:checked')).map(cb => parseInt(cb.value));
+            serviceTypeArea.appendChild(label);
+            checkbox.addEventListener('change', handleServiceChange);
+          });
+        } catch (e) {
+          console.error('Error fetching service items:', e);
+        }
+      };
 
-    const selectedServices = serviceItems.filter(item => selectedIds.includes(item.id));
+      function handleServiceChange() {
+        const selectedIds = Array.from(
+          document.querySelectorAll('input[name="services"]:checked'),
+        ).map((cb) => parseInt(cb.value));
 
-    const output = selectedServices.map(service => ({
-      serviceTitle: service.title,
-      subServiceItems: service.subServiceItems.map(sub => ({
-        id: sub.id,
-        title: sub.title,
-        description: sub.description,
-        iconName: sub.iconName,
-      }))
-    }));
+        const selectedServices = serviceItems.filter((item) =>
+          selectedIds.includes(item.id),
+        );
 
-    const subServiceArea = document.getElementById('subServiceItemsArea');
-    subServiceArea.innerHTML = '';
-    if (selectedIds.length == 0) {
-      subServiceArea.innerHTML = '<p class="text-center text-gray-500 italic">Please choose a Service Type above to see available Specialities.</p>';
-    }
-    output.forEach(service => {
-      const h3 = document.createElement('h3');
-      h3.textContent = service.serviceTitle;
-      h3.className = 'font-semibold mt-2';
-      subServiceArea.appendChild(h3);
+        const output = selectedServices.map((service) => ({
+          serviceTitle: service.title,
+          subServiceItems: service.subServiceItems.map((sub) => ({
+            id: sub.id,
+            title: sub.title,
+            description: sub.description,
+            iconName: sub.iconName,
+          })),
+        }));
 
-      // Sub Services Cards
-      
-      
-      const div = document.createElement('div');
-      div.className = 'grid grid-cols-2 gap-2';
-      
-      service.subServiceItems.forEach(sub => {
-        const label = document.createElement('label');
-        label.className = 'block cursor-pointer';
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.name = 'subServices';
-        checkbox.value = sub.id;
-        checkbox.className = 'peer hidden';
-        label.appendChild(checkbox);
+        const subServiceArea = document.getElementById('subServiceItemsArea');
+        subServiceArea.innerHTML = '';
+        if (selectedIds.length == 0) {
+          subServiceArea.innerHTML =
+            '<p class="text-center text-gray-500 italic">Please choose a Service Type above to see available Specialities.</p>';
+        }
+        output.forEach((service) => {
+          const h3 = document.createElement('h3');
+          h3.textContent = service.serviceTitle;
+          h3.className = 'font-semibold mt-2';
+          subServiceArea.appendChild(h3);
 
-        const specialityDiv = document.createElement('div');
-        specialityDiv.className = `flex flex-row border rounded-lg p-4 
+          // Sub Services Cards
+
+          const div = document.createElement('div');
+          div.className = 'grid grid-cols-2 gap-2';
+
+          service.subServiceItems.forEach((sub) => {
+            const label = document.createElement('label');
+            label.className = 'block cursor-pointer';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = 'subServices';
+            checkbox.value = sub.id;
+            checkbox.className = 'peer hidden';
+            label.appendChild(checkbox);
+
+            const specialityDiv = document.createElement('div');
+            specialityDiv.className = `flex flex-row border rounded-lg p-4 
                     transition-all peer-checked:border-[#034B57] 
                     peer-checked:bg-[#04697D] peer-checked:text-white hover:border-[#04697D] gap-2`;
-        const icon = document.createElement('div');
-        icon.innerHTML = getIconHtml(sub.iconName);
-        const p = document.createElement('p');
-        p.textContent = sub.title;
-        specialityDiv.appendChild(icon);
-        specialityDiv.appendChild(p);
-        
-        label.appendChild(specialityDiv);
-        div.appendChild(label);
-      });
-      subServiceArea.appendChild(div);
-    });
-  }
+            const icon = document.createElement('div');
+            icon.innerHTML = getIconHtml(sub.iconName);
+            const p = document.createElement('p');
+            p.textContent = sub.title;
+            specialityDiv.appendChild(icon);
+            specialityDiv.appendChild(p);
 
-  // Helper function for drag-and-drop file upload
-  function setupDropzone(dropzoneId, inputId, fileNameId) {
-    const dropzone = document.getElementById(dropzoneId);
-    const input = document.getElementById(inputId);
-    const fileName = document.getElementById(fileNameId);
-
-    // Click to open file browser
-    dropzone.addEventListener('click', () => input.click());
-
-    // Highlight on dragover
-    dropzone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropzone.classList.add('border-blue-500', 'bg-blue-50');
-    });
-
-    // Remove highlight on drag leave
-    dropzone.addEventListener('dragleave', () => {
-      dropzone.classList.remove('border-blue-500', 'bg-blue-50');
-    });
-
-    // Handle file drop
-    dropzone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropzone.classList.remove('border-blue-500', 'bg-blue-50');
-
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        input.files = files;
-        fileName.textContent = `Selected file: ${files[0].name}`;
+            label.appendChild(specialityDiv);
+            div.appendChild(label);
+          });
+          subServiceArea.appendChild(div);
+        });
       }
-    });
 
-    // Show selected file when using file input
-    input.addEventListener('change', () => {
-      if (input.files.length > 0) {
-        fileName.textContent = `Selected file: ${input.files[0].name}`;
+      // Helper function for drag-and-drop file upload
+      function setupDropzone(dropzoneId, inputId, fileNameId) {
+        const dropzone = document.getElementById(dropzoneId);
+        const input = document.getElementById(inputId);
+        const fileName = document.getElementById(fileNameId);
+
+        // Click to open file browser
+        dropzone.addEventListener('click', () => input.click());
+
+        // Highlight on dragover
+        dropzone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropzone.classList.add('border-blue-500', 'bg-blue-50');
+        });
+
+        // Remove highlight on drag leave
+        dropzone.addEventListener('dragleave', () => {
+          dropzone.classList.remove('border-blue-500', 'bg-blue-50');
+        });
+
+        // Handle file drop
+        dropzone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropzone.classList.remove('border-blue-500', 'bg-blue-50');
+
+          const files = e.dataTransfer.files;
+          if (files.length > 0) {
+            input.files = files;
+            fileName.textContent = `Selected file: ${files[0].name}`;
+          }
+        });
+
+        // Show selected file when using file input
+        input.addEventListener('change', () => {
+          if (input.files.length > 0) {
+            fileName.textContent = `Selected file: ${input.files[0].name}`;
+          }
+        });
       }
-    });
-  }
 
-  function setupDropzoneMultiple(dropzoneId, inputId, fileNameId) {
-    const dropzone = document.getElementById(dropzoneId);
-    const input = document.getElementById(inputId);
-    const fileName = document.getElementById(fileNameId);
+      function setupDropzoneMultiple(dropzoneId, inputId, fileNameId) {
+        const dropzone = document.getElementById(dropzoneId);
+        const input = document.getElementById(inputId);
+        const fileName = document.getElementById(fileNameId);
 
-    dropzone.addEventListener('click', () => input.click());
+        dropzone.addEventListener('click', () => input.click());
 
-    dropzone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropzone.classList.add('border-blue-500', 'bg-blue-50');
-    });
+        dropzone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropzone.classList.add('border-blue-500', 'bg-blue-50');
+        });
 
-    dropzone.addEventListener('dragleave', () => {
-      dropzone.classList.remove('border-blue-500', 'bg-blue-50');
-    });
+        dropzone.addEventListener('dragleave', () => {
+          dropzone.classList.remove('border-blue-500', 'bg-blue-50');
+        });
 
-    dropzone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropzone.classList.remove('border-blue-500', 'bg-blue-50');
+        dropzone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropzone.classList.remove('border-blue-500', 'bg-blue-50');
 
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        input.files = files;
-        const names = Array.from(files).map(f => f.name).join(', ');
-        fileName.textContent = `Selected files: ${names}`;
+          const files = e.dataTransfer.files;
+          if (files.length > 0) {
+            input.files = files;
+            const names = Array.from(files)
+              .map((f) => f.name)
+              .join(', ');
+            fileName.textContent = `Selected files: ${names}`;
+          }
+        });
+
+        input.addEventListener('change', () => {
+          if (input.files.length > 0) {
+            const names = Array.from(input.files)
+              .map((f) => f.name)
+              .join(', ');
+            fileName.textContent = `Selected files: ${names}`;
+          }
+        });
       }
-    });
 
-    input.addEventListener('change', () => {
-      if (input.files.length > 0) {
-        const names = Array.from(input.files).map(f => f.name).join(', ');
-        fileName.textContent = `Selected files: ${names}`;
+      // Initialize both dropzones
+      setupDropzone('govIdDropzone', 'govIdInput', 'govIdFileName');
+      setupDropzone('nbiDropzone', 'nbiInput', 'nbiFileName');
+      setupDropzone('skillDropzone', 'skillInput', 'skillFileName');
+
+      function initMap() {
+        const map = new google.maps.Map(document.getElementById('map'), {
+          center: { lat: 14.5995, lng: 120.9842 }, // Default Manila
+          zoom: 12,
+        });
+
+        const marker = new google.maps.Marker({
+          map,
+          draggable: true,
+          position: { lat: 14.5995, lng: 120.9842 },
+        });
+
+        const input = document.getElementById('addressInput');
+        const autocomplete = new google.maps.places.Autocomplete(input);
+        autocomplete.bindTo('bounds', map);
+
+        // When user selects an address
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (!place.geometry) return;
+
+          map.setCenter(place.geometry.location);
+          map.setZoom(15);
+          marker.setPosition(place.geometry.location);
+
+          // Fill hidden inputs
+          document.getElementById('latitude').value =
+            place.geometry.location.lat();
+          document.getElementById('longitude').value =
+            place.geometry.location.lng();
+        });
+
+        // Update hidden inputs when marker is dragged
+        marker.addListener('dragend', () => {
+          const pos = marker.getPosition();
+          document.getElementById('latitude').value = pos.lat();
+          document.getElementById('longitude').value = pos.lng();
+        });
       }
-    });
-  }
 
-  // Initialize both dropzones
-  setupDropzone('govIdDropzone', 'govIdInput', 'govIdFileName');
-  setupDropzone('nbiDropzone', 'nbiInput', 'nbiFileName');
-  setupDropzoneMultiple('skillDropzone', 'skillInput', 'skillFileName');
+      document
+        .getElementById('registrationForm')
+        .addEventListener('submit', function (event) {
+          event.preventDefault();
 
-  function initMap() {
-    const map = new google.maps.Map(document.getElementById('map'), {
-      center: { lat: 14.5995, lng: 120.9842 }, // Default Manila
-      zoom: 12
-    });
+          const selectedServices = Array.from(
+            document.querySelectorAll('input[name="services"]:checked'),
+          ).map((cb) => cb.value);
+          const selectedSubServices = Array.from(
+            document.querySelectorAll('input[name="subServices"]:checked'),
+          ).map((cb) => cb.value);
 
-    const marker = new google.maps.Marker({
-      map,
-      draggable: true,
-      position: { lat: 14.5995, lng: 120.9842 }
-    });
+          const formData = {
+            firstName: document.getElementById('firstName').value,
+            lastName: document.getElementById('lastName').value,
+            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value,
+            serviceItems: selectedServices,
+            subServiceItems: selectedSubServices,
+            experienceDescription: document.getElementById('experienceDescription').value,
+            latitude: document.getElementById('latitude').value,
+            longitude: document.getElementById('longitude').value,
+          };
 
-    const input = document.getElementById('addressInput');
-    const autocomplete = new google.maps.places.Autocomplete(input);
-    autocomplete.bindTo('bounds', map);
+          console.log(formData);
 
-    // When user selects an address
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
-      if (!place.geometry) return;
-
-      map.setCenter(place.geometry.location);
-      map.setZoom(15);
-      marker.setPosition(place.geometry.location);
-
-      // Fill hidden inputs
-      document.getElementById('latitude').value = place.geometry.location.lat();
-      document.getElementById('longitude').value = place.geometry.location.lng();
-    });
-
-    // Update hidden inputs when marker is dragged
-    marker.addListener('dragend', () => {
-      const pos = marker.getPosition();
-      document.getElementById('latitude').value = pos.lat();
-      document.getElementById('longitude').value = pos.lng();
-    });
-  }
-
-  document.getElementById('registrationForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-
-    const selectedServices = Array.from(document.querySelectorAll('input[name="services"]:checked')).map(cb => cb.value);
-    const selectedSubServices = Array.from(document.querySelectorAll('input[name="subServices"]:checked')).map(cb => cb.value);
-
-    const formData = {
-      firstName: document.getElementById('firstName').value,
-      lastName: document.getElementById('lastName').value,
-      email: document.getElementById('email').value,
-      phone: document.getElementById('phone').value,
-      serviceItems: selectedServices,
-      subServiceItems: selectedSubServices,
-      description: document.getElementById('experience').value,
-      latitude: document.getElementById('latitude').value,
-      longitude: document.getElementById('longitude').value,
-    };
-
-    console.log(formData);
-
-    // fetch('https://api.yourdomain.com/api/manong/register', {
-    //   method: 'POST',
-    //   headers: {'Content-Type': 'application/json'},
-    //   body: JSON.stringify(formData)
-    // })
-    // .then(response => {
-    //   if (!response.ok) throw new Error('Network response was not ok');
-    //   return response.json();
-    // })
-    // .then(data => {
-    //   document.getElementById('message').innerText = 'Registration successful!';
-    //   document.getElementById('registrationForm').reset();
-    // })
-    // .catch(error => {
-    //   document.getElementById('message').innerText = 'Registration failed: ' + error.message;
-    // });
-  });
-</script>
-
-</body>
+          // fetch('https://api.yourdomain.com/api/manong/register', {
+          //   method: 'POST',
+          //   headers: {'Content-Type': 'application/json'},
+          //   body: JSON.stringify(formData)
+          // })
+          // .then(response => {
+          //   if (!response.ok) throw new Error('Network response was not ok');
+          //   return response.json();
+          // })
+          // .then(data => {
+          //   document.getElementById('message').innerText = 'Registration successful!';
+          //   document.getElementById('registrationForm').reset();
+          // })
+          // .catch(error => {
+          //   document.getElementById('message').innerText = 'Registration failed: ' + error.message;
+          // });
+        });
+    </script>
+  </body>
 </html>

@@ -1,3 +1,4 @@
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
   Controller,
   Get,
@@ -7,10 +8,13 @@ import {
   UseGuards,
   Body,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ManongService } from './manong.service';
 import { FetchManongsQueryDto } from './dto/fetch-manongs-query.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
+import { CurrentUserId } from 'src/common/decorators/current-user-id.decorator';
+import { CreateManongDto } from './dto/create-manong.dto';
 
 @Controller('api/manongs')
 export class ManongController {
@@ -37,5 +41,37 @@ export class ManongController {
     const manong = await this.manongService.findManongById(id);
 
     return { success: true, data: manong };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('register')
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'skillImage', maxCount: 1 },
+      { name: 'nbiImage', maxCount: 1 },
+      { name: 'govIdImage', maxCount: 1 },
+    ]),
+  )
+  async registerManong(
+    @CurrentUserId() userId: number,
+    files: {
+      skillImage?: Express.Multer.File[];
+      nbiImage?: Express.Multer.File[];
+      govIdImage?: Express.Multer.File[];
+    },
+    @Body() dto: CreateManongDto,
+  ) {
+    dto.skillImage = files.skillImage;
+    dto.nbiImage = files.nbiImage;
+    dto.govIdImage = files.govIdImage;
+
+    const result = await this.manongService.registerManong(userId, dto);
+
+    return {
+      success: true,
+      data: result,
+      message:
+        'Registration successful. Your profile and documents have been submitted for review.',
+    };
   }
 }
