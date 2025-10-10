@@ -1,9 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import express from 'express';
 
 async function bootstrap() {
+  const server = express();
   const app = await NestFactory.create(AppModule);
+
+  server.set('trust proxy', 1);
 
   // Enable CORS for Flutter app
   app.enableCors({
