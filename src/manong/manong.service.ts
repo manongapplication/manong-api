@@ -109,7 +109,7 @@ export class ManongService {
     return savedPaths;
   }
 
-  async registerManong(userId: number, dto: CreateManongDto) {
+  async registerManong(dto: CreateManongDto) {
     const {
       firstName,
       lastName,
@@ -153,7 +153,7 @@ export class ManongService {
       data: specialitiesData,
     });
 
-    const files = await this.saveManongFiles(userId, {
+    const files = await this.saveManongFiles(manong.id, {
       skillImage,
       nbiImage,
       govIdImage,
@@ -167,7 +167,7 @@ export class ManongService {
 
     if (files.skillImagePaths && files.skillImagePaths.length > 0) {
       verificationData.push({
-        userId,
+        userId: manong.id,
         documentType: 'skillImage',
         documentUrl: files.skillImagePaths[0],
       });
@@ -175,7 +175,7 @@ export class ManongService {
 
     if (files.nbiImagePaths && files.nbiImagePaths.length > 0) {
       verificationData.push({
-        userId,
+        userId: manong.id,
         documentType: 'nbiImage',
         documentUrl: files.nbiImagePaths[0],
       });
@@ -183,7 +183,7 @@ export class ManongService {
 
     if (files.govIdImagePaths && files.govIdImagePaths.length > 0) {
       verificationData.push({
-        userId,
+        userId: manong.id,
         documentType: 'govIdImage',
         documentUrl: files.govIdImagePaths[0],
       });

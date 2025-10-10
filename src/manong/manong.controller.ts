@@ -13,7 +13,6 @@ import {
 import { ManongService } from './manong.service';
 import { FetchManongsQueryDto } from './dto/fetch-manongs-query.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
-import { CurrentUserId } from 'src/common/decorators/current-user-id.decorator';
 import { CreateManongDto } from './dto/create-manong.dto';
 
 @Controller('api/manongs')
@@ -43,7 +42,6 @@ export class ManongController {
     return { success: true, data: manong };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('register')
   @UseInterceptors(
     FileFieldsInterceptor([
@@ -53,7 +51,6 @@ export class ManongController {
     ]),
   )
   async registerManong(
-    @CurrentUserId() userId: number,
     files: {
       skillImage?: Express.Multer.File[];
       nbiImage?: Express.Multer.File[];
@@ -65,7 +62,7 @@ export class ManongController {
     dto.nbiImage = files.nbiImage;
     dto.govIdImage = files.govIdImage;
 
-    const result = await this.manongService.registerManong(userId, dto);
+    const result = await this.manongService.registerManong(dto);
 
     return {
       success: true,

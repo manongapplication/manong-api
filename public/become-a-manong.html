@@ -571,7 +571,7 @@
 
       document
         .getElementById('registrationForm')
-        .addEventListener('submit', function (event) {
+        .addEventListener('submit', async function (event) {
           event.preventDefault();
 
           const selectedServices = Array.from(
@@ -581,36 +581,58 @@
             document.querySelectorAll('input[name="subServices"]:checked'),
           ).map((cb) => cb.value);
 
-          const formData = {
-            firstName: document.getElementById('firstName').value,
-            lastName: document.getElementById('lastName').value,
-            email: document.getElementById('email').value,
-            phone: document.getElementById('phone').value,
-            serviceItems: selectedServices,
-            subServiceItems: selectedSubServices,
-            experienceDescription: document.getElementById('experienceDescription').value,
-            latitude: document.getElementById('latitude').value,
-            longitude: document.getElementById('longitude').value,
-          };
+          const formData = new FormData();
 
-          console.log(formData);
+          formData.append('firstName', document.getElementById('firstName'));
+          formData.append('lastName', document.getElementById('lastName'));
+          formData.append('email', document.getElementById('email'));
+          formData.append('phone', document.getElementById('phone'));
+          formData.append('password', document.getElementById('password'));
+          formData.append('yearsExperience', document.getElementById('yearsExperience'));
+          formData.append('experienceDescription', document.getElementById('experienceDescription'));
+          formData.append('latitude', document.getElementById('latitude'));
+          formData.append('longitude', document.getElementById('longitude'));
 
-          // fetch('https://api.yourdomain.com/api/manong/register', {
-          //   method: 'POST',
-          //   headers: {'Content-Type': 'application/json'},
-          //   body: JSON.stringify(formData)
-          // })
-          // .then(response => {
-          //   if (!response.ok) throw new Error('Network response was not ok');
-          //   return response.json();
-          // })
-          // .then(data => {
-          //   document.getElementById('message').innerText = 'Registration successful!';
-          //   document.getElementById('registrationForm').reset();
-          // })
-          // .catch(error => {
-          //   document.getElementById('message').innerText = 'Registration failed: ' + error.message;
-          // });
+
+          selectedServices.forEach((id) => formData.append('serviceItems[]', id));
+          selectedSubServices.forEach((id) => formData.append('subServiceItems[]', id));
+
+          const skillFile = document.getElementById('skillInput').files[0];
+          const nbiFile = document.getElementById('nbiInput').files[0];
+          const govIdFile = document.getElementById('govIdInput').files[0];
+
+          if (skillFile) formData.append('skillImage', skillFile);
+          if (nbiFile) formData.append('nbiImage', nbiFile);
+          if (govIdFile) formData.append('govIdImage', govIdFile);
+
+          const message = document.getElementById('message');
+          message.textContent = 'Submitting... please wait.';
+          message.classList.add('text-blue-600');
+
+          try {
+            const response = await fetch('http://31.97.71.80/api/manongs/register', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+              body: formData,
+            });
+
+            if (!response.ok) throw new Error('Failed to register');
+
+            const result = await response.json();
+
+            message.textContent = result.message || 'Registration successfull!';
+            message.classList.remove('text-blue-600');
+            message.classList.add('text-green-600');
+
+            document.getElementById('registrationForm').reset();
+          } catch (e) {
+            message.textContent = result.message || 'Registration failed: ' + error.message;
+            message.classList.remove('text-blue-600');
+            message.classList.add('text-red-600');
+          }
         });
     </script>
   </body>
