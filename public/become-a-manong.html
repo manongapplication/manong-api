@@ -236,6 +236,7 @@
 
         <button
           type="submit"
+          id="submitBtn"
           class="w-full bg-[#04697D] text-white p-3 rounded-md hover:bg-[#034B57] transition-colors"
         >
           Submit
@@ -608,6 +609,8 @@
           const message = document.getElementById('message');
           message.textContent = 'Submitting... please wait.';
           message.classList.add('text-blue-600');
+          const submitBtn = document.getElementById('submitBtn');
+          submitBtn.disabled = true;
 
           try {
             const response = await fetch('http://31.97.71.80/api/manongs/register', {
@@ -629,9 +632,11 @@
 
             document.getElementById('registrationForm').reset();
           } catch (e) {
-            message.textContent = result.message || 'Registration failed: ' + error.message;
+            message.textContent = 'Registration failed: ' + e.message;
             message.classList.remove('text-blue-600');
             message.classList.add('text-red-600');
+          } finally {
+            submitBtn.disabled = false;
           }
         });
     </script>
