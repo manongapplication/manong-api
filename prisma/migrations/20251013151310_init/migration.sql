@@ -253,6 +253,9 @@ CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone");
 CREATE UNIQUE INDEX "ServiceRequest_paymentTransactionId_key" ON "ServiceRequest"("paymentTransactionId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "ManongProfile_userId_key" ON "ManongProfile"("userId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "UserPaymentMethod_userId_provider_paymentMethodIdOnGateway_key" ON "UserPaymentMethod"("userId", "provider", "paymentMethodIdOnGateway");
 
 -- AddForeignKey

@@ -20,10 +20,8 @@ export class ManongService {
         role: 'manong',
         ...(serviceItemId && {
           manongProfile: {
-            some: {
-              manongSpecialities: {
-                some: { subServiceItem: { serviceItemId } },
-              },
+            manongSpecialities: {
+              some: { subServiceItem: { serviceItemId } },
             },
           },
         }),
@@ -49,7 +47,10 @@ export class ManongService {
           const count = await this.serviceRequestService.findByManongIdAndCount(
             manong.id,
           );
-          return count < 5 ? manong : null;
+
+          return count < (manong.manongProfile?.dailyServiceLimit ?? 5)
+            ? manong
+            : null;
         }),
       )
     ).filter(Boolean);

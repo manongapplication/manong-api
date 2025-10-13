@@ -44,7 +44,7 @@ model User {
 
   user                  ServiceRequest[]       @relation("UserRequests")
   manongRequest         ServiceRequest[]       @relation("ManongRequests")
-  manongProfile         ManongProfile[]
+  manongProfile         ManongProfile?
   userPaymentMethod     UserPaymentMethod[]
   notifications         UserNotification[]
   providerVerifications ProviderVerification[] @relation("UserProviderVerifications")
@@ -177,7 +177,7 @@ enum ManongStatus {
 
 model ManongProfile {
   id                       Int          @id @default(autoincrement())
-  userId                   Int
+  userId                   Int          @unique
   status                   ManongStatus @default(available)
   licenseNumber            String?
   yearsExperience          Int?
