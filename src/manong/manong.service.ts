@@ -207,14 +207,14 @@ export class ManongService {
       },
     });
 
-    const specialitiesData = dto.subServiceItems.map((subServiceId) => ({
-      manongProfileId: manongProfile.id,
-      subServiceItemId: subServiceId,
-    }));
-
-    await this.prisma.manongSpecialities.createMany({
-      data: specialitiesData,
-    });
+    if (dto.subServiceItems?.length) {
+      await this.prisma.manongSpecialities.createMany({
+        data: dto.subServiceItems.map((subServiceId) => ({
+          manongProfileId: manongProfile.id,
+          subServiceItemId: subServiceId,
+        })),
+      });
+    }
 
     const files = await this.saveManongFiles(manong.id, {
       skillImage,
@@ -222,39 +222,31 @@ export class ManongService {
       govIdImage,
     });
 
-    const verificationData: {
-      userId: number;
-      documentType: string;
-      documentUrl: string;
-    }[] = [];
-
-    if (files.skillImagePaths && files.skillImagePaths.length > 0) {
-      verificationData.push({
+    const verificationData = [
+      ...files.skillImagePaths.map((p) => ({
         userId: manong.id,
         documentType: 'skillImage',
-        documentUrl: files.skillImagePaths[0],
-      });
-    }
+        documentUrl: p,
+      })),
 
-    if (files.nbiImagePaths && files.nbiImagePaths.length > 0) {
-      verificationData.push({
+      ...files.nbiImagePaths.map((p) => ({
         userId: manong.id,
         documentType: 'nbiImage',
-        documentUrl: files.nbiImagePaths[0],
-      });
-    }
+        documentUrl: p,
+      })),
 
-    if (files.govIdImagePaths && files.govIdImagePaths.length > 0) {
-      verificationData.push({
+      ...files.govIdImagePaths.map((p) => ({
         userId: manong.id,
         documentType: 'govIdImage',
-        documentUrl: files.govIdImagePaths[0],
+        documentUrl: p,
+      })),
+    ];
+
+    if (verificationData.length) {
+      await this.prisma.providerVerification.createMany({
+        data: verificationData,
       });
     }
-
-    await this.prisma.providerVerification.createMany({
-      data: verificationData,
-    });
 
     return {
       manong,
