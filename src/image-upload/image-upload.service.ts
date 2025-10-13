@@ -33,7 +33,7 @@ export class ImageUploadService {
 
       const attachment = await this.prisma.attachment.create({
         data: {
-          message_id: dto.messageId,
+          messageId: dto.messageId,
           type: 'image',
           url: filePath,
         },

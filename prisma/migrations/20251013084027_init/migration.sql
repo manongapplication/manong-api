@@ -1,4 +1,7 @@
 -- CreateEnum
+CREATE TYPE "AccountStatus" AS ENUM ('pending', 'onHold', 'verified', 'rejected', 'suspended');
+
+-- CreateEnum
 CREATE TYPE "PaymentStatus" AS ENUM ('unpaid', 'pending', 'paid', 'failed', 'refunded');
 
 -- CreateEnum
@@ -23,6 +26,7 @@ CREATE TABLE "User" (
     "lastKnownLat" DECIMAL(10,7),
     "lastKnownLng" DECIMAL(10,7),
     "fcmToken" TEXT,
+    "status" "AccountStatus" NOT NULL DEFAULT 'pending',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -43,8 +47,9 @@ CREATE TABLE "ServiceItem" (
     "id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "priceMin" INTEGER NOT NULL,
-    "priceMax" INTEGER NOT NULL,
+    "priceMin" DECIMAL(10,2) NOT NULL,
+    "priceMax" DECIMAL(10,2) NOT NULL,
+    "ratePerKm" DECIMAL(8,2),
     "iconName" TEXT,
     "iconColor" TEXT NOT NULL DEFAULT '#3B82F6',
     "isActive" BOOLEAN NOT NULL DEFAULT true,
@@ -61,9 +66,9 @@ CREATE TABLE "SubServiceItem" (
     "title" TEXT NOT NULL,
     "iconName" TEXT,
     "description" TEXT,
-    "cost" INTEGER,
-    "fee" INTEGER,
-    "gross" INTEGER NOT NULL,
+    "cost" DECIMAL(10,2),
+    "fee" DECIMAL(10,2),
+    "gross" DECIMAL(10,2) NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -192,9 +197,12 @@ CREATE TABLE "UserPaymentMethod" (
 -- CreateTable
 CREATE TABLE "Message" (
     "id" SERIAL NOT NULL,
-    "sender_id" TEXT NOT NULL,
-    "room_id" TEXT NOT NULL,
+    "senderId" INTEGER NOT NULL,
+    "receiverId" INTEGER NOT NULL,
+    "roomId" TEXT NOT NULL,
     "content" TEXT NOT NULL,
+    "seenAt" TIMESTAMP(3),
+    "serviceRequestId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -204,7 +212,7 @@ CREATE TABLE "Message" (
 -- CreateTable
 CREATE TABLE "Attachment" (
     "id" SERIAL NOT NULL,
-    "message_id" INTEGER NOT NULL,
+    "messageId" INTEGER NOT NULL,
     "type" TEXT NOT NULL,
     "url" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -225,6 +233,17 @@ CREATE TABLE "UserNotification" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "UserNotification_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ServiceSettings" (
+    "id" SERIAL NOT NULL,
+    "serviceTax" DOUBLE PRECISION NOT NULL,
+    "maxDistanceFee" DOUBLE PRECISION NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ServiceSettings_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -279,7 +298,10 @@ ALTER TABLE "UserPaymentMethod" ADD CONSTRAINT "UserPaymentMethod_userId_fkey" F
 ALTER TABLE "UserPaymentMethod" ADD CONSTRAINT "UserPaymentMethod_paymentMethodId_fkey" FOREIGN KEY ("paymentMethodId") REFERENCES "PaymentMethod"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_message_id_fkey" FOREIGN KEY ("message_id") REFERENCES "Message"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Message" ADD CONSTRAINT "Message_serviceRequestId_fkey" FOREIGN KEY ("serviceRequestId") REFERENCES "ServiceRequest"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "Message"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "UserNotification" ADD CONSTRAINT "UserNotification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

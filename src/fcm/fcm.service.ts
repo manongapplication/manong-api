@@ -11,28 +11,43 @@ export class FcmService {
   ) {}
   private readonly logger = new Logger(FcmService.name);
 
-  async sendPushNotification(dto: CreateNotificationDto) {
+  async sendPushNotification(
+    dto: CreateNotificationDto,
+    otherData?: Record<string, any>,
+  ) {
+    if (!dto.token || !dto.title || !dto.body) {
+      this.logger.warn(`Missing required fields: ${JSON.stringify(dto)}`);
+      return;
+    }
+
     this.logger.log(`CreateNotificationDto token: ${dto.token}`);
-    const data = {
+    const data = Object.entries({
       title: dto.title,
       body: dto.body,
       ...(dto.serviceRequestId != null && {
         serviceRequestId: dto.serviceRequestId,
       }),
-      ...(dto.status != null && {
-        status: dto.status,
-      }),
-      ...(dto.paymentStatus != null && {
-        paymentStatus: dto.paymentStatus,
-      }),
-    };
+      ...(dto.status != null && { status: dto.status }),
+      ...(dto.paymentStatus != null && { paymentStatus: dto.paymentStatus }),
+      ...(otherData ?? {}),
+    }).reduce(
+      (acc, [key, value]) => {
+        if (value !== undefined && value !== null) {
+          acc[key] = String(value);
+        }
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
     try {
-      await this.userNotificationService.createNotification(
-        dto.userId,
-        dto,
-        data,
-      );
+      if (data.type !== 'chat') {
+        await this.userNotificationService.createNotification(
+          dto.userId,
+          dto,
+          data,
+        );
+      }
 
       const title = dto.title;
       const body = dto.body;

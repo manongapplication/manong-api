@@ -44,6 +44,12 @@ import { FcmModule } from './fcm/fcm.module';
 import { UserNotificationService } from './user-notification/user-notification.service';
 import { UserNotificationController } from './user-notification/user-notification.controller';
 import { UserNotificationModule } from './user-notification/user-notification.module';
+import { ServiceSettingsService } from './service-settings/service-settings.service';
+import { ServiceSettingsController } from './service-settings/service-settings.controller';
+import { ServiceSettingsModule } from './service-settings/service-settings.module';
+import { UrgencyLevelService } from './urgency-level/urgency-level.service';
+import { UrgencyLevelController } from './urgency-level/urgency-level.controller';
+import { UrgencyLevelModule } from './urgency-level/urgency-level.module';
 
 @Module({
   imports: [
@@ -64,6 +70,13 @@ import { UserNotificationModule } from './user-notification/user-notification.mo
         index: false,
       },
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'public'),
+      serveRoot: '/', // serve at the root
+      serveStaticOptions: {
+        index: false,
+      },
+    }),
     PaymongoModule,
     UserPaymentMethodModule,
     GoogleGeocodingModule,
@@ -74,6 +87,8 @@ import { UserNotificationModule } from './user-notification/user-notification.mo
     FirebaseModule,
     FcmModule,
     UserNotificationModule,
+    ServiceSettingsModule,
+    UrgencyLevelModule,
   ],
   controllers: [
     AppController,
@@ -86,6 +101,8 @@ import { UserNotificationModule } from './user-notification/user-notification.mo
     FirebaseController,
     FcmController,
     UserNotificationController,
+    ServiceSettingsController,
+    UrgencyLevelController,
   ],
   providers: [
     UserService,
@@ -101,6 +118,8 @@ import { UserNotificationModule } from './user-notification/user-notification.mo
     FirebaseService,
     FcmService,
     UserNotificationService,
+    ServiceSettingsService,
+    UrgencyLevelService,
   ],
 })
 export class AppModule {

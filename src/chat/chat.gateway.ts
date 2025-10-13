@@ -9,10 +9,19 @@ import {
 } from '@nestjs/websockets';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OnEvent } from '@nestjs/event-emitter';
+import { FcmService } from 'src/fcm/fcm.service';
+import { CreateNotificationDto } from 'src/fcm/dto/create-notification.dto';
+import { UserService } from 'src/user/user.service';
+import { ServiceRequestService } from 'src/service-request/service-request.service';
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly fcmService: FcmService,
+    private readonly serviceRequestService: ServiceRequestService,
+    private readonly userService: UserService,
+  ) {}
 
   private readonly logger = new Logger('ChatGateway');
   @WebSocketServer()
@@ -29,17 +38,23 @@ export class ChatGateway {
   @SubscribeMessage('joinChatRoom')
   async joinRoom(
     @MessageBody()
-    data: { userId: string; manongId: string; serviceRequestId: string },
+    data: {
+      senderId: number;
+      receiverId: number;
+      userId: number;
+      manongId: number;
+      serviceRequestId: number;
+    },
     @ConnectedSocket() client: Socket,
   ) {
-    const room = `chat:${data.manongId}-${data.serviceRequestId}`;
+    const room = `chat:${data.userId}-${data.manongId}-${data.serviceRequestId}`;
     await client.join(room);
     this.logger.log(`Client ${client.id} joined the chat room ${room}`);
 
     // Get messages from database
     const messages = await this.prisma.message.findMany({
       where: {
-        room_id: room,
+        roomId: room,
       },
       include: {
         attachment: true,
@@ -49,11 +64,22 @@ export class ChatGateway {
       },
     });
 
+    await this.prisma.message.updateMany({
+      where: {
+        receiverId: data.senderId,
+        seenAt: null,
+      },
+      data: {
+        seenAt: new Date(),
+      },
+    });
+
     // Transform database records to match Flutter expectations
     const transformedMessages = messages.map((message) => ({
       id: message.id,
-      roomId: message.room_id,
-      senderId: message.sender_id,
+      roomId: message.roomId,
+      senderId: message.senderId,
+      receiverId: message.receiverId,
       content: message.content,
       attachments:
         message.attachment && message.attachment.length > 0
@@ -73,10 +99,14 @@ export class ChatGateway {
   @SubscribeMessage('leaveChatRoom')
   async leaveRoom(
     @MessageBody()
-    data: { userId: string; manongId: string; serviceRequestId: string },
+    data: {
+      userId: number;
+      manongId: number;
+      serviceRequestId: number;
+    },
     @ConnectedSocket() client: Socket,
   ) {
-    const room = `chat:${data.manongId}-${data.serviceRequestId}`;
+    const room = `chat:${data.userId}-${data.manongId}-${data.serviceRequestId}`;
     await client.leave(room);
     this.logger.log(`Client ${client.id} left the chat room ${room}`);
   }
@@ -85,31 +115,81 @@ export class ChatGateway {
   async handleSendMessage(
     @MessageBody()
     data: {
-      userId: string;
-      manongId: string;
-      serviceRequestId: string;
+      senderId: number;
+      receiverId: number;
+      userId: number;
+      manongId: number;
+      serviceRequestId: number;
       content: string;
       attachments?: { type: string; url: string }[];
     },
   ) {
-    const room = `chat:${data.manongId}-${data.serviceRequestId}`;
+    const room = `chat:${data.userId}-${data.manongId}-${data.serviceRequestId}`;
 
     const message = await this.prisma.message.create({
       data: {
-        room_id: room,
-        sender_id: data.userId,
+        roomId: room,
+        senderId: data.senderId,
+        receiverId: data.receiverId,
         content: data.content,
+        serviceRequestId: data.serviceRequestId,
       },
     });
 
     const payload = {
       id: message.id,
       roomId: room,
-      senderId: data.userId,
+      senderId: data.senderId,
+      receiverId: data.receiverId,
       content: data.content,
       attachments: [], // Initially empty, will be updated when images are uploaded
       createdAt: message.createdAt,
     };
+
+    try {
+      const isManong = data.userId == data.receiverId;
+
+      const serviceRequest =
+        await this.serviceRequestService.findByIdIncludesUserAndManong(
+          Number(data.serviceRequestId),
+        );
+
+      const receiverFcmToken = isManong
+        ? serviceRequest?.user.fcmToken
+        : serviceRequest?.manong?.fcmToken;
+
+      const senderName = isManong
+        ? serviceRequest?.manong?.firstName?.trim()
+          ? serviceRequest.manong.firstName.trim()
+          : (serviceRequest?.manong?.phone?.toString() ?? 'Manong')
+        : serviceRequest?.user?.firstName?.trim()
+          ? serviceRequest.user.firstName.trim()
+          : (serviceRequest?.user?.phone?.toString() ?? 'User');
+
+      const receiverId = isManong
+        ? serviceRequest?.userId
+        : serviceRequest?.manongId;
+
+      const hasAttachment = !!data.attachments?.length;
+      const bodyText = hasAttachment
+        ? `${senderName} sent an attachment`
+        : data.content?.trim() || 'New message received';
+
+      const notificationDto: CreateNotificationDto = {
+        token: receiverFcmToken ?? '',
+        title: `From ${senderName}`,
+        body: bodyText,
+        userId: receiverId ?? -1,
+      };
+
+      await this.fcmService.sendPushNotification(notificationDto, {
+        type: 'chat',
+        messageId: message.id,
+        roomId: room,
+      });
+    } catch (e) {
+      this.logger.error(`Can't message notification ${e}`);
+    }
 
     this.server.to(room).emit('chat:update', payload);
     this.logger.log(`Chat update for ${room}: ${JSON.stringify(payload)}`);
@@ -131,8 +211,9 @@ export class ChatGateway {
 
     const updatedPayload = {
       id: message.id,
-      roomId: message.room_id,
-      senderId: message.sender_id,
+      roomId: message.roomId,
+      senderId: message.senderId,
+      receiverId: message.receiverId,
       content: message.content,
       attachments: message.attachment.map((att) => ({
         id: att.id,
@@ -142,6 +223,6 @@ export class ChatGateway {
       createdAt: message.createdAt,
     };
 
-    this.server.to(message.room_id).emit('chat:update', updatedPayload);
+    this.server.to(message.roomId).emit('chat:update', updatedPayload);
   }
 }

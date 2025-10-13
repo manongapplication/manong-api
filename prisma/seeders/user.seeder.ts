@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { AccountStatus, Prisma, PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -56,6 +56,7 @@ export class UserSeeder {
         startingPrice: 500,
         latitude: 14.6091,
         longitude: 121.0223,
+        status: AccountStatus.verified,
         specialities: [
           leakRepair?.id,
           pipeInstall?.id,
@@ -63,7 +64,7 @@ export class UserSeeder {
         ].filter(Boolean),
       },
       {
-        firstname: 'Mario',
+        firstName: 'Mario',
         lastName: 'Electrician',
         email: 'mario@example.com',
         phone: '+639876543210',
@@ -73,6 +74,7 @@ export class UserSeeder {
         startingPrice: 450,
         latitude: 14.5995,
         longitude: 120.9842,
+        status: AccountStatus.verified,
         specialities: [outletReplacement?.id, lightingSetup?.id].filter(
           Boolean,
         ),
@@ -88,6 +90,7 @@ export class UserSeeder {
         startingPrice: 600,
         latitude: 14.676,
         longitude: 121.0437,
+        status: AccountStatus.verified,
         specialities: [doorCabinet?.id, shelvingInstall?.id].filter(Boolean),
       },
       {
@@ -101,6 +104,7 @@ export class UserSeeder {
         startingPrice: 800,
         latitude: 14.5794,
         longitude: 121.0359,
+        status: AccountStatus.verified,
         specialities: [roomRepaint?.id].filter(Boolean),
       },
       {
@@ -114,6 +118,7 @@ export class UserSeeder {
         startingPrice: 700,
         latitude: 14.6349,
         longitude: 121.0419,
+        status: AccountStatus.verified,
         specialities: [acRepair?.id].filter(Boolean),
       },
       {
@@ -127,6 +132,7 @@ export class UserSeeder {
         startingPrice: 1000,
         latitude: 14.6137,
         longitude: 121.027,
+        status: AccountStatus.verified,
         specialities: [cctvSetup?.id].filter(Boolean),
       },
       {
@@ -140,6 +146,7 @@ export class UserSeeder {
         startingPrice: 300,
         latitude: 14.5906,
         longitude: 121.0142,
+        status: AccountStatus.verified,
         specialities: [dryerVent?.id, gutterCleaning?.id].filter(Boolean),
       },
       {
@@ -153,6 +160,7 @@ export class UserSeeder {
         startingPrice: 450,
         latitude: 14.6425,
         longitude: 121.0308,
+        status: AccountStatus.verified,
         specialities: [
           leakRepair?.id,
           outletReplacement?.id,
@@ -178,6 +186,7 @@ export class UserSeeder {
         startingPrice: 800,
         latitude: 14.5833,
         longitude: 121.05,
+        status: AccountStatus.verified,
         specialities: [
           pipeInstall?.id,
           lightingSetup?.id,
@@ -195,6 +204,7 @@ export class UserSeeder {
         startingPrice: 250,
         latitude: 14.62,
         longitude: 121.01,
+        status: AccountStatus.verified,
         specialities: [
           dryerVent?.id,
           gutterCleaning?.id,
@@ -212,6 +222,7 @@ export class UserSeeder {
         startingPrice: 400,
         latitude: 14.605,
         longitude: 121.035,
+        status: AccountStatus.verified,
         specialities: [toiletRepair?.id, outletReplacement?.id].filter(Boolean),
       },
       {
@@ -225,6 +236,7 @@ export class UserSeeder {
         startingPrice: 500,
         latitude: 14.575,
         longitude: 121.025,
+        status: AccountStatus.verified,
         specialities: [
           leakRepair?.id,
           doorCabinet?.id,
@@ -247,6 +259,7 @@ export class UserSeeder {
           isVerified: true,
           latitude: m.latitude,
           longitude: m.longitude,
+          status: m.status,
           manongProfile: {
             create: {
               licenseNumber: m.licenseNumber,
@@ -276,6 +289,7 @@ export class UserSeeder {
         isVerified: true,
         latitude: new Prisma.Decimal(14.676),
         longitude: new Prisma.Decimal(121.0437),
+        status: AccountStatus.verified,
       },
     });
 
@@ -288,6 +302,7 @@ export class UserSeeder {
         phone: '+639222222222',
         latitude: 14.6,
         longitude: 121.03,
+        status: AccountStatus.verified,
       },
       {
         firstName: 'Jose',
@@ -296,6 +311,7 @@ export class UserSeeder {
         phone: '+639333333333',
         latitude: 14.61,
         longitude: 121.04,
+        status: AccountStatus.verified,
       },
       {
         firstName: 'Ana',
@@ -304,6 +320,7 @@ export class UserSeeder {
         phone: '+639444444444',
         latitude: 14.59,
         longitude: 121.02,
+        status: AccountStatus.verified,
       },
     ];
 
@@ -319,6 +336,7 @@ export class UserSeeder {
           isVerified: true,
           latitude: new Prisma.Decimal(c.latitude),
           longitude: new Prisma.Decimal(c.longitude),
+          status: c.status,
         },
       });
     }

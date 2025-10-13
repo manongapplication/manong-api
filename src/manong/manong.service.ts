@@ -3,13 +3,19 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateManongDto } from './dto/create-manong.dto';
 import { join } from 'path';
 import { promises as fs } from 'fs';
+import { ServiceRequestService } from 'src/service-request/service-request.service';
 
 @Injectable()
 export class ManongService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly serviceRequestService: ServiceRequestService,
+  ) {}
 
   async fetchManongs(serviceItemId?: number, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
+
+    const serviceRequestCount = await this.serviceRequestService
 
     const manongs = this.prisma.user.findMany({
       where: {

@@ -57,6 +57,7 @@ export class CalculationUtil {
       total += Number(serviceRequest.urgencyLevel.price);
     }
 
-    return total + this.calculateServiceTaxAmount(serviceRequest);
+    // return total + this.calculateServiceTaxAmount(serviceRequest);
+    return total;
   }
 }

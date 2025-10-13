@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 import { join } from 'path';
 import { promises as fs } from 'fs';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
-import { PaymentStatus } from '@prisma/client';
+import { PaymentStatus, Prisma } from '@prisma/client';
 import { CalculationUtil } from 'src/common/utils/calculation.util';
 import { UserPaymentMethodService } from 'src/user-payment-method/user-payment-method.service';
 import { PaymongoService } from 'src/paymongo/paymongo.service';
@@ -40,6 +40,23 @@ export class ServiceRequestService {
     return this.prisma.serviceRequest.findUnique({ where: { id } });
   }
 
+  async findByIdIncludes(id: number, include?: Prisma.ServiceRequestInclude) {
+    return this.prisma.serviceRequest.findUnique({
+      where: { id },
+      include,
+    });
+  }
+
+  async findByIdIncludesUserAndManong(id: number) {
+    return this.prisma.serviceRequest.findUnique({
+      where: { id },
+      include: {
+        user: true,
+        manong: true,
+      },
+    });
+  }
+
   async findOrFail(id: number) {
     try {
       return await this.prisma.serviceRequest.findUniqueOrThrow({
@@ -63,6 +80,10 @@ export class ServiceRequestService {
           gte: todayStart,
           lte: todayEnd,
         },
+      },
+      include: {
+        serviceItem: true,
+        subServiceItem: true,
       },
     });
 
@@ -112,6 +133,10 @@ export class ServiceRequestService {
         customerLng: dto.customerLng!,
         status: dto.status ?? 'pending',
       },
+      include: {
+        serviceItem: true,
+        subServiceItem: true,
+      },
     });
 
     return { created, warning: null, duplicate: false };
@@ -153,6 +178,13 @@ export class ServiceRequestService {
         subServiceItem: true,
         urgencyLevel: true,
         paymentMethod: true,
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          where: {
+            receiverId: userId,
+          },
+        },
       },
       skip,
       take: limit,

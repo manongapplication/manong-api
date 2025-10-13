@@ -2,10 +2,10 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
-  IsInt,
   IsLatitude,
   IsLongitude,
   IsNotEmpty,
+  IsNumberString,
   IsOptional,
   IsString,
   Length,
@@ -73,7 +73,7 @@ export class CreateManongDto {
   @IsNotEmpty()
   password: string;
 
-  @IsInt()
+  @IsNumberString()
   @IsNotEmpty()
   yearsExperience: number;
 }
