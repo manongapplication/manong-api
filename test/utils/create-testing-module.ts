@@ -16,6 +16,8 @@ import { ServiceRequestService } from 'src/service-request/service-request.servi
 import { ManongService } from 'src/manong/manong.service';
 import { PaymentMethodService } from 'src/payment-method/payment-method.service';
 import { GoogleGeocodingService } from 'src/google-geocoding/google-geocoding.service';
+import { UrgencyLevelService } from 'src/urgency-level/urgency-level.service';
+import { ServiceSettingsService } from 'src/service-settings/service-settings.service';
 
 // 🧩 Add here any other frequently injected services
 // (so you won’t need to mock them manually later)
@@ -37,6 +39,8 @@ const defaultMocks = [
   { provide: ServiceRequestService, useValue: {} },
   { provide: ManongService, useValue: {} },
   { provide: GoogleGeocodingService, useValue: {} },
+  { provide: UrgencyLevelService, useValue: {} },
+  { provide: ServiceSettingsService, useValue: {} },
 ];
 
 export async function createTestingModule(
