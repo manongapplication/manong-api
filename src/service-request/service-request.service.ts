@@ -57,6 +57,24 @@ export class ServiceRequestService {
     });
   }
 
+  async findByManongIdAndCount(id: number) {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const startOfTomorrow = new Date(startOfToday);
+    startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+
+    return this.prisma.serviceRequest.count({
+      where: {
+        manongId: id,
+        createdAt: {
+          gte: startOfToday,
+          lt: startOfTomorrow,
+        },
+      },
+    });
+  }
+
   async findOrFail(id: number) {
     try {
       return await this.prisma.serviceRequest.findUniqueOrThrow({

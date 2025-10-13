@@ -15,9 +15,7 @@ export class ManongService {
   async fetchManongs(serviceItemId?: number, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
 
-    const serviceRequestCount = await this.serviceRequestService
-
-    const manongs = this.prisma.user.findMany({
+    const allManongs = await this.prisma.user.findMany({
       where: {
         role: 'manong',
         ...(serviceItemId && {
@@ -42,8 +40,66 @@ export class ManongService {
         },
       },
       skip,
-      take: limit,
+      take: limit * 2,
     });
+
+    const filteredManongs = (
+      await Promise.all(
+        allManongs.map(async (manong) => {
+          const count = await this.serviceRequestService.findByManongIdAndCount(
+            manong.id,
+          );
+          return count < 5 ? manong : null;
+        }),
+      )
+    ).filter(Boolean);
+
+    return filteredManongs;
+  }
+
+  async fetchManongsRaw(serviceItemId?: number, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date(startOfToday);
+    endOfToday.setDate(endOfToday.getDate() + 1);
+
+    // Pass ISO strings (still fine)
+    const startISO = startOfToday.toISOString();
+    const endISO = endOfToday.toISOString();
+
+    const query = `
+      SELECT u.*
+      FROM "User" u
+      LEFT JOIN "ServiceRequest" sr
+        ON sr."manongId" = u.id
+        AND sr."createdAt" >= $1::timestamp
+        AND sr."createdAt" < $2::timestamp
+      ${
+        serviceItemId
+          ? `
+      INNER JOIN "ManongProfile" mp ON mp."userId" = u.id
+      INNER JOIN "ManongSpecialities" ms ON ms."manongProfileId" = mp.id
+      INNER JOIN "SubServiceItem" ssi ON ssi.id = ms."subServiceItemId"
+      `
+          : ''
+      }
+      WHERE u."role" = 'manong'
+      ${serviceItemId ? 'AND ssi."serviceItemId" = $5' : ''}
+      GROUP BY u.id
+      HAVING COUNT(sr.id) < 5
+      ORDER BY u.id ASC
+      LIMIT $3 OFFSET $4
+    `;
+
+    const params = serviceItemId
+      ? [startISO, endISO, limit, skip, serviceItemId]
+      : [startISO, endISO, limit, skip];
+
+    const manongs = await this.prisma.$queryRawUnsafe(query, ...params);
+
+    console.log(JSON.stringify(manongs));
 
     return manongs;
   }
@@ -205,4 +261,13 @@ export class ManongService {
       verificationData,
     };
   }
+
+  // -- For Manong Registration (Future)
+  // return this.prisma.$transaction(async (tx) => {
+  //   const manong = await tx.user.create(...);
+  //   const manongProfile = await tx.manongProfile.create(...);
+  //   await tx.manongSpecialities.createMany(...);
+  //   await tx.providerVerification.createMany(...);
+  //   return { manong, manongProfile, verificationData };
+  // });
 }
