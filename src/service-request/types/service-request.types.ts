@@ -19,8 +19,6 @@ export interface CompleteServiceRequest {
   notes: string | null;
   rating: number | null;
   status: string | null;
-  profilePhoto: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   total: Decimal | null;
   paymentStatus: $Enums.PaymentStatus;
   createdAt: Date;

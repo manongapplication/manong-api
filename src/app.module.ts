@@ -50,6 +50,9 @@ import { ServiceSettingsModule } from './service-settings/service-settings.modul
 import { UrgencyLevelService } from './urgency-level/urgency-level.service';
 import { UrgencyLevelController } from './urgency-level/urgency-level.controller';
 import { UrgencyLevelModule } from './urgency-level/urgency-level.module';
+import { ProviderVerificationService } from './provider-verification/provider-verification.service';
+import { ProviderVerificationController } from './provider-verification/provider-verification.controller';
+import { ProviderVerificationModule } from './provider-verification/provider-verification.module';
 
 @Module({
   imports: [
@@ -89,6 +92,7 @@ import { UrgencyLevelModule } from './urgency-level/urgency-level.module';
     UserNotificationModule,
     ServiceSettingsModule,
     UrgencyLevelModule,
+    ProviderVerificationModule,
   ],
   controllers: [
     AppController,
@@ -103,6 +107,7 @@ import { UrgencyLevelModule } from './urgency-level/urgency-level.module';
     UserNotificationController,
     ServiceSettingsController,
     UrgencyLevelController,
+    ProviderVerificationController,
   ],
   providers: [
     UserService,
@@ -120,6 +125,7 @@ import { UrgencyLevelModule } from './urgency-level/urgency-level.module';
     UserNotificationService,
     ServiceSettingsService,
     UrgencyLevelService,
+    ProviderVerificationService,
   ],
 })
 export class AppModule {

@@ -21,21 +21,32 @@ enum AccountStatus {
   suspended
 }
 
+enum AddressCategory {
+  residential
+  apartment
+  condominium
+  commercial
+}
+
 model User {
-  id              Int       @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   firstName       String?
   lastName        String?
+  nickname        String?
   email           String?
   emailVerifiedAt DateTime?
   password        String?
-  role            String    @default("user")
-  isVerified      Boolean   @default(false)
-  phone           String    @unique
-  latitude        Decimal?  @db.Decimal(10, 7)
-  longitude       Decimal?  @db.Decimal(10, 7)
-  lastKnownLat    Decimal?  @db.Decimal(10, 7)
-  lastKnownLng    Decimal?  @db.Decimal(10, 7)
+  role            String           @default("user")
+  isVerified      Boolean          @default(false)
+  phone           String           @unique
+  addressCategory AddressCategory? @default(residential)
+  addressLine     String?
+  latitude        Decimal?         @db.Decimal(10, 7)
+  longitude       Decimal?         @db.Decimal(10, 7)
+  lastKnownLat    Decimal?         @db.Decimal(10, 7)
+  lastKnownLng    Decimal?         @db.Decimal(10, 7)
   fcmToken        String?
+  profilePhoto    String?
 
   status AccountStatus @default(pending)
 
@@ -147,7 +158,6 @@ model ServiceRequest {
   notes                String?
   rating               Int?          @db.SmallInt
   status               String?
-  profilePhoto         String?
   total                Decimal?      @db.Decimal(10, 2)
   paymentStatus        PaymentStatus @default(unpaid)
   paymentTransactionId String?       @unique

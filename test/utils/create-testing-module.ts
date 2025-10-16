@@ -18,6 +18,7 @@ import { PaymentMethodService } from 'src/payment-method/payment-method.service'
 import { GoogleGeocodingService } from 'src/google-geocoding/google-geocoding.service';
 import { UrgencyLevelService } from 'src/urgency-level/urgency-level.service';
 import { ServiceSettingsService } from 'src/service-settings/service-settings.service';
+import { ProviderVerificationService } from 'src/provider-verification/provider-verification.service';
 
 // 🧩 Add here any other frequently injected services
 // (so you won’t need to mock them manually later)
@@ -41,6 +42,7 @@ const defaultMocks = [
   { provide: GoogleGeocodingService, useValue: {} },
   { provide: UrgencyLevelService, useValue: {} },
   { provide: ServiceSettingsService, useValue: {} },
+  { provide: ProviderVerificationService, useValue: {} },
 ];
 
 export async function createTestingModule(

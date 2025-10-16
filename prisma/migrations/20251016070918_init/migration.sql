@@ -2,6 +2,9 @@
 CREATE TYPE "AccountStatus" AS ENUM ('pending', 'onHold', 'verified', 'rejected', 'suspended');
 
 -- CreateEnum
+CREATE TYPE "AddressCategory" AS ENUM ('residential', 'apartment', 'condominium', 'commercial');
+
+-- CreateEnum
 CREATE TYPE "PaymentStatus" AS ENUM ('unpaid', 'pending', 'paid', 'failed', 'refunded');
 
 -- CreateEnum
@@ -15,17 +18,21 @@ CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
     "firstName" TEXT,
     "lastName" TEXT,
+    "nickname" TEXT,
     "email" TEXT,
     "emailVerifiedAt" TIMESTAMP(3),
     "password" TEXT,
     "role" TEXT NOT NULL DEFAULT 'user',
     "isVerified" BOOLEAN NOT NULL DEFAULT false,
     "phone" TEXT NOT NULL,
+    "addressCategory" "AddressCategory" DEFAULT 'residential',
+    "addressLine" TEXT,
     "latitude" DECIMAL(10,7),
     "longitude" DECIMAL(10,7),
     "lastKnownLat" DECIMAL(10,7),
     "lastKnownLng" DECIMAL(10,7),
     "fcmToken" TEXT,
+    "profilePhoto" TEXT,
     "status" "AccountStatus" NOT NULL DEFAULT 'pending',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -118,7 +125,6 @@ CREATE TABLE "ServiceRequest" (
     "notes" TEXT,
     "rating" SMALLINT,
     "status" TEXT,
-    "profilePhoto" TEXT,
     "total" DECIMAL(10,2),
     "paymentStatus" "PaymentStatus" NOT NULL DEFAULT 'unpaid',
     "paymentTransactionId" TEXT,

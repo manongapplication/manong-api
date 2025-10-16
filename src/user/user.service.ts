@@ -1,10 +1,19 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UpdateUserDto } from 'src/user/dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CompleteProfileUserDto } from './dto/complete-profile-user.dto';
+import { join } from 'path';
+import { promises as fs } from 'fs';
+import { ProviderVerificationService } from 'src/provider-verification/provider-verification.service';
+import { CreateProviderVerificationDto } from 'src/provider-verification/dto/create-provider-verification.dto';
+import { AccountStatus } from '@prisma/client';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly providerVerificationService: ProviderVerificationService,
+  ) {}
 
   async findByPhone(phone: string) {
     return await this.prisma.user.findUnique({ where: { phone } });
@@ -96,6 +105,48 @@ export class UserService {
         fcmToken: fcmToken,
       },
     });
+
+    return updated;
+  }
+
+  async completeProfile(userId: number, dto: CompleteProfileUserDto) {
+    if (!dto.validId) {
+      throw new BadRequestException('Valid ID is required!');
+    }
+
+    const dest = join('uploads', 'valid_id', String(userId));
+    await fs.mkdir(dest, { recursive: true });
+
+    const timestamp = Date.now();
+    const fileExt = dto.validId.originalname.split('.').pop();
+    const fileName = `valid_id_${timestamp}.${fileExt}`;
+    const filePath = join(dest, fileName);
+
+    await fs.writeFile(filePath, dto.validId.buffer);
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        nickname: dto.nickname,
+        email: dto.email,
+        addressCategory: dto.addressCategory,
+        addressLine: dto.addressLine,
+        status: AccountStatus.onHold,
+      },
+    });
+
+    const providerVerification: CreateProviderVerificationDto = {
+      userId,
+      documentType: dto.validIdType,
+      documentUrl: filePath,
+    };
+
+    await this.providerVerificationService.createProviderVerification(
+      userId,
+      providerVerification,
+    );
 
     return updated;
   }

@@ -48,6 +48,7 @@ export class UserSeeder {
       {
         firstName: 'Pedro',
         lastName: 'Pedro',
+        nickname: 'Pedring',
         email: 'pedro@example.com',
         phone: '+639987654321',
         licenseNumber: 'PLMBR-12345',
@@ -66,6 +67,7 @@ export class UserSeeder {
       {
         firstName: 'Mario',
         lastName: 'Electrician',
+        nickname: 'Mar',
         email: 'mario@example.com',
         phone: '+639876543210',
         licenseNumber: 'ELEC-67890',
@@ -82,6 +84,7 @@ export class UserSeeder {
       {
         firstName: 'Juan',
         lastName: 'Carpenter',
+        nickname: 'Juaning',
         email: 'juan@example.com',
         phone: '+639765432109',
         licenseNumber: 'CRPT-54321',
@@ -96,6 +99,7 @@ export class UserSeeder {
       {
         firstName: 'Rico',
         lastName: 'Painter',
+        nickname: 'Ricky',
         email: 'rico@example.com',
         phone: '+639654321098',
         licenseNumber: 'PNTR-98765',
@@ -110,6 +114,7 @@ export class UserSeeder {
       {
         firstName: 'Carlos',
         lastName: 'Technician',
+        nickname: 'Carlito',
         email: 'carlos@example.com',
         phone: '+639543210987',
         licenseNumber: 'TECH-13579',
@@ -124,6 +129,7 @@ export class UserSeeder {
       {
         firstName: 'Roberto',
         lastName: 'Security',
+        nickname: 'Bert',
         email: 'roberto@example.com',
         phone: '+639432109876',
         licenseNumber: 'SECU-24680',
@@ -138,6 +144,7 @@ export class UserSeeder {
       {
         firstName: 'Antonio',
         lastName: 'Maintenance',
+        nickname: 'Tony',
         email: 'antonio@example.com',
         phone: '+639321098765',
         licenseNumber: 'MAINT-97531',
@@ -152,6 +159,7 @@ export class UserSeeder {
       {
         firstName: 'Miguel',
         lastName: 'Multi-Skilled',
+        nickname: 'Migs',
         email: 'miguel@example.com',
         phone: '+639210987654',
         licenseNumber: 'MULTI-86420',
@@ -178,6 +186,7 @@ export class UserSeeder {
       {
         firstName: 'Eduardo',
         lastName: 'Expert',
+        nickname: 'Ed',
         email: 'eduardo@example.com',
         phone: '+639109876543',
         licenseNumber: 'EXPR-75319',
@@ -196,6 +205,7 @@ export class UserSeeder {
       {
         firstName: 'Benito',
         lastName: 'Budget',
+        nickname: 'Ben',
         email: 'benito@example.com',
         phone: '+639098765432',
         licenseNumber: 'BUDG-64208',
@@ -214,6 +224,7 @@ export class UserSeeder {
       {
         firstName: 'Fernando',
         lastName: 'Fast',
+        nickname: 'Nando',
         email: 'fernando@example.com',
         phone: '+639987654320',
         licenseNumber: 'FAST-53197',
@@ -228,6 +239,7 @@ export class UserSeeder {
       {
         firstName: 'Gerardo',
         lastName: 'General',
+        nickname: 'Gerry',
         email: 'gerardo@example.com',
         phone: '+639876543201',
         licenseNumber: 'GEN-42086',
@@ -252,6 +264,7 @@ export class UserSeeder {
         data: {
           firstName: m.firstName,
           lastName: m.lastName,
+          nickname: m.nickname,
           email: m.email,
           phone: m.phone,
           password: await bcrypt.hash('password', 10),
@@ -282,6 +295,7 @@ export class UserSeeder {
       data: {
         firstName: 'Admin',
         lastName: 'User',
+        nickname: 'SuperAdmin',
         email: 'admin@example.com',
         phone: '+639111111111',
         password: await bcrypt.hash('adminpassword', 10),
@@ -298,6 +312,7 @@ export class UserSeeder {
       {
         firstName: 'Maria',
         lastName: 'Customer',
+        nickname: 'Mariz',
         email: 'maria@customer.com',
         phone: '+639222222222',
         latitude: 14.6,
@@ -307,6 +322,7 @@ export class UserSeeder {
       {
         firstName: 'Jose',
         lastName: 'Client',
+        nickname: 'Pepe',
         email: 'jose@client.com',
         phone: '+639333333333',
         latitude: 14.61,
@@ -316,6 +332,7 @@ export class UserSeeder {
       {
         firstName: 'Ana',
         lastName: 'Homeowner',
+        nickname: 'Annie',
         email: 'ana@homeowner.com',
         phone: '+639444444444',
         latitude: 14.59,
@@ -329,6 +346,7 @@ export class UserSeeder {
         data: {
           firstName: c.firstName,
           lastName: c.lastName,
+          nickname: c.nickname,
           email: c.email,
           phone: c.phone,
           password: await bcrypt.hash('password', 10),
