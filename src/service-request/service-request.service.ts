@@ -175,7 +175,7 @@ export class ServiceRequestService {
       where = { userId };
     }
 
-    const admin = role == UserRole.admin || role == UserRole.manong;
+    const isManong = role == UserRole.manong;
 
     const requests = await this.prisma.serviceRequest.findMany({
       where: where,
@@ -216,7 +216,7 @@ export class ServiceRequestService {
         ...req,
         imagesPath: req.imagesPath,
       })),
-      admin: admin,
+      isManong: isManong,
     };
   }
 
@@ -486,7 +486,7 @@ export class ServiceRequestService {
       where = { userId };
     }
 
-    const admin = role == UserRole.admin || role == UserRole.manong;
+    const isManong = role == UserRole.manong;
 
     const ongoing = await this.prisma.serviceRequest.findFirst({
       where: { ...where, status: 'inprogress' },
@@ -513,7 +513,7 @@ export class ServiceRequestService {
 
     return {
       data: ongoing,
-      admin: admin,
+      isManong: isManong,
     };
   }
 

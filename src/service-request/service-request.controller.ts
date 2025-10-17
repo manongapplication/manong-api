@@ -70,10 +70,10 @@ export class ServiceRequestController {
       success: true,
       data: result.data,
       message:
-        result.admin != false
+        result.isManong != false
           ? 'Proceed to the client’s location.'
           : 'Your Manong is on the way!',
-      admin: result.admin,
+      isManong: result.isManong,
     };
   }
 
@@ -106,7 +106,7 @@ export class ServiceRequestController {
         parseInt(limit),
       );
 
-    return { success: true, data: requests.data, admin: requests.admin };
+    return { success: true, data: requests.data, isManong: requests.isManong };
   }
 
   @UseGuards(JwtAuthGuard)
