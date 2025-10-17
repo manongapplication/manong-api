@@ -115,7 +115,7 @@ const fetchServiceType = async () => {
       chip.className = `bg-[${iconColor}] border rounded-2xl p-4 text-center 
           transition-all peer-checked:border-[#034B57] 
           peer-checked:bg-[#04697D] hover:border-[#04697D] 
-          w-14 h-14 text-white`;
+          w-14 h-14 text-white flex items-center justify-center`;
       const title = document.createElement('p');
       title.className = 'text-center';
       title.textContent = item.title;
