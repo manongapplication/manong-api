@@ -73,6 +73,7 @@ export class CreateManongDto {
   @IsNotEmpty()
   password: string;
 
+  @Type(() => Number)
   @IsNumber()
   @IsNotEmpty()
   yearsExperience: number;
