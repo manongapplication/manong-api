@@ -185,12 +185,19 @@ export class ManongService {
       latitude,
       longitude,
       password,
+      confirmPassword,
       yearsExperience,
       experienceDescription,
       skillImage,
       nbiImage,
       govIdImage,
     } = dto;
+
+    if (password != confirmPassword) {
+      throw new BadRequestException(
+        'Password and confirmation password do not match.',
+      );
+    }
 
     // Check phone uniqueness
     const exists = await this.prisma.user.findUnique({ where: { phone } });
@@ -221,6 +228,7 @@ export class ManongService {
         latitude,
         longitude,
         password,
+        role: 'manong',
       },
     });
 

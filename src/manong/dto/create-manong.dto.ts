@@ -75,6 +75,10 @@ export class CreateManongDto {
   @IsNotEmpty()
   password: string;
 
+  @IsString()
+  @IsNotEmpty()
+  confirmPassword: string;
+
   @Type(() => Number)
   @IsNumber()
   @IsNotEmpty()
