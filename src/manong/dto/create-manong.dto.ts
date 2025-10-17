@@ -5,7 +5,7 @@ import {
   IsLatitude,
   IsLongitude,
   IsNotEmpty,
-  IsNumberString,
+  IsNumber,
   IsOptional,
   IsString,
   Length,
@@ -73,7 +73,7 @@ export class CreateManongDto {
   @IsNotEmpty()
   password: string;
 
-  @IsNumberString()
+  @IsNumber()
   @IsNotEmpty()
   yearsExperience: number;
 }

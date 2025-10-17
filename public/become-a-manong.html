@@ -120,54 +120,6 @@
         </div>
 
         <div class="max-w-md mx-auto mt-6 space-y-6">
-          <!-- Government ID Upload -->
-          <div>
-            <label class="block mb-2 font-semibold"
-              >Upload Government ID <span class="text-red-500">*</span></label
-            >
-            <div
-              id="govIdDropzone"
-              class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500"
-            >
-              <p id="govIdText">
-                Drag & drop your Government ID here, or click to select
-              </p>
-              <input
-                type="file"
-                id="govIdInput"
-                class="hidden"
-                accept=".pdf,.jpg,.png"
-                required
-              />
-            </div>
-            <p id="govIdFileName" class="mt-2 text-sm text-gray-600"></p>
-          </div>
-
-          <!-- NBI Clearance Upload -->
-          <div>
-            <label class="block mb-2 font-semibold"
-              >Upload NBI Clearance <span class="text-red-500">*</span></label
-            >
-            <div
-              id="nbiDropzone"
-              class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500"
-            >
-              <p id="nbiText">
-                Drag & drop your NBI Clearance here, or click to select
-              </p>
-              <input
-                type="file"
-                id="nbiInput"
-                class="hidden"
-                accept=".pdf,.jpg,.png"
-                required
-              />
-            </div>
-            <p id="nbiFileName" class="mt-2 text-sm text-gray-600">
-              Valid within 6 months
-            </p>
-          </div>
-
           <!-- Proof of Skill Upload -->
           <div class="max-w-md mx-auto mt-6">
             <label class="block mb-2 font-semibold"
@@ -185,12 +137,60 @@
               <input
                 type="file"
                 id="skillInput"
+                name="skillInput"
                 class="hidden"
                 accept=".pdf,.jpg,.png"
-                required
               />
             </div>
             <p id="skillFileName" class="mt-2 text-sm text-gray-600"></p>
+          </div>
+
+          <!-- NBI Clearance Upload -->
+          <div>
+            <label class="block mb-2 font-semibold"
+              >Upload NBI Clearance <span class="text-red-500">*</span></label
+            >
+            <div
+              id="nbiDropzone"
+              class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500"
+            >
+              <p id="nbiText">
+                Drag & drop your NBI Clearance here, or click to select
+              </p>
+              <input
+                type="file"
+                id="nbiInput"
+                name="nbiInput"
+                class="hidden"
+                accept=".pdf,.jpg,.png"
+              />
+            </div>
+            <p id="nbiFileName" class="mt-2 text-sm text-gray-600">
+              Valid within 6 months
+            </p>
+          </div>
+
+          <!-- Government ID Upload -->
+          <div>
+            <label class="block mb-2 font-semibold"
+              >Upload Government ID <span class="text-red-500">*</span></label
+            >
+            <div
+              id="govIdDropzone"
+              class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500"
+            >
+              <p id="govIdText">
+                Drag & drop your Government ID here, or click to select
+              </p>
+              <input
+                type="file"
+                id="govIdInput"
+                name="govIdInput"
+                class="hidden"
+                accept=".pdf,.jpg,.png"
+              />
+            </div>
+            <p id="govIdFileName" class="mt-2 text-sm text-gray-600"></p>
           </div>
 
           <div class="max-w-md mx-auto mt-6">
@@ -580,10 +580,38 @@
         });
       }
 
+      function errorMessage(text) {
+        const message = document.getElementById('message');
+        message.textContent = text;
+        message.classList.remove('text-blue-600');
+        message.classList.add('text-red-600');
+      }
+
+      function successMessage(text) {
+        const message = document.getElementById('message');
+        message.textContent = text;
+        message.classList.remove('text-blue-600');
+        message.classList.add('text-green-600');
+      }
+
+      function infoMessage(text) {
+        const message = document.getElementById('message');
+        message.textContent = text;
+        message.classList.add('text-blue-600');
+      }
+
       document
         .getElementById('registrationForm')
         .addEventListener('submit', async function (event) {
           event.preventDefault();
+
+          const password = document.getElementById('password').value;
+          const confirmPassword = document.getElementById('confirmPassword').value;
+
+          if (password != confirmPassword) {
+            errorMessage('Password and confirmation password do not match.');
+            return;
+          }
 
           const selectedServices = Array.from(
             document.querySelectorAll('input[name="services"]:checked'),
@@ -606,7 +634,11 @@
           formData.append('phone', document.getElementById('phone').value);
           formData.append(
             'password',
-            document.getElementById('password').value,
+            password,
+          );
+          formData.append(
+            'confirmPassword',
+            confirmPassword,
           );
           formData.append(
             'yearsExperience',
@@ -636,13 +668,27 @@
           const nbiFile = document.getElementById('nbiInput').files[0];
           const govIdFile = document.getElementById('govIdInput').files[0];
 
-          if (skillFile) formData.append('skillImage', skillFile);
-          if (nbiFile) formData.append('nbiImage', nbiFile);
-          if (govIdFile) formData.append('govIdImage', govIdFile);
+          if (skillFile) {
+            formData.append('skillImage', skillFile);
+          } else {
+            errorMessage('Skill image is missing.');
+            return;
+          }
 
-          const message = document.getElementById('message');
-          message.textContent = 'Submitting... please wait.';
-          message.classList.add('text-blue-600');
+          if (nbiFile) {
+            formData.append('nbiImage', nbiFile);
+          } else {
+            errorMessage('NBI image is missing.');
+            return;
+          }
+          if (govIdFile) {
+            formData.append('govIdImage', govIdFile);
+          } else {
+            errorMessage('Government ID image is missing.');
+            return;
+          }
+
+          infoMessage('Submitting... please wait.');
           const submitBtn = document.getElementById('submitBtn');
           submitBtn.disabled = true;
 
@@ -660,15 +706,11 @@
 
             const result = await response.json();
 
-            message.textContent = result.message || 'Registration successfull!';
-            message.classList.remove('text-blue-600');
-            message.classList.add('text-green-600');
+            successMessage(result.message || 'Registration successfull!');
 
             document.getElementById('registrationForm').reset();
           } catch (e) {
-            message.textContent = 'Registration failed: ' + e.message;
-            message.classList.remove('text-blue-600');
-            message.classList.add('text-red-600');
+            errorMessage('Registration failed: ' + e.message)
           } finally {
             submitBtn.disabled = false;
           }
