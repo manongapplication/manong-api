@@ -44,11 +44,14 @@ export class ManongController {
 
   @Post('register')
   @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'skillImage', maxCount: 1 },
-      { name: 'nbiImage', maxCount: 1 },
-      { name: 'govIdImage', maxCount: 1 },
-    ]),
+    FileFieldsInterceptor(
+      [
+        { name: 'skillImage', maxCount: 1 },
+        { name: 'nbiImage', maxCount: 1 },
+        { name: 'govIdImage', maxCount: 1 },
+      ],
+      { limits: { fileSize: 5 * 1024 * 1024 } },
+    ),
   )
   async registerManong(
     files: {
