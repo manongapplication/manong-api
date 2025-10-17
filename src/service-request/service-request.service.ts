@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 import { join } from 'path';
 import { promises as fs } from 'fs';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
-import { PaymentStatus, Prisma } from '@prisma/client';
+import { PaymentStatus, Prisma, UserRole } from '@prisma/client';
 import { CalculationUtil } from 'src/common/utils/calculation.util';
 import { UserPaymentMethodService } from 'src/user-payment-method/user-payment-method.service';
 import { PaymongoService } from 'src/paymongo/paymongo.service';
@@ -167,13 +167,15 @@ export class ServiceRequestService {
 
     let where = {};
 
-    if (user?.role == 'manong') {
+    const role = user?.role;
+
+    if (role == UserRole.manong) {
       where = { manongId: userId };
     } else {
       where = { userId };
     }
 
-    const admin = user?.role == 'manong';
+    const admin = role == UserRole.admin || role == UserRole.manong;
 
     const requests = await this.prisma.serviceRequest.findMany({
       where: where,
@@ -430,7 +432,7 @@ export class ServiceRequestService {
   async acceptServiceRequest(userId: number, id: number) {
     const user = await this.userService.findById(userId);
 
-    if (user?.role != 'manong' && user?.role != 'admin') {
+    if (user?.role != UserRole.manong && user?.role != UserRole.admin) {
       throw new Error('Not authorized to start the request.');
     }
 
@@ -447,7 +449,7 @@ export class ServiceRequestService {
   async startServiceRequest(userId: number, id: number) {
     const user = await this.userService.findById(userId);
 
-    if (user?.role != 'manong' && user?.role != 'admin') {
+    if (user?.role != UserRole.manong && user?.role != UserRole.admin) {
       throw new Error('Not authorized to start the request.');
     }
 
@@ -476,13 +478,15 @@ export class ServiceRequestService {
 
     let where = {};
 
-    if (user?.role == 'manong') {
+    const role = user?.role;
+
+    if (role == UserRole.manong) {
       where = { manongId: userId };
     } else {
       where = { userId };
     }
 
-    const admin = user?.role == 'manong';
+    const admin = role == UserRole.admin || role == UserRole.manong;
 
     const ongoing = await this.prisma.serviceRequest.findFirst({
       where: { ...where, status: 'inprogress' },

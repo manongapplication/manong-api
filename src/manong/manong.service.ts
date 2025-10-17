@@ -8,6 +8,7 @@ import { CreateManongDto } from './dto/create-manong.dto';
 import { join } from 'path';
 import { promises as fs } from 'fs';
 import { ServiceRequestService } from 'src/service-request/service-request.service';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class ManongService {
@@ -21,7 +22,7 @@ export class ManongService {
 
     const allManongs = await this.prisma.user.findMany({
       where: {
-        role: 'manong',
+        role: UserRole.manong,
         ...(serviceItemId && {
           manongProfile: {
             manongSpecialities: {
@@ -228,7 +229,7 @@ export class ManongService {
         latitude,
         longitude,
         password,
-        role: 'manong',
+        role: UserRole.manong,
       },
     });
 

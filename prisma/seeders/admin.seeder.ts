@@ -1,4 +1,4 @@
-import { AccountStatus, Prisma, PrismaClient } from '@prisma/client';
+import { AccountStatus, Prisma, PrismaClient, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -14,7 +14,7 @@ export class AdminSeeder {
         email: 'admin@example.com',
         phone: '+639111111111',
         password: await bcrypt.hash('adminpassword', 10),
-        role: 'admin',
+        role: UserRole.admin,
         isVerified: true,
         latitude: new Prisma.Decimal(14.676),
         longitude: new Prisma.Decimal(121.0437),

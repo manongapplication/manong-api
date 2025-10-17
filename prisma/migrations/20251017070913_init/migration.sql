@@ -5,6 +5,9 @@ CREATE TYPE "AccountStatus" AS ENUM ('pending', 'onHold', 'verified', 'rejected'
 CREATE TYPE "AddressCategory" AS ENUM ('residential', 'apartment', 'condominium', 'commercial');
 
 -- CreateEnum
+CREATE TYPE "UserRole" AS ENUM ('customer', 'manong', 'admin', 'superadmin', 'moderator', 'guest');
+
+-- CreateEnum
 CREATE TYPE "PaymentStatus" AS ENUM ('unpaid', 'pending', 'paid', 'failed', 'refunded');
 
 -- CreateEnum
@@ -22,7 +25,7 @@ CREATE TABLE "User" (
     "email" TEXT,
     "emailVerifiedAt" TIMESTAMP(3),
     "password" TEXT,
-    "role" TEXT NOT NULL DEFAULT 'user',
+    "role" "UserRole" NOT NULL DEFAULT 'customer',
     "isVerified" BOOLEAN NOT NULL DEFAULT false,
     "phone" TEXT NOT NULL,
     "addressCategory" "AddressCategory" DEFAULT 'residential',

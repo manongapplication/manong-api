@@ -28,6 +28,15 @@ enum AddressCategory {
   commercial
 }
 
+enum UserRole {
+  customer // regular customer requesting services
+  manong // service provider
+  admin // system administrator
+  superadmin // optional, higher-level admin
+  moderator // optional, for reviewing/verifications
+  guest // optional, limited access
+}
+
 model User {
   id              Int              @id @default(autoincrement())
   firstName       String?
@@ -36,7 +45,7 @@ model User {
   email           String?
   emailVerifiedAt DateTime?
   password        String?
-  role            String           @default("user")
+  role            UserRole         @default(customer)
   isVerified      Boolean          @default(false)
   phone           String           @unique
   addressCategory AddressCategory? @default(residential)

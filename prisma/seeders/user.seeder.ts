@@ -1,4 +1,4 @@
-import { AccountStatus, Prisma, PrismaClient } from '@prisma/client';
+import { AccountStatus, Prisma, PrismaClient, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -268,7 +268,7 @@ export class UserSeeder {
           email: m.email,
           phone: m.phone,
           password: await bcrypt.hash('password', 10),
-          role: 'manong',
+          role: UserRole.manong,
           isVerified: true,
           latitude: m.latitude,
           longitude: m.longitude,
@@ -333,7 +333,7 @@ export class UserSeeder {
           email: c.email,
           phone: c.phone,
           password: await bcrypt.hash('password', 10),
-          role: 'customer',
+          role: UserRole.customer,
           isVerified: true,
           latitude: new Prisma.Decimal(c.latitude),
           longitude: new Prisma.Decimal(c.longitude),
