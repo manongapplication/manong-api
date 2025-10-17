@@ -183,7 +183,7 @@ function handleServiceChange() {
       const specialityDiv = document.createElement('div');
       specialityDiv.className = `flex flex-row border rounded-lg p-4 
               transition-all peer-checked:border-[#034B57] 
-              peer-checked:bg-[#04697D] peer-checked:text-white hover:border-[#04697D] gap-2`;
+              peer-checked:bg-[#04697D] peer-checked:text-white hover:border-[#04697D] gap-2 items-center`;
       const icon = document.createElement('div');
       icon.innerHTML = getIconHtml(sub.iconName);
       const p = document.createElement('p');
