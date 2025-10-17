@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadGatewayException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateManongDto } from './dto/create-manong.dto';
 import { join } from 'path';
@@ -187,6 +187,12 @@ export class ManongService {
       nbiImage,
       govIdImage,
     } = dto;
+
+    if (!skillImage) throw new BadGatewayException('Skill image is missing.');
+    if (!nbiImage) throw new BadGatewayException('NBI image is missing.');
+    if (!govIdImage)
+      throw new BadGatewayException('Government ID image is missing.');
+
     const manong = await this.prisma.user.create({
       data: {
         firstName,
