@@ -35,10 +35,12 @@ export class CreateManongDto {
 
   @IsArray()
   @IsNotEmpty()
+  @Type(() => Number)
   serviceItems: number[];
 
   @IsArray()
   @IsNotEmpty()
+  @Type(() => Number)
   subServiceItems: number[];
 
   @IsString()

@@ -58,7 +58,8 @@ export class UserService {
     const { firstName, lastName, email, phone } = dto;
 
     if (email) {
-      const existingEmail = await this.findByEmail(email);
+      const normalizedEmail = email.toLowerCase();
+      const existingEmail = await this.findByEmail(normalizedEmail);
       if (existingEmail && existingEmail.id !== userId) {
         throw new BadRequestException('Email already in use');
       }
@@ -110,6 +111,14 @@ export class UserService {
   }
 
   async completeProfile(userId: number, dto: CompleteProfileUserDto) {
+    if (dto.email) {
+      const normalizedEmail = dto.email.toLowerCase();
+      const existingEmail = await this.findByEmail(normalizedEmail);
+      if (existingEmail && existingEmail.id !== userId) {
+        throw new BadRequestException('Email already in use');
+      }
+    }
+
     if (!dto.validId) {
       throw new BadRequestException('Valid ID is required!');
     }

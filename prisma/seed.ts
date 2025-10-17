@@ -1,9 +1,10 @@
+import { AdminSeeder } from './seeders/admin.seeder';
 import { PaymentMethodSeeder } from './seeders/payment-method.seeder';
 import { ServiceItemSeeder } from './seeders/service-item.seeder';
 import { ServiceSettingsSeeder } from './seeders/service-settings.seeder';
 import { SubServiceItemSeeder } from './seeders/sub-service-item.seeder';
 import { UrgencyLevelSeeder } from './seeders/urgency-level.seeder';
-import { UserSeeder } from './seeders/user.seeder';
+// import { UserSeeder } from './seeders/user.seeder';
 
 async function main() {
   await new ServiceItemSeeder().run();
@@ -11,7 +12,8 @@ async function main() {
   await new SubServiceItemSeeder().run();
   await new UrgencyLevelSeeder().run();
   await new PaymentMethodSeeder().run();
-  await new UserSeeder().run();
+  // await new UserSeeder().run();
+  await new AdminSeeder().run();
 }
 
 main()

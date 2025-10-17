@@ -8,8 +8,8 @@ async function bootstrap() {
 
   // Correctly set JSON & URL limits on Nest's underlying Express
   app.use(
-    express.json({ limit: '20mb' }),
-    express.urlencoded({ limit: '20mb', extended: true }),
+    express.json({ limit: '50mb' }),
+    express.urlencoded({ limit: '50mb', extended: true }),
   );
 
   // Enable CORS

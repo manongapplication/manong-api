@@ -290,23 +290,6 @@ export class UserSeeder {
       });
     }
 
-    // Create Admin User
-    await prisma.user.create({
-      data: {
-        firstName: 'Admin',
-        lastName: 'User',
-        nickname: 'SuperAdmin',
-        email: 'admin@example.com',
-        phone: '+639111111111',
-        password: await bcrypt.hash('adminpassword', 10),
-        role: 'admin',
-        isVerified: true,
-        latitude: new Prisma.Decimal(14.676),
-        longitude: new Prisma.Decimal(121.0437),
-        status: AccountStatus.verified,
-      },
-    });
-
     // Create some Customers
     const customers = [
       {

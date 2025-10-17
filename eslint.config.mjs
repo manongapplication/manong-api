@@ -22,6 +22,7 @@ export default tseslint.config(
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
+      ignorePatterns: ['public/js/**/*.js'],
     },
   },
   {

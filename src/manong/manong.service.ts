@@ -1,4 +1,8 @@
-import { BadGatewayException, Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateManongDto } from './dto/create-manong.dto';
 import { join } from 'path';
@@ -188,6 +192,21 @@ export class ManongService {
       govIdImage,
     } = dto;
 
+    // Check phone uniqueness
+    const exists = await this.prisma.user.findUnique({ where: { phone } });
+    if (exists)
+      throw new BadRequestException('Phone number is already registered.');
+
+    // Optional email check
+    if (email) {
+      const emailExists = await this.prisma.user.findFirst({
+        where: { email },
+      });
+      if (emailExists) {
+        throw new BadRequestException('Email is already registered.');
+      }
+    }
+
     if (!skillImage) throw new BadGatewayException('Skill image is missing.');
     if (!nbiImage) throw new BadGatewayException('NBI image is missing.');
     if (!govIdImage)
@@ -217,7 +236,7 @@ export class ManongService {
       await this.prisma.manongSpecialities.createMany({
         data: dto.subServiceItems.map((subServiceId) => ({
           manongProfileId: manongProfile.id,
-          subServiceItemId: subServiceId,
+          subServiceItemId: Number(subServiceId),
         })),
       });
     }

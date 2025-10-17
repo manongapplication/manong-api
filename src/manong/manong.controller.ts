@@ -9,6 +9,7 @@ import {
   Body,
   Query,
   UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import { ManongService } from './manong.service';
 import { FetchManongsQueryDto } from './dto/fetch-manongs-query.dto';
@@ -50,10 +51,16 @@ export class ManongController {
         { name: 'nbiImage', maxCount: 1 },
         { name: 'govIdImage', maxCount: 1 },
       ],
-      { limits: { fileSize: 5 * 1024 * 1024 } },
+      {
+        limits: {
+          fileSize: 5 * 1024 * 1024,
+          fieldSize: 10 * 1024 * 1024,
+        },
+      },
     ),
   )
   async registerManong(
+    @UploadedFiles()
     files: {
       skillImage?: Express.Multer.File[];
       nbiImage?: Express.Multer.File[];
@@ -71,7 +78,7 @@ export class ManongController {
       success: true,
       data: result,
       message:
-        'Registration successful. Your profile and documents have been submitted for review.',
+        "Registration successful! We'll notify you via the email you provided once your application has been reviewed.",
     };
   }
 }
