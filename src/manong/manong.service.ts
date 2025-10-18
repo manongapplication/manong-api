@@ -8,7 +8,7 @@ import { CreateManongDto } from './dto/create-manong.dto';
 import { join } from 'path';
 import { promises as fs } from 'fs';
 import { ServiceRequestService } from 'src/service-request/service-request.service';
-import { UserRole } from '@prisma/client';
+import { AccountStatus, UserRole } from '@prisma/client';
 
 @Injectable()
 export class ManongService {
@@ -17,7 +17,7 @@ export class ManongService {
     private readonly serviceRequestService: ServiceRequestService,
   ) {}
 
-  async fetchManongs(serviceItemId?: number, page = 1, limit = 10) {
+  async fetchVerifiedManongs(serviceItemId?: number, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
 
     const allManongs = await this.prisma.user.findMany({
@@ -30,6 +30,7 @@ export class ManongService {
             },
           },
         }),
+        status: AccountStatus.verified,
       },
       include: {
         manongProfile: {

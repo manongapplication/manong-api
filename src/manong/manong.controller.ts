@@ -27,7 +27,7 @@ export class ManongController {
     @Query('page') page = '1',
     @Query('limit') limit = '10',
   ) {
-    const manongs = await this.manongService.fetchManongs(
+    const manongs = await this.manongService.fetchVerifiedManongs(
       dto.serviceItemId,
       parseInt(page),
       parseInt(limit),
