@@ -189,18 +189,6 @@ const assistantInit = () => {
       assistantArea.removeChild(assistantRow);
     }
   });
-
-  document
-    .getElementById('debugAssistantInputs')
-    .addEventListener('click', (e) => {
-      const inputs = document.querySelectorAll(
-        'input[name="assistantsFullname[]"]',
-      );
-
-      const values = Array.from(inputs).map((input) => input.value);
-
-      console.log(values);
-    });
 };
 
 function handleServiceChange() {
