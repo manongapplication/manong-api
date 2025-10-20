@@ -283,6 +283,17 @@ export class ManongService {
       });
     }
 
+    if (dto.assistants && dto.assistants.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      await this.prisma.manongAssistant.createMany({
+        data: dto.assistants.map((assistant) => ({
+          manongProfileId: manongProfile.id,
+          fullName: assistant.fullName,
+          phone: assistant.phone || null,
+        })),
+      });
+    }
+
     return {
       manong,
       manongProfile,

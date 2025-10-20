@@ -1,5 +1,8 @@
+const MAX_ASSISTANTS = 5;
+
 const iconLibrary = {
-  water_drop: '<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C10 6 6 10 6 14a6 6 0 0012 0c0-4-4-8-6-12z"/></svg>',
+  water_drop:
+    '<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C10 6 6 10 6 14a6 6 0 0012 0c0-4-4-8-6-12z"/></svg>',
   plumbing: '<i class="fa-solid fa-wrench"></i>',
   wc: '<i class="fa-solid fa-toilet"></i>',
   thermostat: '<i class="fa-solid fa-temperature-half"></i>',
@@ -55,6 +58,7 @@ function getIconHtml(iconName) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   fetchServiceType();
+  assistantInit();
   initMap();
 });
 
@@ -62,10 +66,16 @@ let serviceItems = [];
 
 const fetchServiceType = async () => {
   try {
-    const response = await fetch('https://api.manongapp.com/api/service-items', {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    });
+    const response = await fetch(
+      'https://api.manongapp.com/api/service-items',
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      },
+    );
 
     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
     const jsonData = await response.json();
@@ -107,9 +117,78 @@ const fetchServiceType = async () => {
   }
 };
 
+const handleAddAssistant = () => {
+  const assistantArea = document.getElementById('assistantArea');
+
+  if (assistantArea.children.length >= MAX_ASSISTANTS) {
+    return;
+  }
+
+  const div = document.createElement('div');
+  div.className =
+    assistantArea.children.length == 0 ? 'flex gap-2 mt-6' : 'flex gap-2 mt-2';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.name = 'assistantsFullname[]';
+  input.placeholder = "Assistant's full name";
+  input.className =
+    'flex-1 p-2 sm:p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D] text-sm sm:text-base';
+  input.required = true;
+
+  const plusDiv = document.createElement('div');
+  plusDiv.className =
+    'flex items-center justify-center border rounded-md px-3 cursor-pointer hover:bg-gray-100 add-assistant';
+  plusDiv.innerHTML = '<i class="fa-solid fa-plus"></i>';
+
+  div.append(input, plusDiv);
+  assistantArea.appendChild(div);
+};
+
+const assistantInit = () => {
+  const assistantRadios = document.querySelectorAll(
+    'input[name="assistantRadio"]',
+  );
+  const assistantArea = document.getElementById('assistantArea');
+
+  assistantRadios.forEach((radio, index) => {
+    radio.addEventListener('change', () => {
+      if (index == 0) {
+        assistantArea.classList.remove('hidden');
+        handleAddAssistant();
+      } else {
+        assistantArea.classList.add('hidden');
+        assistantArea.innerHTML = '';
+      }
+    });
+  });
+
+  assistantArea.addEventListener('click', (e) => {
+    if (e.target.closest('.add-assistant')) {
+      handleAddAssistant();
+    }
+  });
+
+  document
+    .getElementById('debugAssistantInputs')
+    .addEventListener('click', (e) => {
+      const inputs = document.querySelectorAll(
+        'input[name="assistantsFullname[]"]',
+      );
+
+      const values = Array.from(inputs).map((input) => input.value);
+
+      console.log(values);
+    });
+};
+
 function handleServiceChange() {
-  const selectedIds = Array.from(document.querySelectorAll('input[name="services"]:checked')).map((cb) => parseInt(cb.value));
-  const selectedServices = serviceItems.filter((item) => selectedIds.includes(item.id));
+  const selectedIds = Array.from(
+    document.querySelectorAll('input[name="services"]:checked'),
+  ).map((cb) => parseInt(cb.value));
+  const selectedServices = serviceItems.filter((item) =>
+    selectedIds.includes(item.id),
+  );
 
   const output = selectedServices.map((service) => ({
     serviceTitle: service.title,
@@ -124,7 +203,8 @@ function handleServiceChange() {
   const subServiceArea = document.getElementById('subServiceItemsArea');
   subServiceArea.innerHTML = '';
   if (selectedIds.length == 0) {
-    subServiceArea.innerHTML = '<p class="text-center text-gray-500 italic text-xs sm:text-sm">Please choose a Service Type above to see available Specialities.</p>';
+    subServiceArea.innerHTML =
+      '<p class="text-center text-gray-500 italic text-xs sm:text-sm">Please choose a Service Type above to see available Specialities.</p>';
   }
   output.forEach((service) => {
     const h3 = document.createElement('h3');
@@ -262,83 +342,122 @@ function infoMessage(text) {
   message.classList.add('text-blue-600');
 }
 
-document.getElementById('registrationForm').addEventListener('submit', async function (event) {
-  event.preventDefault();
+document
+  .getElementById('registrationForm')
+  .addEventListener('submit', async function (event) {
+    event.preventDefault();
 
-  const password = document.getElementById('password').value;
-  const confirmPassword = document.getElementById('confirmPassword').value;
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
 
-  if (password != confirmPassword) {
-    errorMessage('Password and confirmation password do not match.');
-    return;
-  }
-
-  const selectedServices = Array.from(document.querySelectorAll('input[name="services"]:checked')).map((cb) => cb.value);
-  const selectedSubServices = Array.from(document.querySelectorAll('input[name="subServices"]:checked')).map((cb) => cb.value);
-
-  const formData = new FormData();
-
-  formData.append('firstName', document.getElementById('firstName').value);
-  formData.append('lastName', document.getElementById('lastName').value);
-  formData.append('email', document.getElementById('email').value);
-  formData.append('phone', document.getElementById('phone').value);
-  formData.append('password', password);
-  formData.append('confirmPassword', confirmPassword);
-  formData.append('yearsExperience', document.getElementById('yearsExperience').value);
-  formData.append('experienceDescription', document.getElementById('experienceDescription').value);
-  formData.append('latitude', document.getElementById('latitude').value);
-  formData.append('longitude', document.getElementById('longitude').value);
-
-  selectedServices.forEach((id) => formData.append('serviceItems[]', id));
-  selectedSubServices.forEach((id) => formData.append('subServiceItems[]', id));
-
-  const skillFile = document.getElementById('skillInput').files[0];
-  const nbiFile = document.getElementById('nbiInput').files[0];
-  const govIdFile = document.getElementById('govIdInput').files[0];
-
-  if (skillFile) {
-    formData.append('skillImage', skillFile);
-  } else {
-    errorMessage('Skill image is missing.');
-    return;
-  }
-
-  if (nbiFile) {
-    formData.append('nbiImage', nbiFile);
-  } else {
-    errorMessage('NBI image is missing.');
-    return;
-  }
-  if (govIdFile) {
-    formData.append('govIdImage', govIdFile);
-  } else {
-    errorMessage('Government ID image is missing.');
-    return;
-  }
-
-  infoMessage('Submitting... please wait.');
-  const submitBtn = document.getElementById('submitBtn');
-  submitBtn.disabled = true;
-
-  try {
-    const response = await fetch('https://api.manongapp.com/api/manongs/register', {
-      method: 'POST',
-      headers: { Accept: 'application/json' },
-      body: formData,
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      errorMessage(result.message || 'Registration failed');
+    if (password != confirmPassword) {
+      errorMessage('Password and confirmation password do not match.');
       return;
     }
 
-    successMessage(result.message || 'Registration successfull!');
-    document.getElementById('registrationForm').reset();
-  } catch (e) {
-    errorMessage('Registration failed: ' + e.message);
-  } finally {
-    submitBtn.disabled = false;
-  }
-});
+    const selectedServices = Array.from(
+      document.querySelectorAll('input[name="services"]:checked'),
+    ).map((cb) => cb.value);
+    const selectedSubServices = Array.from(
+      document.querySelectorAll('input[name="subServices"]:checked'),
+    ).map((cb) => cb.value);
+
+    const formData = new FormData();
+
+    formData.append('firstName', document.getElementById('firstName').value);
+    formData.append('lastName', document.getElementById('lastName').value);
+    formData.append('email', document.getElementById('email').value);
+    formData.append('phone', document.getElementById('phone').value);
+    formData.append('password', password);
+    formData.append('confirmPassword', confirmPassword);
+    formData.append(
+      'yearsExperience',
+      document.getElementById('yearsExperience').value,
+    );
+    formData.append(
+      'experienceDescription',
+      document.getElementById('experienceDescription').value,
+    );
+    formData.append('latitude', document.getElementById('latitude').value);
+    formData.append('longitude', document.getElementById('longitude').value);
+
+    if (selectedServices.length === 0) {
+      errorMessage('Please select at least one service.');
+      return;
+    }
+
+    if (selectedSubServices.length === 0) {
+      errorMessage('Please select at least one sub-service.');
+      return;
+    }
+
+    selectedServices.forEach((id) => formData.append('serviceItems[]', id));
+    selectedSubServices.forEach((id) =>
+      formData.append('subServiceItems[]', id),
+    );
+
+    const assistantsFullname = document.querySelectorAll(
+      'input[name="assistantsFullname[]"]',
+    );
+
+    const assistants = Array.from(assistantsFullname)
+      .map((input) => input.value.trim())
+      .filter((name) => name !== '')
+      .map((name) => ({ fullName: name, phone: null }));
+
+    formData.append('assistants', JSON.stringify(assistants));
+
+    const skillFile = document.getElementById('skillInput').files[0];
+    const nbiFile = document.getElementById('nbiInput').files[0];
+    const govIdFile = document.getElementById('govIdInput').files[0];
+
+    if (skillFile) {
+      formData.append('skillImage', skillFile);
+    } else {
+      errorMessage('Skill image is missing.');
+      return;
+    }
+
+    if (nbiFile) {
+      formData.append('nbiImage', nbiFile);
+    } else {
+      errorMessage('NBI image is missing.');
+      return;
+    }
+
+    if (govIdFile) {
+      formData.append('govIdImage', govIdFile);
+    } else {
+      errorMessage('Government ID image is missing.');
+      return;
+    }
+
+    infoMessage('Submitting... please wait.');
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+
+    try {
+      const response = await fetch(
+        'https://api.manongapp.com/api/manongs/register',
+        {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          body: formData,
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        errorMessage(result.message || 'Registration failed');
+        return;
+      }
+
+      successMessage(result.message || 'Registration successfull!');
+      document.getElementById('registrationForm').reset();
+    } catch (e) {
+      errorMessage('Registration failed: ' + e.message);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });

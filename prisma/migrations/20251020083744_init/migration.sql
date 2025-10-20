@@ -170,6 +170,18 @@ CREATE TABLE "ManongSpecialities" (
 );
 
 -- CreateTable
+CREATE TABLE "ManongAssistant" (
+    "id" SERIAL NOT NULL,
+    "manongProfileId" INTEGER NOT NULL,
+    "fullName" TEXT NOT NULL,
+    "phone" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ManongAssistant_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "ProviderVerification" (
     "id" SERIAL NOT NULL,
     "userId" INTEGER NOT NULL,
@@ -296,6 +308,9 @@ ALTER TABLE "ManongSpecialities" ADD CONSTRAINT "ManongSpecialities_manongProfil
 
 -- AddForeignKey
 ALTER TABLE "ManongSpecialities" ADD CONSTRAINT "ManongSpecialities_subServiceItemId_fkey" FOREIGN KEY ("subServiceItemId") REFERENCES "SubServiceItem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ManongAssistant" ADD CONSTRAINT "ManongAssistant_manongProfileId_fkey" FOREIGN KEY ("manongProfileId") REFERENCES "ManongProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ProviderVerification" ADD CONSTRAINT "ProviderVerification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

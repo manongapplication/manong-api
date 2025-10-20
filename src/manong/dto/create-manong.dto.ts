@@ -1,5 +1,6 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsArray,
   IsEmail,
   IsLatitude,
@@ -11,6 +12,7 @@ import {
   Length,
   MaxLength,
 } from 'class-validator';
+import { AssistantDto } from './assistant.dto';
 
 export class CreateManongDto {
   @IsString()
@@ -83,4 +85,13 @@ export class CreateManongDto {
   @IsNumber()
   @IsNotEmpty()
   yearsExperience: number;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(5)
+  @Type(() => AssistantDto)
+  @Transform(({ value }) =>
+    typeof value === 'string' ? JSON.parse(value) : value,
+  )
+  assistants?: AssistantDto[];
 }

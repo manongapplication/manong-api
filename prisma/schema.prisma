@@ -211,6 +211,7 @@ model ManongProfile {
 
   user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   manongSpecialities ManongSpecialities[]
+  manongAssistants   ManongAssistant[]
 }
 
 model ManongSpecialities {
@@ -223,6 +224,17 @@ model ManongSpecialities {
 
   manongProfile  ManongProfile  @relation(fields: [manongProfileId], references: [id], onDelete: Cascade)
   subServiceItem SubServiceItem @relation(fields: [subServiceItemId], references: [id], onDelete: Cascade)
+}
+
+model ManongAssistant {
+  id              Int      @id @default(autoincrement())
+  manongProfileId Int
+  fullName        String
+  phone           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  manongProfile ManongProfile @relation(fields: [manongProfileId], references: [id], onDelete: Cascade)
 }
 
 enum VerificationStatus {
