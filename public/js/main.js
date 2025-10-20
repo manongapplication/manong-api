@@ -141,7 +141,17 @@ const handleAddAssistant = () => {
     'flex items-center justify-center border rounded-md px-3 cursor-pointer hover:bg-gray-100 add-assistant';
   plusDiv.innerHTML = '<i class="fa-solid fa-plus"></i>';
 
-  div.append(input, plusDiv);
+  const minusDiv = document.createElement('div');
+  minusDiv.className =
+    'flex items-center justify-center border rounded-md px-3 cursor-pointer hover:bg-gray-100 minus-assistant';
+  minusDiv.innerHTML = '<i class="fa-solid fa-minus"></i>';
+
+  if (assistantArea.children.length === 0) {
+    minusDiv.style.pointerEvents = 'none';
+    minusDiv.style.opacity = '0.5';
+  }
+
+  div.append(input, plusDiv, minusDiv);
   assistantArea.appendChild(div);
 };
 
@@ -166,6 +176,17 @@ const assistantInit = () => {
   assistantArea.addEventListener('click', (e) => {
     if (e.target.closest('.add-assistant')) {
       handleAddAssistant();
+    }
+
+    if (e.target.closest('.minus-assistant')) {
+      const assistantRow = e.target.closest('#assistantArea > div');
+      if (!assistantRow) return;
+
+      const index = Array.from(assistantArea.children).indexOf(assistantRow);
+
+      if (index === 0) return;
+
+      assistantArea.removeChild(assistantRow);
     }
   });
 
