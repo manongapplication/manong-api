@@ -230,7 +230,7 @@ function handleServiceChange() {
   output.forEach((service) => {
     const h3 = document.createElement('h3');
     h3.textContent = service.serviceTitle;
-    h3.className = 'font-semibold mt-2 text-sm sm:text-base';
+    h3.className = 'font-semibold mt-2 mb-2 text-sm sm:text-base';
     subServiceArea.appendChild(h3);
 
     const div = document.createElement('div');
