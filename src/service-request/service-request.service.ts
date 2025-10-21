@@ -181,19 +181,7 @@ export class ServiceRequestService {
       where: where,
       include: {
         user: true,
-        manong: {
-          include: {
-            manongProfile: {
-              include: {
-                manongSpecialities: {
-                  include: {
-                    subServiceItem: true,
-                  },
-                },
-              },
-            },
-          },
-        },
+        manong: true,
         serviceItem: true,
         subServiceItem: true,
         urgencyLevel: true,

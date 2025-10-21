@@ -122,6 +122,7 @@ export class ManongService {
                 subServiceItem: true,
               },
             },
+            manongAssistants: true,
           },
         },
       },

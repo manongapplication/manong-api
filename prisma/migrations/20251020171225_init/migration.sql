@@ -37,6 +37,7 @@ CREATE TABLE "User" (
     "fcmToken" TEXT,
     "profilePhoto" TEXT,
     "status" "AccountStatus" NOT NULL DEFAULT 'pending',
+    "hasSeenVerificationCongrats" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEmail,
   IsOptional,
   IsString,
@@ -35,4 +36,8 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   fcmToken?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  hasSeenVerificationCongrats?: boolean;
 }
