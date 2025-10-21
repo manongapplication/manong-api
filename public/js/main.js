@@ -1,5 +1,7 @@
 const MAX_ASSISTANTS = 5;
 
+let iti;
+
 const iconLibrary = {
   water_drop:
     '<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C10 6 6 10 6 14a6 6 0 0012 0c0-4-4-8-6-12z"/></svg>',
@@ -60,7 +62,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   fetchServiceType();
   assistantInit();
   initMap();
+  phoneInit();
 });
+
+const phoneInit = () => {
+  const phoneInput = document.getElementById("phone");
+  if (!phoneInput) return;
+
+  iti = window.intlTelInput(phoneInput, {
+    initialCountry: "ph",
+    preferredCountries: ["ph", "us", "sg"],
+    separateDialCode: true,
+    nationalMode: false,
+    formatOnDisplay: true,
+    utilsScript:
+      "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/js/utils.js",
+  });
+};
 
 let serviceItems = [];
 
@@ -335,6 +353,8 @@ function errorMessage(text) {
 function successMessage(text) {
   const modal = document.getElementById('successModal');
   const modalMessage = document.getElementById('successModalMessage');
+  const message = document.getElementById('message');
+  message.textContent = '';
 
   modalMessage.textContent = text;
   modal.classList.remove('hidden');
@@ -364,6 +384,12 @@ document
       return;
     }
 
+    const phoneInput = document.getElementById("phone");
+    if (!phoneInput) return;
+
+    const fullNumber = iti.getNumber();
+    phoneInput.value = fullNumber;
+
     const selectedServices = Array.from(
       document.querySelectorAll('input[name="services"]:checked'),
     ).map((cb) => cb.value);
@@ -376,7 +402,7 @@ document
     formData.append('firstName', document.getElementById('firstName').value);
     formData.append('lastName', document.getElementById('lastName').value);
     formData.append('email', document.getElementById('email').value);
-    formData.append('phone', document.getElementById('phone').value);
+    formData.append('phone', fullNumber);
     formData.append('password', password);
     formData.append('confirmPassword', confirmPassword);
     formData.append(

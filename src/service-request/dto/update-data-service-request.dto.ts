@@ -17,7 +17,6 @@ export interface UpdateDataServiceRequestDto {
   customerLng?: number | null | undefined;
 
   notes?: string | null | undefined;
-  rating?: number | null | undefined;
   status?: string | null | undefined;
   profilePhoto?: string | null | undefined;
   total?: number | null | undefined;

@@ -10,6 +10,79 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDtLQ72B5P83ub6NVTvNHM_sYcMSH3ygY&libraries=places"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/css/intlTelInput.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/js/intlTelInput.min.js"></script>
+  
+    <style>
+      /* === PHONE INPUT STYLING === */
+      .iti {
+        width: 100%;
+        font-family: 'Inter', sans-serif;
+      }
+
+      /* The main input box */
+      .iti input {
+        width: 100%;
+        padding: 12px 16px 12px 52px; /* space for flag */
+        border: 1.5px solid #ccc;
+        border-radius: 10px;
+        font-size: 16px;
+        background-color: #fff;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      /* When input is focused */
+      .iti input:focus {
+        border-color: #007bff; /* primary blue */
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        outline: none;
+      }
+
+      /* Country flag area */
+      .iti__flag-container {
+        background: #f8f9fa;
+        border-right: 1px solid #ddd;
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+        padding-left: 10px;
+      }
+
+      /* Dropdown arrow */
+      .iti__selected-flag {
+        margin: 0 -10px;
+        border-radius: 10px 0 0 10px;
+        cursor: pointer;
+      }
+
+      /* Dropdown list (when open) */
+      .iti__country-list {
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Hover state for countries */
+      .iti__country:hover {
+        background-color: #f2f4f6;
+      }
+
+      /* Placeholder style */
+      .iti input::placeholder {
+        color: #999;
+      }
+
+      /* Optional: dark mode tweak */
+      @media (prefers-color-scheme: dark) {
+        .iti input {
+          background-color: #222;
+          border-color: #444;
+          color: #eee;
+        }
+        .iti__flag-container {
+          background: #2c2c2c;
+          border-color: #444;
+        }
+      }
+    </style>
   </head>
   <body class="bg-gray-100 p-2 sm:p-6">
     <div
@@ -68,18 +141,9 @@
           />
         </div>
 
-        <div>
-          <label for="phone" class="block mb-2 font-medium text-sm sm:text-base"
-            >Phone Number</label
-          >
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            placeholder="0912345678"
-            required
-            class="w-full p-2 sm:p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D] text-sm sm:text-base"
-          />
+        <div class="form-group">
+          <label for="phone">Phone Number</label>
+          <input id="phone" type="tel" name="phone" placeholder="Enter your phone number" />
         </div>
 
         <div class="flex flex-col gap-3 sm:gap-4">

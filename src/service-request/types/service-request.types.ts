@@ -17,7 +17,6 @@ export interface CompleteServiceRequest {
   customerLat: Decimal;
   customerLng: Decimal;
   notes: string | null;
-  rating: number | null;
   status: string | null;
   total: Decimal | null;
   paymentStatus: $Enums.PaymentStatus;

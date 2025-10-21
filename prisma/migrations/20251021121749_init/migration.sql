@@ -127,7 +127,6 @@ CREATE TABLE "ServiceRequest" (
     "customerLat" DECIMAL(10,7) NOT NULL,
     "customerLng" DECIMAL(10,7) NOT NULL,
     "notes" TEXT,
-    "rating" SMALLINT,
     "status" TEXT,
     "total" DECIMAL(10,2),
     "paymentStatus" "PaymentStatus" NOT NULL DEFAULT 'unpaid',
@@ -139,6 +138,21 @@ CREATE TABLE "ServiceRequest" (
     "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "ServiceRequest_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Feedback" (
+    "id" SERIAL NOT NULL,
+    "serviceRequestId" INTEGER NOT NULL,
+    "reviewerId" INTEGER NOT NULL,
+    "revieweeId" INTEGER NOT NULL,
+    "rating" SMALLINT NOT NULL,
+    "comment" TEXT,
+    "attachmentsPath" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Feedback_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -272,13 +286,67 @@ CREATE TABLE "ServiceSettings" (
 CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone");
 
 -- CreateIndex
+CREATE INDEX "SubServiceItem_serviceItemId_idx" ON "SubServiceItem"("serviceItemId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "ServiceRequest_paymentTransactionId_key" ON "ServiceRequest"("paymentTransactionId");
+
+-- CreateIndex
+CREATE INDEX "ServiceRequest_userId_idx" ON "ServiceRequest"("userId");
+
+-- CreateIndex
+CREATE INDEX "ServiceRequest_manongId_idx" ON "ServiceRequest"("manongId");
+
+-- CreateIndex
+CREATE INDEX "ServiceRequest_status_idx" ON "ServiceRequest"("status");
+
+-- CreateIndex
+CREATE INDEX "ServiceRequest_createdAt_idx" ON "ServiceRequest"("createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Feedback_serviceRequestId_key" ON "Feedback"("serviceRequestId");
+
+-- CreateIndex
+CREATE INDEX "Feedback_revieweeId_idx" ON "Feedback"("revieweeId");
+
+-- CreateIndex
+CREATE INDEX "Feedback_reviewerId_idx" ON "Feedback"("reviewerId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Feedback_serviceRequestId_reviewerId_key" ON "Feedback"("serviceRequestId", "reviewerId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ManongProfile_userId_key" ON "ManongProfile"("userId");
 
 -- CreateIndex
+CREATE INDEX "ManongProfile_status_idx" ON "ManongProfile"("status");
+
+-- CreateIndex
+CREATE INDEX "ManongProfile_isProfessionallyVerified_idx" ON "ManongProfile"("isProfessionallyVerified");
+
+-- CreateIndex
+CREATE INDEX "ProviderVerification_userId_idx" ON "ProviderVerification"("userId");
+
+-- CreateIndex
+CREATE INDEX "ProviderVerification_status_idx" ON "ProviderVerification"("status");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "UserPaymentMethod_userId_provider_paymentMethodIdOnGateway_key" ON "UserPaymentMethod"("userId", "provider", "paymentMethodIdOnGateway");
+
+-- CreateIndex
+CREATE INDEX "Message_roomId_idx" ON "Message"("roomId");
+
+-- CreateIndex
+CREATE INDEX "Message_serviceRequestId_idx" ON "Message"("serviceRequestId");
+
+-- CreateIndex
+CREATE INDEX "Message_senderId_idx" ON "Message"("senderId");
+
+-- CreateIndex
+CREATE INDEX "UserNotification_userId_idx" ON "UserNotification"("userId");
+
+-- CreateIndex
+CREATE INDEX "UserNotification_seenAt_idx" ON "UserNotification"("seenAt");
 
 -- AddForeignKey
 ALTER TABLE "SubServiceItem" ADD CONSTRAINT "SubServiceItem_serviceItemId_fkey" FOREIGN KEY ("serviceItemId") REFERENCES "ServiceItem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -300,6 +368,15 @@ ALTER TABLE "ServiceRequest" ADD CONSTRAINT "ServiceRequest_paymentMethodId_fkey
 
 -- AddForeignKey
 ALTER TABLE "ServiceRequest" ADD CONSTRAINT "ServiceRequest_urgencyLevelId_fkey" FOREIGN KEY ("urgencyLevelId") REFERENCES "UrgencyLevel"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Feedback" ADD CONSTRAINT "Feedback_serviceRequestId_fkey" FOREIGN KEY ("serviceRequestId") REFERENCES "ServiceRequest"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Feedback" ADD CONSTRAINT "Feedback_reviewerId_fkey" FOREIGN KEY ("reviewerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Feedback" ADD CONSTRAINT "Feedback_revieweeId_fkey" FOREIGN KEY ("revieweeId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ManongProfile" ADD CONSTRAINT "ManongProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
