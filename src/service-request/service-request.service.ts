@@ -579,4 +579,34 @@ export class ServiceRequestService {
 
     return updated;
   }
+
+  async markServiceRequestCompleted(id: number) {
+    const completed = await this.prisma.serviceRequest.update({
+      where: { id },
+      data: {
+        status: 'completed',
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    const notificationDto: CreateNotificationDto = {
+      token: completed.user?.fcmToken ?? '',
+      title: 'How was your service request?',
+      body: 'Thank you for choosing Manong! We’d love to hear about your experience — leave a review to help others and support our hardworking Manongs.',
+      userId: completed.manongId!,
+      serviceRequestId: completed.id.toString(),
+      paymentStatus: completed.paymentStatus,
+    };
+
+    try {
+      await this.fcmService.sendPushNotification(notificationDto);
+    } catch (error) {
+      this.logger.error(`Error sending notification ${error}`);
+      throw error;
+    }
+
+    return completed;
+  }
 }

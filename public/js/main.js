@@ -473,7 +473,7 @@ document
 
     try {
       const response = await fetch(
-        'https://bowless-merry-turfier.ngrok-free.app/api/manongs/register',
+        'https://api.manongapp.com/api/manongs/register',
         {
           method: 'POST',
           headers: { Accept: 'application/json' },

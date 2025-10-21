@@ -246,4 +246,17 @@ export class ServiceRequestController {
       message: 'The service request has already expired.',
     };
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/mark-completed')
+  async markServiceRequestCompleted(@Param('id', ParseIntPipe) id: number) {
+    const result =
+      await this.serviceRequestService.markServiceRequestCompleted(id);
+
+    return {
+      success: true,
+      data: result,
+      message: 'Service request mark as completed.',
+    };
+  }
 }
