@@ -63,8 +63,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user                  ServiceRequest[]       @relation("UserRequests")
-  manongRequest         ServiceRequest[]       @relation("ManongRequests")
+  userRequests          ServiceRequest[]       @relation("UserRequests")
+  manongRequests        ServiceRequest[]       @relation("ManongRequests")
   manongProfile         ManongProfile?
   userPaymentMethod     UserPaymentMethod[]
   notifications         UserNotification[]

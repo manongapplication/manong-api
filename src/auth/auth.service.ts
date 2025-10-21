@@ -32,7 +32,13 @@ export class AuthService {
   }
 
   async me(userId: number) {
-    return this.userService.findById(userId);
+    return this.userService.findLatestById(userId, {
+      givenFeedbacks: {
+        include: {
+          serviceRequest: true,
+        },
+      },
+    });
   }
 
   async updateUser(userId: number, dto: UpdateUserDto) {

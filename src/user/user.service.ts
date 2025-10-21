@@ -6,7 +6,7 @@ import { join } from 'path';
 import { promises as fs } from 'fs';
 import { ProviderVerificationService } from 'src/provider-verification/provider-verification.service';
 import { CreateProviderVerificationDto } from 'src/provider-verification/dto/create-provider-verification.dto';
-import { AccountStatus } from '@prisma/client';
+import { AccountStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -21,6 +21,23 @@ export class UserService {
 
   async findById(id: number) {
     return await this.prisma.user.findUnique({ where: { id } });
+  }
+
+  async findByIdIncludes(id: number, include?: Prisma.UserInclude) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include,
+    });
+  }
+
+  async findLatestById(id: number, include?: Prisma.UserInclude) {
+    return this.prisma.user.findFirst({
+      where: { id },
+      include,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 
   async findByEmail(email: string) {
