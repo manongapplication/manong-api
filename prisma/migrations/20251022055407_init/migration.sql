@@ -11,6 +11,9 @@ CREATE TYPE "UserRole" AS ENUM ('customer', 'manong', 'admin', 'superadmin', 'mo
 CREATE TYPE "PaymentStatus" AS ENUM ('unpaid', 'pending', 'paid', 'failed', 'refunded');
 
 -- CreateEnum
+CREATE TYPE "ServiceRequestStatus" AS ENUM ('awaitingAcceptance', 'accepted', 'inProgress', 'completed', 'failed', 'cancelled', 'rejected', 'paused', 'pending', 'expired');
+
+-- CreateEnum
 CREATE TYPE "ManongStatus" AS ENUM ('available', 'busy', 'offline', 'inactive', 'suspended');
 
 -- CreateEnum
@@ -127,7 +130,7 @@ CREATE TABLE "ServiceRequest" (
     "customerLat" DECIMAL(10,7) NOT NULL,
     "customerLng" DECIMAL(10,7) NOT NULL,
     "notes" TEXT,
-    "status" TEXT,
+    "status" "ServiceRequestStatus",
     "total" DECIMAL(10,2),
     "paymentStatus" "PaymentStatus" NOT NULL DEFAULT 'unpaid',
     "paymentTransactionId" TEXT,
@@ -136,6 +139,10 @@ CREATE TABLE "ServiceRequest" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "arrivedAt" TIMESTAMP(3),
     "deletedAt" TIMESTAMP(3),
+    "acceptedAt" TIMESTAMP(3),
+    "startedAt" TIMESTAMP(3),
+    "completedAt" TIMESTAMP(3),
+    "cancelledAt" TIMESTAMP(3),
 
     CONSTRAINT "ServiceRequest_pkey" PRIMARY KEY ("id")
 );

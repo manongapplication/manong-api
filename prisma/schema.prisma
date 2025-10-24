@@ -154,6 +154,19 @@ enum PaymentStatus {
   refunded
 }
 
+enum ServiceRequestStatus {
+  awaitingAcceptance
+  accepted
+  inProgress
+  completed
+  failed
+  cancelled
+  rejected
+  paused
+  pending
+  expired
+}
+
 model ServiceRequest {
   id               Int     @id @default(autoincrement())
   userId           Int
@@ -171,10 +184,10 @@ model ServiceRequest {
   customerLng         Decimal @db.Decimal(10, 7)
 
   notes                String?
-  status               String?
-  total                Decimal?      @db.Decimal(10, 2)
-  paymentStatus        PaymentStatus @default(unpaid)
-  paymentTransactionId String?       @unique
+  status               ServiceRequestStatus?
+  total                Decimal?              @db.Decimal(10, 2)
+  paymentStatus        PaymentStatus         @default(unpaid)
+  paymentTransactionId String?               @unique
   paymentRedirectUrl   String?
 
   user           User            @relation("UserRequests", fields: [userId], references: [id], onDelete: Cascade)
@@ -190,6 +203,11 @@ model ServiceRequest {
   updatedAt DateTime  @updatedAt
   arrivedAt DateTime?
   deletedAt DateTime?
+
+  acceptedAt  DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
 
   @@index([userId])
   @@index([manongId])

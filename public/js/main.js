@@ -66,17 +66,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 const phoneInit = () => {
-  const phoneInput = document.getElementById("phone");
+  const phoneInput = document.getElementById('phone');
   if (!phoneInput) return;
 
   iti = window.intlTelInput(phoneInput, {
-    initialCountry: "ph",
-    preferredCountries: ["ph", "us", "sg"],
+    initialCountry: 'ph',
+    preferredCountries: ['ph', 'us', 'sg'],
     separateDialCode: true,
     nationalMode: false,
     formatOnDisplay: true,
     utilsScript:
-      "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/js/utils.js",
+      'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/js/utils.js',
   });
 };
 
@@ -384,7 +384,7 @@ document
       return;
     }
 
-    const phoneInput = document.getElementById("phone");
+    const phoneInput = document.getElementById('phone');
     if (!phoneInput) return;
 
     const fullNumber = iti.getNumber();
@@ -473,7 +473,7 @@ document
 
     try {
       const response = await fetch(
-        'https://api.manongapp.com/api/manongs/register',
+        'http://api.manongapp.com/js/main.js/api/manongs/register',
         {
           method: 'POST',
           headers: { Accept: 'application/json' },

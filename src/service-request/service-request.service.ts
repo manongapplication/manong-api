@@ -10,7 +10,12 @@ import dayjs from 'dayjs';
 import { join } from 'path';
 import { promises as fs } from 'fs';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
-import { PaymentStatus, Prisma, UserRole } from '@prisma/client';
+import {
+  PaymentStatus,
+  Prisma,
+  ServiceRequestStatus,
+  UserRole,
+} from '@prisma/client';
 import { CalculationUtil } from 'src/common/utils/calculation.util';
 import { UserPaymentMethodService } from 'src/user-payment-method/user-payment-method.service';
 import { PaymongoService } from 'src/paymongo/paymongo.service';
@@ -149,7 +154,7 @@ export class ServiceRequestService {
         customerFullAddress: dto.customerFullAddress,
         customerLat: dto.customerLat!,
         customerLng: dto.customerLng!,
-        status: dto.status ?? 'pending',
+        status: dto.status ?? ServiceRequestStatus.pending,
       },
       include: {
         serviceItem: true,
@@ -193,6 +198,7 @@ export class ServiceRequestService {
             receiverId: userId,
           },
         },
+        feedback: true,
       },
       skip,
       take: limit,
@@ -442,7 +448,7 @@ export class ServiceRequestService {
     }
 
     const ongoing = await this.prisma.serviceRequest.findFirst({
-      where: { manongId: userId, status: 'inprogress' },
+      where: { manongId: userId, status: ServiceRequestStatus.inProgress },
     });
 
     if (ongoing) {
@@ -454,7 +460,7 @@ export class ServiceRequestService {
         id,
       },
       data: {
-        status: 'inprogress',
+        status: ServiceRequestStatus.inProgress,
       },
     });
 
@@ -477,7 +483,7 @@ export class ServiceRequestService {
     const isManong = role == UserRole.manong;
 
     const ongoing = await this.prisma.serviceRequest.findFirst({
-      where: { ...where, status: 'inprogress' },
+      where: { ...where, status: ServiceRequestStatus.inProgress },
       include: {
         user: true,
         manong: {
@@ -519,12 +525,12 @@ export class ServiceRequestService {
       },
     });
 
-    let status = '';
+    let status: ServiceRequestStatus | null = null;
 
     if (data?.paymentStatus == PaymentStatus.paid) {
-      status = 'refunding';
+      status = ServiceRequestStatus.completed;
     } else {
-      status = 'cancelled';
+      status = ServiceRequestStatus.cancelled;
     }
 
     const updated = await this.prisma.serviceRequest.update({
@@ -566,7 +572,7 @@ export class ServiceRequestService {
           deletedAt: new Date(),
         };
       }
-    } else if (exists.status == 'inprogress') {
+    } else if (exists.status == ServiceRequestStatus.inProgress) {
       data = { status: 'completed' };
     }
 
@@ -584,7 +590,7 @@ export class ServiceRequestService {
     const completed = await this.prisma.serviceRequest.update({
       where: { id },
       data: {
-        status: 'completed',
+        status: ServiceRequestStatus.completed,
       },
       include: {
         user: true,
@@ -595,9 +601,10 @@ export class ServiceRequestService {
       token: completed.user?.fcmToken ?? '',
       title: 'How was your service request?',
       body: 'Thank you for choosing Manong! We’d love to hear about your experience — leave a review to help others and support our hardworking Manongs.',
-      userId: completed.manongId!,
+      userId: completed.userId,
       serviceRequestId: completed.id.toString(),
       paymentStatus: completed.paymentStatus,
+      status: completed.status!,
     };
 
     try {

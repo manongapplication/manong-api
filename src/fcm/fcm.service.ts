@@ -62,7 +62,7 @@ export class FcmService {
       };
 
       const response = await admin.messaging().send(message);
-      this.logger.log(`Push sent successfully: ${response}`);
+      // this.logger.log(`Push sent successfully: ${response}`);
 
       return response;
     } catch (error) {

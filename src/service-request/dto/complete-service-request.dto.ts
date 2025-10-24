@@ -3,7 +3,6 @@ import {
   ArrayMinSize,
   IsArray,
   IsEnum,
-  IsIn,
   IsInt,
   IsLatitude,
   IsLongitude,
@@ -13,7 +12,7 @@ import {
 } from 'class-validator';
 import { Exists } from 'src/common/validators/exists.validator';
 import { Type } from 'class-transformer';
-import { PaymentStatus } from '@prisma/client';
+import { PaymentStatus, ServiceRequestStatus } from '@prisma/client';
 
 export class CompleteServiceRequestDto {
   @IsOptional()
@@ -99,9 +98,8 @@ export class CompleteServiceRequestDto {
   customerLng?: number;
 
   @IsOptional()
-  @IsString()
-  @IsIn(['pending', 'accepted', 'completed', 'cancelled', 'expired'])
-  status?: string;
+  @IsEnum(ServiceRequestStatus, { message: 'status enum is not valid' })
+  status?: ServiceRequestStatus;
 
   @IsOptional()
   @IsEnum(PaymentStatus)

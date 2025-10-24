@@ -34,9 +34,6 @@ export class UserService {
     return this.prisma.user.findFirst({
       where: { id },
       include,
-      orderBy: {
-        createdAt: 'desc',
-      },
     });
   }
 

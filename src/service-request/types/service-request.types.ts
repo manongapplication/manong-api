@@ -1,4 +1,4 @@
-import { $Enums } from '@prisma/client';
+import { $Enums, ServiceRequestStatus } from '@prisma/client';
 import { Decimal, JsonValue } from '@prisma/client/runtime/library';
 
 export interface CompleteServiceRequest {
@@ -17,7 +17,7 @@ export interface CompleteServiceRequest {
   customerLat: Decimal;
   customerLng: Decimal;
   notes: string | null;
-  status: string | null;
+  status: ServiceRequestStatus | null;
   total: Decimal | null;
   paymentStatus: $Enums.PaymentStatus;
   createdAt: Date;

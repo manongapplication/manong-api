@@ -1,4 +1,4 @@
-import { PaymentStatus } from '@prisma/client';
+import { PaymentStatus, ServiceRequestStatus } from '@prisma/client';
 
 export interface UpdateDataServiceRequestDto {
   // id?: number | null | undefined;
@@ -17,7 +17,7 @@ export interface UpdateDataServiceRequestDto {
   customerLng?: number | null | undefined;
 
   notes?: string | null | undefined;
-  status?: string | null | undefined;
+  status?: ServiceRequestStatus | null | undefined;
   profilePhoto?: string | null | undefined;
   total?: number | null | undefined;
   paymentStatus?: PaymentStatus | null | undefined;

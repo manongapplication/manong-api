@@ -53,6 +53,9 @@ import { UrgencyLevelModule } from './urgency-level/urgency-level.module';
 import { ProviderVerificationService } from './provider-verification/provider-verification.service';
 import { ProviderVerificationController } from './provider-verification/provider-verification.controller';
 import { ProviderVerificationModule } from './provider-verification/provider-verification.module';
+import { FeedbackService } from './feedback/feedback.service';
+import { FeedbackController } from './feedback/feedback.controller';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
@@ -93,6 +96,7 @@ import { ProviderVerificationModule } from './provider-verification/provider-ver
     ServiceSettingsModule,
     UrgencyLevelModule,
     ProviderVerificationModule,
+    FeedbackModule,
   ],
   controllers: [
     AppController,
@@ -108,6 +112,7 @@ import { ProviderVerificationModule } from './provider-verification/provider-ver
     ServiceSettingsController,
     UrgencyLevelController,
     ProviderVerificationController,
+    FeedbackController,
   ],
   providers: [
     UserService,
@@ -126,6 +131,7 @@ import { ProviderVerificationModule } from './provider-verification/provider-ver
     ServiceSettingsService,
     UrgencyLevelService,
     ProviderVerificationService,
+    FeedbackService,
   ],
 })
 export class AppModule {

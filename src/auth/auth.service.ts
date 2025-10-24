@@ -4,6 +4,7 @@ import { UserService } from 'src/user/user.service';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateUserDto } from '../user/dto/update-user.dto';
 import { TwilioService } from 'src/twilio/twilio.service';
+import { ServiceRequestStatus } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -27,18 +28,25 @@ export class AuthService {
     }
 
     const token = await this.jwt.signAsync({ sub: user.id });
-    console.log({ token, user });
+    // console.log({ token, user });
     return { token, user };
   }
 
   async me(userId: number) {
-    return this.userService.findLatestById(userId, {
+    const user = await this.userService.findLatestById(userId, {
       givenFeedbacks: {
-        include: {
-          serviceRequest: true,
-        },
+        include: { serviceRequest: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
+      userRequests: {
+        where: { status: ServiceRequestStatus.completed },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
       },
     });
+
+    return user;
   }
 
   async updateUser(userId: number, dto: UpdateUserDto) {
