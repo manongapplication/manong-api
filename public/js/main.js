@@ -1,10 +1,13 @@
 let API_URL = '';
 
 async function loadEnv() {
-  const res = await fetch('/env');
-  const data = await res.json();
-  API_URL = data.API_URL;
-  console.log(API_URL);
+  try {
+    const res = await fetch('/env');
+    const data = await res.json();
+    API_URL = data.API_URL;
+  } catch (e) {
+    console.error('Failed to load env:', e);
+  }
 }
 
 const MAX_ASSISTANTS = 5;
