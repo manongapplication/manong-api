@@ -4,28 +4,17 @@ async function loadEnv() {
   try {
     const res = await fetch('/env');
     const data = await res.json();
-
-    // Default to whatever the backend gave
-    API_URL = data.API_URL;
-
-    // If running on production (main domain)
     const currentHost = window.location.hostname;
 
     if (currentHost === 'manongapp.com' || currentHost === 'www.manongapp.com') {
-      // automatically use the API subdomain with /api suffix
-      API_URL = `https://api.${currentHost}/api`;
+      API_URL = `https://api.manongapp.com/api`;
     } 
-    else if (currentHost.includes('localhost') || currentHost.includes('127.0.0.1')) {
-      // local environment
-      API_URL = 'http://localhost:3000/api';
-    }
 
-    console.log('Loaded API_URL:', API_URL);
+    API_URL = data.API_URL;
   } catch (e) {
     console.error('Failed to load env:', e);
   }
 }
-
 
 const MAX_ASSISTANTS = 5;
 
