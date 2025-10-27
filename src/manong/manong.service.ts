@@ -9,15 +9,30 @@ import { join } from 'path';
 import { promises as fs } from 'fs';
 import { ServiceRequestService } from 'src/service-request/service-request.service';
 import { AccountStatus, UserRole } from '@prisma/client';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class ManongService {
   constructor(
     private prisma: PrismaService,
     private readonly serviceRequestService: ServiceRequestService,
+    private readonly userService: UserService,
   ) {}
 
-  async fetchVerifiedManongs(serviceItemId?: number, page = 1, limit = 10) {
+  async fetchVerifiedManongs(
+    userId: number,
+    page = 1,
+    limit = 10,
+    serviceItemId?: number,
+  ) {
+    const user = await this.userService.findById(userId);
+
+    let isAdmin = false;
+
+    if (user?.role == UserRole.admin) {
+      isAdmin = true;
+    }
+
     const skip = (page - 1) * limit;
 
     const allManongs = await this.prisma.user.findMany({
@@ -42,6 +57,7 @@ export class ManongService {
             },
           },
         },
+        providerVerifications: isAdmin,
       },
       skip,
       take: limit * 2,
@@ -194,6 +210,7 @@ export class ManongService {
       skillImage,
       nbiImage,
       govIdImage,
+      addressLine,
     } = dto;
 
     if (password != confirmPassword) {
@@ -232,6 +249,7 @@ export class ManongService {
         longitude,
         password,
         role: UserRole.manong,
+        addressLine,
       },
     });
 

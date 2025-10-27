@@ -1,3 +1,11 @@
+let API_URL = '';
+
+async function loadEnv() {
+  const res = await fetch('/env');
+  const data = await res.json();
+  API_URL = data.API_URL;
+}
+
 const MAX_ASSISTANTS = 5;
 
 let iti;
@@ -59,6 +67,8 @@ function getIconHtml(iconName) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  await loadEnv();
+
   fetchServiceType();
   assistantInit();
   initMap();
@@ -85,7 +95,7 @@ let serviceItems = [];
 const fetchServiceType = async () => {
   try {
     const response = await fetch(
-      'https://api.manongapp.com/api/service-items',
+      `${API_URL}/api/service-items`,
       {
         method: 'GET',
         headers: {
@@ -446,6 +456,11 @@ document
     const nbiFile = document.getElementById('nbiInput').files[0];
     const govIdFile = document.getElementById('govIdInput').files[0];
 
+    formData.append(
+      'addressLine',
+      document.getElementById('addressInput').value,
+    );
+
     if (skillFile) {
       formData.append('skillImage', skillFile);
     } else {
@@ -473,7 +488,7 @@ document
 
     try {
       const response = await fetch(
-        'http://api.manongapp.com/js/main.js/api/manongs/register',
+        `${API_URL}/js/main.js/api/manongs/register`,
         {
           method: 'POST',
           headers: { Accept: 'application/json' },

@@ -69,6 +69,10 @@ export class CreateManongDto {
   @IsOptional()
   govIdImage?: Express.Multer.File[];
 
+  @IsNotEmpty()
+  @IsString()
+  addressLine: string;
+
   @IsOptional()
   @Type(() => Number)
   maxDailyServices?: number;

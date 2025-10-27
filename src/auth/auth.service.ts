@@ -1,10 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateUserDto } from '../user/dto/update-user.dto';
 import { TwilioService } from 'src/twilio/twilio.service';
-import { ServiceRequestStatus } from '@prisma/client';
+import { ServiceRequestStatus, UserRole } from '@prisma/client';
+import { LoginDto } from './dto/login.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -111,5 +117,32 @@ export class AuthService {
     const response = await this.userService.updateFcmToken(id, fcmToken);
 
     return response;
+  }
+
+  async validateUser(dto: LoginDto) {
+    const { email, password } = dto;
+    const user = await this.userService.findByEmail(email);
+    if (!user) throw new UnauthorizedException('Invalid credentials');
+
+    if (!user || !user.password) {
+      throw new UnauthorizedException('Invalid Credentials');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid)
+      throw new UnauthorizedException('Invalid Credentials');
+
+    return user;
+  }
+
+  async login(dto: LoginDto) {
+    const user = await this.validateUser(dto);
+
+    const payload = { sub: user.id, email: user.email };
+    const token = this.jwt.sign(payload);
+
+    const isAdmin = user.role == UserRole.admin;
+
+    return { token, user, isAdmin };
   }
 }

@@ -15,6 +15,7 @@ import { ManongService } from './manong.service';
 import { FetchManongsQueryDto } from './dto/fetch-manongs-query.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 import { CreateManongDto } from './dto/create-manong.dto';
+import { CurrentUserId } from 'src/common/decorators/current-user-id.decorator';
 
 @Controller('api/manongs')
 export class ManongController {
@@ -26,11 +27,13 @@ export class ManongController {
     @Body() dto: FetchManongsQueryDto,
     @Query('page') page = '1',
     @Query('limit') limit = '10',
+    @CurrentUserId() userId: number,
   ) {
     const manongs = await this.manongService.fetchVerifiedManongs(
-      dto.serviceItemId,
+      userId,
       parseInt(page),
       parseInt(limit),
+      dto.serviceItemId,
     );
 
     return { success: true, data: manongs };

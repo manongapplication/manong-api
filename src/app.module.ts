@@ -56,6 +56,7 @@ import { ProviderVerificationModule } from './provider-verification/provider-ver
 import { FeedbackService } from './feedback/feedback.service';
 import { FeedbackController } from './feedback/feedback.controller';
 import { FeedbackModule } from './feedback/feedback.module';
+import { EnvController } from './env.controller';
 
 @Module({
   imports: [
@@ -113,6 +114,7 @@ import { FeedbackModule } from './feedback/feedback.module';
     UrgencyLevelController,
     ProviderVerificationController,
     FeedbackController,
+    EnvController,
   ],
   providers: [
     UserService,
