@@ -4,6 +4,7 @@ async function loadEnv() {
   const res = await fetch('/env');
   const data = await res.json();
   API_URL = data.API_URL;
+  console.log(API_URL);
 }
 
 const MAX_ASSISTANTS = 5;
@@ -95,7 +96,7 @@ let serviceItems = [];
 const fetchServiceType = async () => {
   try {
     const response = await fetch(
-      `${API_URL}/api/service-items`,
+      `${API_URL}/service-items`,
       {
         method: 'GET',
         headers: {
@@ -488,7 +489,7 @@ document
 
     try {
       const response = await fetch(
-        `${API_URL}/js/main.js/api/manongs/register`,
+        `${API_URL}/manongs/register`,
         {
           method: 'POST',
           headers: { Accept: 'application/json' },
