@@ -6,11 +6,14 @@ async function loadEnv() {
     const data = await res.json();
     const currentHost = window.location.hostname;
 
+    // For production (WordPress) pages
     if (currentHost === 'manongapp.com' || currentHost === 'www.manongapp.com') {
       API_URL = `https://api.manongapp.com/api`;
     } 
-
-    API_URL = data.API_URL;
+    // For local or others, fallback to what backend gave
+    else if (data.API_URL) {
+      API_URL = data.API_URL;
+    }
   } catch (e) {
     console.error('Failed to load env:', e);
   }
