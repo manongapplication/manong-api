@@ -1,21 +1,26 @@
 let API_URL = '';
 
 async function loadEnv() {
+  const currentHost = window.location.hostname;
+
+  // ✅ If inside WordPress or your production domain
+  if (currentHost === 'manongapp.com' || currentHost === 'www.manongapp.com') {
+    API_URL = `https://api.manongapp.com/api`;
+    console.log('✅ Using API_URL (WordPress):', API_URL);
+    return;
+  }
+
+  // ✅ Otherwise (like local dev or test), try fetching /env
   try {
     const res = await fetch('/env');
+    if (!res.ok) throw new Error('No /env found');
     const data = await res.json();
-    const currentHost = window.location.hostname;
-
-    // For production (WordPress) pages
-    if (currentHost === 'manongapp.com' || currentHost === 'www.manongapp.com') {
-      API_URL = `https://api.manongapp.com/api`;
-    } 
-    // For local or others, fallback to what backend gave
-    else if (data.API_URL) {
-      API_URL = data.API_URL;
-    }
+    API_URL = data.API_URL || 'http://localhost:3000/api';
+    console.log('✅ Using API_URL (from /env):', API_URL);
   } catch (e) {
-    console.error('Failed to load env:', e);
+    // fallback for local
+    API_URL = 'http://localhost:3000/api';
+    console.warn('⚠️ Falling back to localhost API:', API_URL, e.message);
   }
 }
 
