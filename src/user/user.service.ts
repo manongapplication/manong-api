@@ -41,6 +41,13 @@ export class UserService {
     return await this.prisma.user.findFirst({ where: { email } });
   }
 
+  async deleteById(id: number) {
+    return await this.prisma.user.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+  }
+
   async createUser(phone: string) {
     const user = await this.prisma.user.create({ data: { phone } });
 

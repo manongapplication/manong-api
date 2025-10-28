@@ -2,14 +2,16 @@ import {
   BadGatewayException,
   BadRequestException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateManongDto } from './dto/create-manong.dto';
 import { join } from 'path';
 import { promises as fs } from 'fs';
 import { ServiceRequestService } from 'src/service-request/service-request.service';
-import { AccountStatus, UserRole } from '@prisma/client';
+import { AccountStatus, ManongStatus, UserRole } from '@prisma/client';
 import { UserService } from 'src/user/user.service';
+import { UpdateManongDto } from './dto/update-manong.dto';
 
 @Injectable()
 export class ManongService {
@@ -19,20 +21,7 @@ export class ManongService {
     private readonly userService: UserService,
   ) {}
 
-  async fetchVerifiedManongs(
-    userId: number,
-    page = 1,
-    limit = 10,
-    serviceItemId?: number,
-  ) {
-    const user = await this.userService.findById(userId);
-
-    let isAdmin = false;
-
-    if (user?.role == UserRole.admin) {
-      isAdmin = true;
-    }
-
+  async fetchVerifiedManongs(serviceItemId?: number, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
 
     const allManongs = await this.prisma.user.findMany({
@@ -55,6 +44,67 @@ export class ManongService {
                 subServiceItem: true,
               },
             },
+          },
+        },
+      },
+      skip,
+      take: limit * 2,
+    });
+
+    const filteredManongs = (
+      await Promise.all(
+        allManongs.map(async (manong) => {
+          const count = await this.serviceRequestService.findByManongIdAndCount(
+            manong.id,
+          );
+
+          return count < (manong.manongProfile?.dailyServiceLimit ?? 5)
+            ? manong
+            : null;
+        }),
+      )
+    ).filter(Boolean);
+
+    return filteredManongs;
+  }
+
+  async fetchManongs(
+    userId: number,
+    serviceItemId?: number,
+    page = 1,
+    limit = 10,
+  ) {
+    const user = await this.userService.findById(userId);
+
+    if (!user) return;
+
+    let isAdmin = false;
+
+    if (user.role == UserRole.admin) {
+      isAdmin = true;
+    }
+    const skip = (page - 1) * limit;
+
+    const allManongs = await this.prisma.user.findMany({
+      where: {
+        role: UserRole.manong,
+        ...(serviceItemId && {
+          manongProfile: {
+            manongSpecialities: {
+              some: { subServiceItem: { serviceItemId } },
+            },
+          },
+        }),
+      },
+      include: {
+        manongProfile: {
+          include: {
+            manongSpecialities: {
+              include: {
+                subServiceItem: true,
+              },
+            },
+            manongAssistants: true,
           },
         },
         providerVerifications: isAdmin,
@@ -303,7 +353,6 @@ export class ManongService {
     }
 
     if (dto.assistants && dto.assistants.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       await this.prisma.manongAssistant.createMany({
         data: dto.assistants.map((assistant) => ({
           manongProfileId: manongProfile.id,
@@ -320,12 +369,153 @@ export class ManongService {
     };
   }
 
-  // -- For Manong Registration (Future)
-  // return this.prisma.$transaction(async (tx) => {
-  //   const manong = await tx.user.create(...);
-  //   const manongProfile = await tx.manongProfile.create(...);
-  //   await tx.manongSpecialities.createMany(...);
-  //   await tx.providerVerification.createMany(...);
-  //   return { manong, manongProfile, verificationData };
-  // });
+  async updateManong(id: number, dto: UpdateManongDto) {
+    const user = await this.userService.findById(id);
+
+    if (!user) {
+      throw new BadGatewayException('Manong not found!');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: {
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        email: dto.email,
+        phone: dto.phone,
+        latitude: dto.latitude,
+        longitude: dto.longitude,
+        password: dto.password,
+        addressLine: dto.addressLine,
+        status: dto.status,
+      },
+    });
+
+    await this.prisma.manongProfile.update({
+      where: { userId: updated.id },
+      data: {
+        yearsExperience: dto.yearsExperience,
+        experienceDescription: dto.experienceDescription,
+      },
+    });
+
+    return updated;
+  }
+
+  async deleteManong(userId: number, id: number) {
+    const now = new Date();
+
+    const user = await this.userService.findById(userId);
+
+    if (!user) {
+      throw new BadGatewayException('User not logged in!');
+    }
+
+    if (user.role != UserRole.admin) {
+      throw new BadGatewayException('User is not admin!');
+    }
+
+    const manong = await this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        manongProfile: {
+          include: { manongSpecialities: true, manongAssistants: true },
+        },
+      },
+    });
+
+    if (!manong) {
+      throw new NotFoundException(`Manong with ID ${id} not found`);
+    }
+
+    const manongId = manong.id;
+
+    await this.prisma.user.update({
+      where: { id: manongId },
+      data: { deletedAt: now, status: AccountStatus.deleted },
+    });
+
+    if (manong.manongProfile) {
+      const manongProfile = await this.prisma.manongProfile.update({
+        where: { userId: manongId },
+        data: { deletedAt: now, status: ManongStatus.deleted },
+      });
+
+      const manongProfileId = manongProfile.id;
+
+      await this.prisma.manongSpecialities.updateMany({
+        where: { manongProfileId },
+        data: {
+          deletedAt: now,
+        },
+      });
+
+      await this.prisma.manongAssistant.updateMany({
+        where: { manongProfileId },
+        data: {
+          deletedAt: now,
+        },
+      });
+    }
+
+    return { id };
+  }
+
+  async bulkDeleteManongs(userId: number, ids: number[]) {
+    const now = new Date();
+
+    const user = await this.userService.findById(userId);
+
+    if (!user) {
+      throw new BadGatewayException('User not logged in!');
+    }
+
+    if (user.role != UserRole.admin) {
+      throw new BadGatewayException('User is not admin!');
+    }
+
+    const manongs = await this.prisma.user.findMany({
+      where: { id: { in: ids } },
+      include: {
+        manongProfile: {
+          include: {
+            manongSpecialities: true,
+            manongAssistants: true,
+          },
+        },
+      },
+    });
+
+    if (!manongs.length) {
+      throw new NotFoundException('No Manongs found for given IDs');
+    }
+
+    await this.prisma.user.updateMany({
+      where: { id: { in: ids } },
+      data: { deletedAt: now, status: AccountStatus.deleted },
+    });
+
+    const profileIds = manongs
+      .map((u) => u.manongProfile?.id)
+      .filter((id): id is number => !!id);
+
+    if (profileIds.length) {
+      await this.prisma.manongProfile.updateMany({
+        where: { id: { in: profileIds } },
+        data: { deletedAt: now, status: ManongStatus.deleted },
+      });
+
+      await this.prisma.manongSpecialities.updateMany({
+        where: { id: { in: profileIds } },
+        data: { deletedAt: now },
+      });
+
+      await this.prisma.manongAssistant.updateMany({
+        where: { id: { in: profileIds } },
+        data: { deletedAt: now },
+      });
+    }
+
+    return { deletedCount: manongs.length, ids };
+  }
 }

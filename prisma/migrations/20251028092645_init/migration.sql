@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "AccountStatus" AS ENUM ('pending', 'onHold', 'verified', 'rejected', 'suspended');
+CREATE TYPE "AccountStatus" AS ENUM ('pending', 'onHold', 'verified', 'rejected', 'suspended', 'deleted');
 
 -- CreateEnum
 CREATE TYPE "AddressCategory" AS ENUM ('residential', 'apartment', 'condominium', 'commercial');
@@ -14,10 +14,10 @@ CREATE TYPE "PaymentStatus" AS ENUM ('unpaid', 'pending', 'paid', 'failed', 'ref
 CREATE TYPE "ServiceRequestStatus" AS ENUM ('awaitingAcceptance', 'accepted', 'inProgress', 'completed', 'failed', 'cancelled', 'rejected', 'paused', 'pending', 'expired');
 
 -- CreateEnum
-CREATE TYPE "ManongStatus" AS ENUM ('available', 'busy', 'offline', 'inactive', 'suspended');
+CREATE TYPE "ManongStatus" AS ENUM ('available', 'busy', 'offline', 'inactive', 'suspended', 'deleted');
 
 -- CreateEnum
-CREATE TYPE "VerificationStatus" AS ENUM ('pending', 'approved', 'rejected');
+CREATE TYPE "VerificationStatus" AS ENUM ('pending', 'approved', 'rejected', 'deleted');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -43,6 +43,7 @@ CREATE TABLE "User" (
     "hasSeenVerificationCongrats" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -176,6 +177,7 @@ CREATE TABLE "ManongProfile" (
     "experienceDescription" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "ManongProfile_pkey" PRIMARY KEY ("id")
 );
@@ -187,6 +189,7 @@ CREATE TABLE "ManongSpecialities" (
     "subServiceItemId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "ManongSpecialities_pkey" PRIMARY KEY ("id")
 );
@@ -199,6 +202,7 @@ CREATE TABLE "ManongAssistant" (
     "phone" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "ManongAssistant_pkey" PRIMARY KEY ("id")
 );
