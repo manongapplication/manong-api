@@ -35,6 +35,7 @@ export class ManongService {
           },
         }),
         status: AccountStatus.verified,
+        deletedAt: null,
       },
       include: {
         manongProfile: {
