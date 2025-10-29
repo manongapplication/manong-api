@@ -345,15 +345,25 @@
               class="w-full border border-gray-300 rounded-lg p-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
             />
 
+
             <!-- Search results container -->
             <div
               id="searchResults"
               class="absolute left-0 right-0 z-[9999] bg-white border border-gray-300 rounded-md max-h-48 overflow-y-auto hidden shadow-md"
             ></div>
-            
-            <p class="text-xs sm:text-sm text-red-600 font-semibold mb-2" id="searchImportantNote">
-              ⚠️ Start typing your address and <strong>please select a suggested location</strong> to set your coordinates.
-            </p>
+
+            <div class="flex flex-col sm:flex-row gap-2 sm:justify-between items-start">
+              <p class="text-xs sm:text-sm text-red-600 font-semibold mb-2 flex-1 break-words" id="searchImportantNote">
+                ⚠️ Start typing your address and <strong>please select a suggested location</strong> to set your coordinates.
+              </p>
+
+              <button type="button" 
+                      class="text-sm px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 flex-shrink-0 w-full sm:w-auto whitespace-nowrap"
+                      id="currentLocBtn">
+                Use Current Location
+              </button>
+            </div>
+
 
             <!-- Map -->
             <div

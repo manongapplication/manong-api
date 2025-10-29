@@ -92,8 +92,72 @@ document.addEventListener('DOMContentLoaded', async () => {
   fetchServiceType();
   assistantInit();
   initMap();
+  initCurrentLocBtn();
   phoneInit();
 });
+
+const initCurrentLocBtn = () => {
+  document.getElementById('currentLocBtn').addEventListener('click', () => {
+    const btn = document.getElementById('currentLocBtn');
+    const note = document.getElementById('searchImportantNote');
+    const resultsDiv = document.getElementById('searchResults');
+    const addressInput = document.getElementById('addressInput');
+
+    if (!navigator.geolocation) {
+      note.textContent = '⚠️ Geolocation is not supported by your browser.';
+      note.className = 'text-sm font-semibold text-red-600 mb-2';
+      return;
+    }
+
+    // Show temporary message
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '📍 Getting location...';
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+
+        // Update hidden inputs
+        document.getElementById('latitude').value = latitude;
+        document.getElementById('longitude').value = longitude;
+
+        // Update map
+        if (map && marker) {
+          map.setView([latitude, longitude], 15);
+          marker.setLatLng([latitude, longitude]);
+        }
+
+        // Reverse geocode to get address
+        reverseGeocode(latitude, longitude).then(() => {
+          note.textContent = '✅ Current location set!';
+          note.className = 'text-sm font-semibold text-green-600 mb-2';
+        });
+
+        // Clear search results
+        resultsDiv.innerHTML = '';
+        resultsDiv.classList.add('hidden');
+        addressInput.value = ''; // optional: clear input if you want fresh
+
+        // Restore button text
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      },
+      (err) => {
+        console.error(err);
+        note.textContent =
+          '⚠️ Unable to get your location. Please select manually.';
+        note.className = 'text-sm font-semibold text-red-600 mb-2';
+
+        // Restore button text
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      },
+      { enableHighAccuracy: true }
+    );
+  });
+
+}
 
 const phoneInit = () => {
   const phoneInput = document.getElementById('phone');
@@ -360,6 +424,26 @@ function initMap() {
     // Reverse geocode to get address
     reverseGeocode(pos.lat, pos.lng);
   });
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        map.setView([lat, lng], 15);
+        marker.setLatLng([lat, lng]);
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+        reverseGeocode(lat, lng);
+        const note = document.getElementById('searchImportantNote');
+        note.textContent = '✅ Current location detected!';
+        note.className = 'text-sm font-semibold text-green-600 mb-2';
+      },
+      (error) => {
+        console.warn('Geolocation failed:', error.message);
+      }
+    );
+  }
 
   // Set up address search
   setupAddressSearch();
