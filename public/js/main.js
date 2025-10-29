@@ -506,6 +506,15 @@ document
   .addEventListener('submit', async function (event) {
     event.preventDefault();
 
+    const latitude = document.getElementById('latitude').value;
+    const longitude = document.getElementById('longitude').value;
+
+
+    if (!latitude || !longitude) {
+      errorMessage('⚠️ Please select a suggested location below the Address input to set your coordinates. Otherwise, latitude and longitude will be empty.');
+      return;
+    }
+
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
 
@@ -543,8 +552,8 @@ document
       'experienceDescription',
       document.getElementById('experienceDescription').value,
     );
-    formData.append('latitude', document.getElementById('latitude').value);
-    formData.append('longitude', document.getElementById('longitude').value);
+    formData.append('latitude', latitude);
+    formData.append('longitude', longitude);
 
     if (selectedServices.length === 0) {
       errorMessage('Please select at least one service.');

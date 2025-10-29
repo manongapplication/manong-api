@@ -350,13 +350,16 @@
               id="searchResults"
               class="absolute left-0 right-0 z-[9999] bg-white border border-gray-300 rounded-md max-h-48 overflow-y-auto hidden shadow-md"
             ></div>
+            <p class="text-xs sm:text-sm text-gray-500 italic mb-2">
+              ⚠️ Please click a suggested location from the dropdown below. This will set your exact coordinates. If not, latitude and longitude will remain empty.
+            </p>
 
             <!-- Map -->
             <div
               id="map"
               class="w-full h-48 sm:h-64 rounded-lg border border-gray-300 mt-2"
             ></div>
-            
+
             <input type="hidden" id="latitude" name="latitude" />
             <input type="hidden" id="longitude" name="longitude" />
           </div>
