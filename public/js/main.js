@@ -370,10 +370,28 @@ let searchTimeout;
 function setupAddressSearch() {
   const input = document.getElementById('addressInput');
   const resultsDiv = document.getElementById('searchResults');
+  const note = document.getElementById('searchImportantNote');
 
   input.addEventListener('input', function() {
     clearTimeout(searchTimeout);
     const query = this.value.trim();
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+
+    if (query.length === 0) {
+      note.textContent = '⚠️ Start typing and select a suggested location to set coordinates.';
+      note.className = 'text-sm font-semibold text-red-600 mb-2';
+      resultsDiv.classList.add('hidden');
+      return;
+    }
+
+    if (!lat || !lng) {
+      note.textContent = '⚠️ Please select a suggested location to set your coordinates.';
+      note.className = 'text-sm font-semibold text-red-600 mb-2';
+    } else {
+      note.textContent = '✅ Location set!';
+      note.className = 'text-sm font-semibold text-green-600 mb-2';
+    }
 
     if (query.length < 3) {
       resultsDiv.classList.add('hidden');
@@ -452,6 +470,10 @@ function selectLocation(result) {
   // Update map
   map.setView([lat, lon], 15);
   marker.setLatLng([lat, lon]);
+
+  const note = document.getElementById('searchImportantNote');
+  note.textContent = '✅ Location set!';
+  note.className = 'text-sm font-semibold text-green-600 mb-2';
   
   // Hide results
   document.getElementById('searchResults').classList.add('hidden');
