@@ -97,25 +97,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 const initCurrentLocBtn = () => {
-  document.getElementById('currentLocBtn').addEventListener('click', () => {
-    const btn = document.getElementById('currentLocBtn');
-    const note = document.getElementById('searchImportantNote');
-    const resultsDiv = document.getElementById('searchResults');
-    const addressInput = document.getElementById('addressInput');
+  const btn = document.getElementById('currentLocBtn');
+  const note = document.getElementById('searchImportantNote');
+  const resultsDiv = document.getElementById('searchResults');
+  const addressInput = document.getElementById('addressInput');
 
+  const requestLocation = () => {
     if (!navigator.geolocation) {
       note.textContent = '⚠️ Geolocation is not supported by your browser.';
       note.className = 'text-sm font-semibold text-red-600 mb-2';
       return;
     }
 
-    // Show temporary message
     btn.disabled = true;
     const originalText = btn.innerHTML;
     btn.innerHTML = '📍 Getting location...';
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
 
         // Update hidden inputs
@@ -128,36 +127,44 @@ const initCurrentLocBtn = () => {
           marker.setLatLng([latitude, longitude]);
         }
 
-        // Reverse geocode to get address
-        reverseGeocode(latitude, longitude).then(() => {
-          note.textContent = '✅ Current location set!';
-          note.className = 'text-sm font-semibold text-green-600 mb-2';
-        });
+        // Reverse geocode to get address and update input
+        await reverseGeocode(latitude, longitude);
 
-        // Clear search results
+        note.textContent = '✅ Current location set!';
+        note.className = 'text-sm font-semibold text-green-600 mb-2';
+
+        // Clear previous search results
         resultsDiv.innerHTML = '';
         resultsDiv.classList.add('hidden');
-        addressInput.value = ''; // optional: clear input if you want fresh
 
-        // Restore button text
+        // DO NOT clear addressInput here! It will be filled by reverseGeocode
+
         btn.innerHTML = originalText;
         btn.disabled = false;
       },
       (err) => {
         console.error(err);
-        note.textContent =
-          '⚠️ Unable to get your location. Please select manually.';
-        note.className = 'text-sm font-semibold text-red-600 mb-2';
 
-        // Restore button text
+        if (err.code === 1) {
+          // Permission denied
+          note.innerHTML =
+            '⚠️ Location access denied. Please allow location access in your browser settings and click "Use Current Location" again.';
+          note.className = 'text-sm font-semibold text-red-600 mb-2';
+        } else {
+          note.textContent =
+            '⚠️ Unable to get your location. Please select manually.';
+          note.className = 'text-sm font-semibold text-red-600 mb-2';
+        }
+
         btn.innerHTML = originalText;
         btn.disabled = false;
       },
       { enableHighAccuracy: true }
     );
-  });
+  };
 
-}
+  btn.addEventListener('click', requestLocation);
+};
 
 const phoneInit = () => {
   const phoneInput = document.getElementById('phone');
