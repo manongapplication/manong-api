@@ -159,7 +159,7 @@ const initCurrentLocBtn = () => {
         btn.innerHTML = originalText;
         btn.disabled = false;
       },
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true },
     );
   };
 
@@ -414,20 +414,20 @@ function initMap() {
   // Add OpenStreetMap tile layer
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
-    maxZoom: 19
+    maxZoom: 19,
   }).addTo(map);
 
   // Add draggable marker
   marker = L.marker([14.5995, 120.9842], {
-    draggable: true
+    draggable: true,
   }).addTo(map);
 
   // Update coordinates when marker is dragged
-  marker.on('dragend', function() {
+  marker.on('dragend', function () {
     const pos = marker.getLatLng();
     document.getElementById('latitude').value = pos.lat;
     document.getElementById('longitude').value = pos.lng;
-    
+
     // Reverse geocode to get address
     reverseGeocode(pos.lat, pos.lng);
   });
@@ -448,7 +448,7 @@ function initMap() {
       },
       (error) => {
         console.warn('Geolocation failed:', error.message);
-      }
+      },
     );
   }
 
@@ -472,14 +472,16 @@ function setupAddressSearch() {
     document.getElementById('longitude').value = '';
 
     if (query.length === 0) {
-      note.textContent = '⚠️ Start typing and select a suggested location to set coordinates.';
+      note.textContent =
+        '⚠️ Start typing and select a suggested location to set coordinates.';
       note.className = 'text-sm font-semibold text-red-600 mb-2';
       resultsDiv.classList.add('hidden');
       return;
     }
 
     // Coordinates are empty → show red
-    note.textContent = '⚠️ Please select a suggested location to set your coordinates.';
+    note.textContent =
+      '⚠️ Please select a suggested location to set your coordinates.';
     note.className = 'text-sm font-semibold text-red-600 mb-2';
 
     if (query.length < 3) {
@@ -488,7 +490,8 @@ function setupAddressSearch() {
       return;
     }
 
-    resultsDiv.innerHTML = '<div class="p-2 text-gray-500 text-sm">Searching...</div>';
+    resultsDiv.innerHTML =
+      '<div class="p-2 text-gray-500 text-sm">Searching...</div>';
     resultsDiv.classList.remove('hidden');
 
     searchTimeout = setTimeout(() => searchAddress(query), 300);
@@ -509,31 +512,32 @@ function setupAddressSearch() {
 
 async function searchAddress(query) {
   const resultsDiv = document.getElementById('searchResults');
-  
+
   try {
     // Using Nominatim (OpenStreetMap's geocoding service)
     // Bias search to Philippines
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ph&limit=5`
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ph&limit=5`,
     );
-    
+
     const results = await response.json();
-    
+
     if (results.length === 0) {
-      resultsDiv.innerHTML = '<div class="p-2 text-gray-500 text-sm">No results found</div>';
+      resultsDiv.innerHTML =
+        '<div class="p-2 text-gray-500 text-sm">No results found</div>';
       resultsDiv.classList.remove('hidden');
       return;
     }
 
     resultsDiv.innerHTML = '';
-    results.forEach(result => {
+    results.forEach((result) => {
       const div = document.createElement('div');
       div.className = 'p-2 hover:bg-gray-100 cursor-pointer border-b text-sm';
       div.textContent = result.display_name;
       div.onclick = () => selectLocation(result);
       resultsDiv.appendChild(div);
     });
-    
+
     resultsDiv.classList.remove('hidden');
   } catch (error) {
     console.error('Error searching address:', error);
@@ -543,14 +547,14 @@ async function searchAddress(query) {
 function selectLocation(result) {
   const lat = parseFloat(result.lat);
   const lon = parseFloat(result.lon);
-  
+
   // Update input
   document.getElementById('addressInput').value = result.display_name;
-  
+
   // Update hidden fields
   document.getElementById('latitude').value = lat;
   document.getElementById('longitude').value = lon;
-  
+
   // Update map
   map.setView([lat, lon], 15);
   marker.setLatLng([lat, lon]);
@@ -558,7 +562,7 @@ function selectLocation(result) {
   const note = document.getElementById('searchImportantNote');
   note.textContent = '✅ Location set!';
   note.className = 'text-sm font-semibold text-green-600 mb-2';
-  
+
   // Hide results
   document.getElementById('searchResults').classList.add('hidden');
 }
@@ -566,11 +570,11 @@ function selectLocation(result) {
 async function reverseGeocode(lat, lng) {
   try {
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
     );
-    
+
     const result = await response.json();
-    
+
     if (result.display_name) {
       document.getElementById('addressInput').value = result.display_name;
     }
@@ -615,9 +619,10 @@ document
     const latitude = document.getElementById('latitude').value;
     const longitude = document.getElementById('longitude').value;
 
-
     if (!latitude || !longitude) {
-      errorMessage('⚠️ Please select a suggested location below the Address input to set your coordinates. Otherwise, latitude and longitude will be empty.');
+      errorMessage(
+        '⚠️ Please select a suggested location below the Address input to set your coordinates. Otherwise, latitude and longitude will be empty.',
+      );
       return;
     }
 

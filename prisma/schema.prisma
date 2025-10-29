@@ -85,16 +85,24 @@ model PasswordResetToken {
   @@id([email, token])
 }
 
+enum ServiceItemStatus {
+  active
+  inactive
+  comingSoon
+  archived
+  deleted
+}
+
 model ServiceItem {
-  id          Int      @id @default(autoincrement())
+  id          Int               @id @default(autoincrement())
   title       String
   description String
-  priceMin    Decimal  @db.Decimal(10, 2)
-  priceMax    Decimal  @db.Decimal(10, 2)
-  ratePerKm   Decimal? @db.Decimal(8, 2)
+  priceMin    Decimal           @db.Decimal(10, 2)
+  priceMax    Decimal           @db.Decimal(10, 2)
+  ratePerKm   Decimal?          @db.Decimal(8, 2)
   iconName    String?
-  iconColor   String   @default("#3B82F6")
-  isActive    Boolean  @default(true)
+  iconColor   String            @default("#3B82F6")
+  status      ServiceItemStatus @default(active)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -104,17 +112,17 @@ model ServiceItem {
 }
 
 model SubServiceItem {
-  id            Int      @id @default(autoincrement())
+  id            Int               @id @default(autoincrement())
   serviceItemId Int
   title         String
   iconName      String?
   description   String?
-  cost          Decimal? @db.Decimal(10, 2)
-  fee           Decimal? @db.Decimal(10, 2)
-  gross         Decimal  @db.Decimal(10, 2)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  cost          Decimal?          @db.Decimal(10, 2)
+  fee           Decimal?          @db.Decimal(10, 2)
+  gross         Decimal           @db.Decimal(10, 2)
+  status        ServiceItemStatus @default(active)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   serviceItem        ServiceItem          @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
   serviceRequest     ServiceRequest[]

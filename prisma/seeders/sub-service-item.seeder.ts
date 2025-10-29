@@ -39,7 +39,6 @@ export class SubServiceItemSeeder {
           cost: 200,
           fee: 300,
           gross: 500,
-          isActive: true,
         },
         {
           serviceItemId: plumbing!.id,
@@ -50,7 +49,6 @@ export class SubServiceItemSeeder {
           cost: 400,
           fee: 600,
           gross: 1000,
-          isActive: true,
         },
         {
           serviceItemId: plumbing!.id,
@@ -61,7 +59,6 @@ export class SubServiceItemSeeder {
           cost: 250,
           fee: 150,
           gross: 400,
-          isActive: true,
         },
         {
           serviceItemId: plumbing!.id,
@@ -72,7 +69,6 @@ export class SubServiceItemSeeder {
           cost: 400,
           fee: 200,
           gross: 600,
-          isActive: true,
         },
         {
           serviceItemId: plumbing!.id,
@@ -83,7 +79,6 @@ export class SubServiceItemSeeder {
           cost: 300,
           fee: 180,
           gross: 480,
-          isActive: true,
         },
         {
           serviceItemId: plumbing!.id,
@@ -94,7 +89,6 @@ export class SubServiceItemSeeder {
           cost: 200,
           fee: 300,
           gross: 500,
-          isActive: true,
         },
         {
           serviceItemId: plumbing!.id,
@@ -105,7 +99,6 @@ export class SubServiceItemSeeder {
           cost: 500,
           fee: 400,
           gross: 900,
-          isActive: true,
         },
         {
           serviceItemId: plumbing!.id,
@@ -116,7 +109,6 @@ export class SubServiceItemSeeder {
           cost: 800,
           fee: 600,
           gross: 1400,
-          isActive: true,
         },
         {
           serviceItemId: plumbing!.id,
@@ -127,7 +119,6 @@ export class SubServiceItemSeeder {
           cost: 300,
           fee: 300,
           gross: 600,
-          isActive: true,
         },
 
         // Electrical Services
@@ -140,7 +131,6 @@ export class SubServiceItemSeeder {
           cost: 150,
           fee: 250,
           gross: 400,
-          isActive: true,
         },
         {
           serviceItemId: electrical!.id,
@@ -151,7 +141,6 @@ export class SubServiceItemSeeder {
           cost: 300,
           fee: 400,
           gross: 700,
-          isActive: true,
         },
 
         // Carpentry Services
@@ -164,7 +153,6 @@ export class SubServiceItemSeeder {
           cost: 120,
           fee: 180,
           gross: 300,
-          isActive: true,
         },
         {
           serviceItemId: carpentry!.id,
@@ -175,7 +163,6 @@ export class SubServiceItemSeeder {
           cost: 120,
           fee: 150,
           gross: 270,
-          isActive: true,
         },
         {
           serviceItemId: carpentry!.id,
@@ -186,7 +173,6 @@ export class SubServiceItemSeeder {
           cost: 120,
           fee: 160,
           gross: 280,
-          isActive: true,
         },
         {
           serviceItemId: carpentry!.id,
@@ -197,7 +183,6 @@ export class SubServiceItemSeeder {
           cost: 120,
           fee: 140,
           gross: 260,
-          isActive: true,
         },
         {
           serviceItemId: carpentry!.id,
@@ -208,7 +193,6 @@ export class SubServiceItemSeeder {
           cost: 120,
           fee: 130,
           gross: 250,
-          isActive: true,
         },
         {
           serviceItemId: carpentry!.id,
@@ -219,7 +203,6 @@ export class SubServiceItemSeeder {
           cost: 300,
           fee: 200,
           gross: 500,
-          isActive: true,
         },
 
         // Painting Services
@@ -232,7 +215,6 @@ export class SubServiceItemSeeder {
           cost: 500,
           fee: 700,
           gross: 1200,
-          isActive: true,
         },
 
         // Appliance Repair Services
@@ -245,7 +227,6 @@ export class SubServiceItemSeeder {
           cost: 600,
           fee: 400,
           gross: 1000,
-          isActive: true,
         },
 
         // Security Services
@@ -258,7 +239,6 @@ export class SubServiceItemSeeder {
           cost: 800,
           fee: 1200,
           gross: 2000,
-          isActive: true,
         },
 
         // Home Maintenance Services
@@ -271,7 +251,6 @@ export class SubServiceItemSeeder {
           cost: 80,
           fee: 120,
           gross: 200,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -282,7 +261,6 @@ export class SubServiceItemSeeder {
           cost: 100,
           fee: 150,
           gross: 250,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -293,7 +271,6 @@ export class SubServiceItemSeeder {
           cost: 200,
           fee: 200,
           gross: 400,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -304,7 +281,6 @@ export class SubServiceItemSeeder {
           cost: 80,
           fee: 120,
           gross: 200,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -315,7 +291,6 @@ export class SubServiceItemSeeder {
           cost: 150,
           fee: 180,
           gross: 330,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -326,7 +301,6 @@ export class SubServiceItemSeeder {
           cost: 100,
           fee: 150,
           gross: 250,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -337,7 +311,6 @@ export class SubServiceItemSeeder {
           cost: 60,
           fee: 90,
           gross: 150,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -348,7 +321,6 @@ export class SubServiceItemSeeder {
           cost: 80,
           fee: 120,
           gross: 200,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -359,7 +331,6 @@ export class SubServiceItemSeeder {
           cost: 60,
           fee: 100,
           gross: 160,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -370,7 +341,6 @@ export class SubServiceItemSeeder {
           cost: 120,
           fee: 180,
           gross: 300,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -381,7 +351,6 @@ export class SubServiceItemSeeder {
           cost: 300,
           fee: 250,
           gross: 550,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -392,7 +361,6 @@ export class SubServiceItemSeeder {
           cost: 200,
           fee: 300,
           gross: 500,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -403,7 +371,6 @@ export class SubServiceItemSeeder {
           cost: 250,
           fee: 350,
           gross: 600,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -414,7 +381,6 @@ export class SubServiceItemSeeder {
           cost: 150,
           fee: 200,
           gross: 350,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -425,7 +391,6 @@ export class SubServiceItemSeeder {
           cost: 100,
           fee: 150,
           gross: 250,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -436,7 +401,6 @@ export class SubServiceItemSeeder {
           cost: 120,
           fee: 180,
           gross: 300,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -447,7 +411,6 @@ export class SubServiceItemSeeder {
           cost: 50,
           fee: 80,
           gross: 130,
-          isActive: true,
         },
         {
           serviceItemId: homeMaintenance!.id,
@@ -458,7 +421,6 @@ export class SubServiceItemSeeder {
           cost: 80,
           fee: 120,
           gross: 200,
-          isActive: true,
         },
       ],
     });

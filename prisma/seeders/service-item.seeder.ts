@@ -14,7 +14,6 @@ export class ServiceItemSeeder {
           ratePerKm: 25,
           iconName: 'plumbing',
           iconColor: '#3B82F6',
-          isActive: true,
         },
         {
           title: 'Electrical',
@@ -24,7 +23,6 @@ export class ServiceItemSeeder {
           ratePerKm: 25,
           iconName: 'electrical_services',
           iconColor: '#F59E0B',
-          isActive: true,
         },
         {
           title: 'Carpentry',
@@ -34,7 +32,6 @@ export class ServiceItemSeeder {
           ratePerKm: 30,
           iconName: 'construction',
           iconColor: '#EF4444',
-          isActive: true,
         },
         {
           title: 'Painting',
@@ -44,7 +41,6 @@ export class ServiceItemSeeder {
           ratePerKm: 30,
           iconName: 'format_paint',
           iconColor: '#8B5CF6',
-          isActive: true,
         },
         {
           title: 'Appliance Repair',
@@ -54,7 +50,6 @@ export class ServiceItemSeeder {
           ratePerKm: 28,
           iconName: 'build',
           iconColor: '#10B981',
-          isActive: true,
         },
         {
           title: 'Security',
@@ -64,7 +59,6 @@ export class ServiceItemSeeder {
           ratePerKm: 25,
           iconName: 'security',
           iconColor: '#6366F1',
-          isActive: true,
         },
         {
           title: 'Home Maintenance',
@@ -75,7 +69,6 @@ export class ServiceItemSeeder {
           ratePerKm: 28,
           iconName: 'home',
           iconColor: '#EC4899',
-          isActive: true,
         },
       ],
     });
