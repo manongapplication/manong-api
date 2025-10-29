@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UpdateUserDto } from 'src/user/dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CompleteProfileUserDto } from './dto/complete-profile-user.dto';
@@ -6,7 +11,7 @@ import { join } from 'path';
 import { promises as fs } from 'fs';
 import { ProviderVerificationService } from 'src/provider-verification/provider-verification.service';
 import { CreateProviderVerificationDto } from 'src/provider-verification/dto/create-provider-verification.dto';
-import { AccountStatus, Prisma } from '@prisma/client';
+import { AccountStatus, Prisma, UserRole } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -105,6 +110,8 @@ export class UserService {
         phone: phone ?? user?.phone,
         hasSeenVerificationCongrats:
           hasSeenVerificationCongrats ?? user?.hasSeenVerificationCongrats,
+        addressLine: dto.addressLine,
+        status: dto.status,
       },
     });
 
@@ -182,5 +189,88 @@ export class UserService {
     );
 
     return updated;
+  }
+
+  async fetchUsers(userId: number, page = 1, limit = 10) {
+    const user = await this.findById(userId);
+
+    if (!user) return;
+
+    if (user.role != UserRole.admin) {
+      throw new BadGatewayException('Is not admin!');
+    }
+
+    const skip = (page - 1) * limit;
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        role: UserRole.customer,
+      },
+      include: {
+        providerVerifications: true,
+      },
+      skip,
+      take: limit * 2,
+    });
+
+    return users;
+  }
+
+  async deleteUser(userId: number, id: number) {
+    const now = new Date();
+
+    const userLoggedIn = await this.findById(userId);
+
+    if (!userLoggedIn) {
+      throw new BadGatewayException('User not logged in!');
+    }
+
+    if (userLoggedIn.role != UserRole.admin) {
+      throw new BadGatewayException('User is not admin!');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    await this.prisma.user.update({
+      where: { id },
+      data: { deletedAt: now, status: AccountStatus.deleted },
+    });
+
+    return { id };
+  }
+
+  async bulkDeleteUsers(userId: number, ids: number[]) {
+    const now = new Date();
+
+    const userLoggedIn = await this.findById(userId);
+
+    if (!userLoggedIn) {
+      throw new BadGatewayException('User not logged in!');
+    }
+
+    if (userLoggedIn.role != UserRole.admin) {
+      throw new BadGatewayException('User is not admin!');
+    }
+
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: ids } },
+    });
+
+    if (!users.length) {
+      throw new NotFoundException('No Users found for given IDs');
+    }
+
+    await this.prisma.user.updateMany({
+      where: { id: { in: ids } },
+      data: { deletedAt: now, status: AccountStatus.deleted },
+    });
+
+    return { deletedCount: users.length, ids };
   }
 }

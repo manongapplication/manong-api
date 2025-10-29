@@ -9,7 +9,8 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDtLQ72B5P83ub6NVTvNHM_sYcMSH3ygY&libraries=places"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/css/intlTelInput.css"
@@ -332,23 +333,30 @@
             ></p>
           </div>
 
-          <div>
-            <label class="block mb-2 font-semibold text-sm sm:text-base"
-              >Address</label
-            >
+          <div class="relative">
+            <label class="block mb-2 font-semibold text-sm sm:text-base">Address</label>
+            
+            <!-- Address search input -->
             <input
               type="text"
               id="addressInput"
-              required
               placeholder="Enter your address"
+              required
               class="w-full border border-gray-300 rounded-lg p-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
             />
 
+            <!-- Search results container -->
             <div
-              id="map"
-              class="w-full h-48 sm:h-64 rounded-lg border border-gray-300"
+              id="searchResults"
+              class="absolute left-0 right-0 z-[9999] bg-white border border-gray-300 rounded-md max-h-48 overflow-y-auto hidden shadow-md"
             ></div>
 
+            <!-- Map -->
+            <div
+              id="map"
+              class="w-full h-48 sm:h-64 rounded-lg border border-gray-300 mt-2"
+            ></div>
+            
             <input type="hidden" id="latitude" name="latitude" />
             <input type="hidden" id="longitude" name="longitude" />
           </div>

@@ -1,10 +1,13 @@
+import { AccountStatus } from '@prisma/client';
 import {
   IsBoolean,
   IsEmail,
+  IsEnum,
   IsOptional,
   IsString,
   Matches,
   MaxLength,
+  MinLength,
   ValidateIf,
 } from 'class-validator';
 
@@ -40,4 +43,14 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   hasSeenVerificationCongrats?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(5)
+  @MaxLength(255)
+  addressLine?: string;
+
+  @IsOptional()
+  @IsEnum(AccountStatus, { message: 'status not valid.' })
+  status?: AccountStatus;
 }

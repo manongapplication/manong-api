@@ -27,6 +27,8 @@ async function loadEnv() {
 const MAX_ASSISTANTS = 5;
 
 let iti;
+let map;
+let marker;
 
 const iconLibrary = {
   water_drop:
@@ -112,16 +114,13 @@ let serviceItems = [];
 
 const fetchServiceType = async () => {
   try {
-    const response = await fetch(
-      `${API_URL}/service-items`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+    const response = await fetch(`${API_URL}/service-items`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
-    );
+    });
 
     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
     const jsonData = await response.json();
@@ -336,39 +335,142 @@ setupDropzone('govIdDropzone', 'govIdInput', 'govIdFileName');
 setupDropzone('nbiDropzone', 'nbiInput', 'nbiFileName');
 setupDropzone('skillDropzone', 'skillInput', 'skillFileName');
 
+// OpenStreetMap implementation with Leaflet
 function initMap() {
-  const map = new google.maps.Map(document.getElementById('map'), {
-    center: { lat: 14.5995, lng: 120.9842 },
-    zoom: 12,
+  // Initialize map centered on Manila, Philippines
+  map = L.map('map').setView([14.5995, 120.9842], 12);
+
+  // Add OpenStreetMap tile layer
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Add draggable marker
+  marker = L.marker([14.5995, 120.9842], {
+    draggable: true
+  }).addTo(map);
+
+  // Update coordinates when marker is dragged
+  marker.on('dragend', function() {
+    const pos = marker.getLatLng();
+    document.getElementById('latitude').value = pos.lat;
+    document.getElementById('longitude').value = pos.lng;
+    
+    // Reverse geocode to get address
+    reverseGeocode(pos.lat, pos.lng);
   });
 
-  const marker = new google.maps.Marker({
-    map,
-    draggable: true,
-    position: { lat: 14.5995, lng: 120.9842 },
-  });
+  // Set up address search
+  setupAddressSearch();
+}
 
+let searchTimeout;
+
+function setupAddressSearch() {
   const input = document.getElementById('addressInput');
-  const autocomplete = new google.maps.places.Autocomplete(input);
-  autocomplete.bindTo('bounds', map);
+  const resultsDiv = document.getElementById('searchResults');
 
-  autocomplete.addListener('place_changed', () => {
-    const place = autocomplete.getPlace();
-    if (!place.geometry) return;
+  input.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
 
-    map.setCenter(place.geometry.location);
-    map.setZoom(15);
-    marker.setPosition(place.geometry.location);
+    if (query.length < 3) {
+      resultsDiv.classList.add('hidden');
+      resultsDiv.innerHTML = '';
+      return;
+    }
 
-    document.getElementById('latitude').value = place.geometry.location.lat();
-    document.getElementById('longitude').value = place.geometry.location.lng();
+    // Show loading state
+    resultsDiv.innerHTML = '<div class="p-2 text-gray-500 text-sm">Searching...</div>';
+    resultsDiv.classList.remove('hidden');
+
+    searchTimeout = setTimeout(() => {
+      searchAddress(query);
+    }, 300);
   });
 
-  marker.addListener('dragend', () => {
-    const pos = marker.getPosition();
-    document.getElementById('latitude').value = pos.lat();
-    document.getElementById('longitude').value = pos.lng();
+  // Show results when input is focused and has value
+  input.addEventListener('focus', function() {
+    if (this.value.trim().length >= 3 && resultsDiv.children.length > 0) {
+      resultsDiv.classList.remove('hidden');
+    }
   });
+
+  // Hide results when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!resultsDiv.contains(e.target) && e.target !== input) {
+      resultsDiv.classList.add('hidden');
+    }
+  });
+}
+
+async function searchAddress(query) {
+  const resultsDiv = document.getElementById('searchResults');
+  
+  try {
+    // Using Nominatim (OpenStreetMap's geocoding service)
+    // Bias search to Philippines
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ph&limit=5`
+    );
+    
+    const results = await response.json();
+    
+    if (results.length === 0) {
+      resultsDiv.innerHTML = '<div class="p-2 text-gray-500 text-sm">No results found</div>';
+      resultsDiv.classList.remove('hidden');
+      return;
+    }
+
+    resultsDiv.innerHTML = '';
+    results.forEach(result => {
+      const div = document.createElement('div');
+      div.className = 'p-2 hover:bg-gray-100 cursor-pointer border-b text-sm';
+      div.textContent = result.display_name;
+      div.onclick = () => selectLocation(result);
+      resultsDiv.appendChild(div);
+    });
+    
+    resultsDiv.classList.remove('hidden');
+  } catch (error) {
+    console.error('Error searching address:', error);
+  }
+}
+
+function selectLocation(result) {
+  const lat = parseFloat(result.lat);
+  const lon = parseFloat(result.lon);
+  
+  // Update input
+  document.getElementById('addressInput').value = result.display_name;
+  
+  // Update hidden fields
+  document.getElementById('latitude').value = lat;
+  document.getElementById('longitude').value = lon;
+  
+  // Update map
+  map.setView([lat, lon], 15);
+  marker.setLatLng([lat, lon]);
+  
+  // Hide results
+  document.getElementById('searchResults').classList.add('hidden');
+}
+
+async function reverseGeocode(lat, lng) {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+    );
+    
+    const result = await response.json();
+    
+    if (result.display_name) {
+      document.getElementById('addressInput').value = result.display_name;
+    }
+  } catch (error) {
+    console.error('Error reverse geocoding:', error);
+  }
 }
 
 function errorMessage(text) {
@@ -505,14 +607,11 @@ document
     submitBtn.disabled = true;
 
     try {
-      const response = await fetch(
-        `${API_URL}/manongs/register`,
-        {
-          method: 'POST',
-          headers: { Accept: 'application/json' },
-          body: formData,
-        },
-      );
+      const response = await fetch(`${API_URL}/manongs/register`, {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+        body: formData,
+      });
 
       const result = await response.json();
 
