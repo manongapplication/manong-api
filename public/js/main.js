@@ -372,11 +372,13 @@ function setupAddressSearch() {
   const resultsDiv = document.getElementById('searchResults');
   const note = document.getElementById('searchImportantNote');
 
-  input.addEventListener('input', function() {
+  input.addEventListener('input', function () {
     clearTimeout(searchTimeout);
     const query = this.value.trim();
-    const lat = document.getElementById('latitude').value;
-    const lng = document.getElementById('longitude').value;
+
+    // Always reset lat/lng when typing
+    document.getElementById('latitude').value = '';
+    document.getElementById('longitude').value = '';
 
     if (query.length === 0) {
       note.textContent = '⚠️ Start typing and select a suggested location to set coordinates.';
@@ -385,13 +387,9 @@ function setupAddressSearch() {
       return;
     }
 
-    if (!lat || !lng) {
-      note.textContent = '⚠️ Please select a suggested location to set your coordinates.';
-      note.className = 'text-sm font-semibold text-red-600 mb-2';
-    } else {
-      note.textContent = '✅ Location set!';
-      note.className = 'text-sm font-semibold text-green-600 mb-2';
-    }
+    // Coordinates are empty → show red
+    note.textContent = '⚠️ Please select a suggested location to set your coordinates.';
+    note.className = 'text-sm font-semibold text-red-600 mb-2';
 
     if (query.length < 3) {
       resultsDiv.classList.add('hidden');
@@ -399,24 +397,19 @@ function setupAddressSearch() {
       return;
     }
 
-    // Show loading state
     resultsDiv.innerHTML = '<div class="p-2 text-gray-500 text-sm">Searching...</div>';
     resultsDiv.classList.remove('hidden');
 
-    searchTimeout = setTimeout(() => {
-      searchAddress(query);
-    }, 300);
+    searchTimeout = setTimeout(() => searchAddress(query), 300);
   });
 
-  // Show results when input is focused and has value
-  input.addEventListener('focus', function() {
+  input.addEventListener('focus', function () {
     if (this.value.trim().length >= 3 && resultsDiv.children.length > 0) {
       resultsDiv.classList.remove('hidden');
     }
   });
 
-  // Hide results when clicking outside
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', function (e) {
     if (!resultsDiv.contains(e.target) && e.target !== input) {
       resultsDiv.classList.add('hidden');
     }
