@@ -83,7 +83,8 @@ const iconLibrary = {
 };
 
 function getIconHtml(iconName) {
-  return iconLibrary[iconName] || iconLibrary['default'];
+  // return iconLibrary[iconName] || iconLibrary['default'];
+  return `<iconify-icon icon="${iconName}"></iconify-icon>`;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -214,7 +215,7 @@ const fetchServiceType = async () => {
       checkbox.value = item.id;
       checkbox.className = 'peer hidden';
       const chip = document.createElement('div');
-      chip.className = `bg-[${iconColor}] border rounded-2xl p-3 sm:p-4 text-center transition-all peer-checked:border-[#034B57] peer-checked:bg-[#04697D] hover:border-[#04697D] w-12 h-12 sm:w-14 sm:h-14 text-white flex items-center justify-center text-sm sm:text-base`;
+      chip.className = `bg-[${iconColor}] border rounded-2xl p-3 sm:p-4 text-center transition-all peer-checked:border-[#034B57] peer-checked:bg-[#034B57] hover:border-[#034B57] w-12 h-12 sm:w-14 sm:h-14 text-white flex items-center justify-center text-sm sm:text-base`;
       const title = document.createElement('p');
       title.className = 'text-center text-xs sm:text-sm';
       title.textContent = item.title;
@@ -222,6 +223,7 @@ const fetchServiceType = async () => {
       label.appendChild(div);
       div.appendChild(checkbox);
       chip.innerHTML = getIconHtml(item.iconName);
+      chip.style = 'color: ' + item.iconTextColor + ';';
       div.appendChild(chip);
       div.appendChild(title);
 

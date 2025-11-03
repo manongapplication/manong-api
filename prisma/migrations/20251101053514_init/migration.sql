@@ -70,9 +70,11 @@ CREATE TABLE "ServiceItem" (
     "ratePerKm" DECIMAL(8,2),
     "iconName" TEXT,
     "iconColor" TEXT NOT NULL DEFAULT '#3B82F6',
+    "iconTextColor" TEXT NOT NULL DEFAULT '#FFFFFF',
     "status" "ServiceItemStatus" NOT NULL DEFAULT 'active',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "ServiceItem_pkey" PRIMARY KEY ("id")
 );
@@ -83,13 +85,14 @@ CREATE TABLE "SubServiceItem" (
     "serviceItemId" INTEGER NOT NULL,
     "title" TEXT NOT NULL,
     "iconName" TEXT,
+    "iconTextColor" TEXT NOT NULL DEFAULT '#FFFFFF',
     "description" TEXT,
     "cost" DECIMAL(10,2),
     "fee" DECIMAL(10,2),
-    "gross" DECIMAL(10,2) NOT NULL,
     "status" "ServiceItemStatus" NOT NULL DEFAULT 'active',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "SubServiceItem_pkey" PRIMARY KEY ("id")
 );

@@ -1,6 +1,17 @@
-import { Controller, Get, Headers, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Post,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import express from 'express';
 import { ServiceItemService } from './service-item.service';
+import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
+import { CreateServiceItems } from './dto/create-service-items.dto';
+import { CurrentUserId } from 'src/common/decorators/current-user-id.decorator';
 
 @Controller('api/service-items')
 export class ServiceItemController {
@@ -31,5 +42,24 @@ export class ServiceItemController {
   async getLastUpdated() {
     const latest = await this.serviceItemService.getLastUpdated();
     return { success: true, lastUpdated: latest?.toISOString() ?? null };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('save')
+  async saveData(@Body() dto: CreateServiceItems) {
+    const result = await this.serviceItemService.saveServiceItems(dto);
+
+    return {
+      success: true,
+      message: result,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('reset-defaults')
+  async resetDefaults(@CurrentUserId() userId: number) {
+    await this.serviceItemService.resetDefaults(userId);
+
+    return { message: 'Service items reset to defaults from seeders' };
   }
 }

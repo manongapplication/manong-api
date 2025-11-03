@@ -94,18 +94,20 @@ enum ServiceItemStatus {
 }
 
 model ServiceItem {
-  id          Int               @id @default(autoincrement())
-  title       String
-  description String
-  priceMin    Decimal           @db.Decimal(10, 2)
-  priceMax    Decimal           @db.Decimal(10, 2)
-  ratePerKm   Decimal?          @db.Decimal(8, 2)
-  iconName    String?
-  iconColor   String            @default("#3B82F6")
-  status      ServiceItemStatus @default(active)
+  id            Int               @id @default(autoincrement())
+  title         String
+  description   String
+  priceMin      Decimal           @db.Decimal(10, 2)
+  priceMax      Decimal           @db.Decimal(10, 2)
+  ratePerKm     Decimal?          @db.Decimal(8, 2)
+  iconName      String?
+  iconColor     String            @default("#3B82F6")
+  iconTextColor String            @default("#FFFFFF")
+  status        ServiceItemStatus @default(active)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   subServiceItems SubServiceItem[]
   serviceRequest  ServiceRequest[]
@@ -116,13 +118,15 @@ model SubServiceItem {
   serviceItemId Int
   title         String
   iconName      String?
+  iconTextColor String            @default("#FFFFFF")
   description   String?
   cost          Decimal?          @db.Decimal(10, 2)
   fee           Decimal?          @db.Decimal(10, 2)
-  gross         Decimal           @db.Decimal(10, 2)
   status        ServiceItemStatus @default(active)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   serviceItem        ServiceItem          @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
   serviceRequest     ServiceRequest[]
