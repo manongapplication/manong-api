@@ -19,6 +19,7 @@ import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { GoogleGeocodingService } from 'src/google-geocoding/google-geocoding.service';
 import { CompleteServiceRequestDto } from './dto/complete-service-request.dto';
 import { PaymentStatus } from '@prisma/client';
+import { getFormattedAddressOSM } from 'src/common/utils/address.util';
 
 @Controller('api/service-requests')
 export class ServiceRequestController {
@@ -35,11 +36,16 @@ export class ServiceRequestController {
     @Body() dto: CreateServiceRequestDto,
     @UploadedFiles() images: Express.Multer.File[],
   ) {
-    const formattedAddress =
-      await this.googleGeocodingService.getFormattedAddress(
-        dto.customerLat!,
-        dto.customerLng!,
-      );
+    // const formattedAddress =
+    //   await this.googleGeocodingService.getFormattedAddress(
+    //     dto.customerLat!,
+    //     dto.customerLng!,
+    //   );
+
+    const formattedAddress = await getFormattedAddressOSM(
+      dto.customerLat!,
+      dto.customerLng!,
+    );
 
     dto.images = images;
     dto.customerFullAddress = formattedAddress;

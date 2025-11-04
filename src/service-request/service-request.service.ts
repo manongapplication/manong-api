@@ -11,6 +11,7 @@ import { join } from 'path';
 import { promises as fs } from 'fs';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import {
+  AccountStatus,
   PaymentStatus,
   Prisma,
   ServiceRequestStatus,
@@ -91,6 +92,18 @@ export class ServiceRequestService {
   }
 
   async createServiceRequest(userId: number, dto: CreateServiceRequestDto) {
+    const user = await this.userService.findById(userId);
+    if (
+      user?.status == AccountStatus.pending ||
+      user?.status == AccountStatus.onHold
+    ) {
+      return {
+        warning:
+          'Account on hold. Please wait before you can use our services.',
+        duplicate: false,
+      };
+    }
+
     const todayStart = dayjs().startOf('day').toDate();
     const todayEnd = dayjs().endOf('day').toDate();
 

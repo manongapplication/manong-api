@@ -2,6 +2,7 @@ import {
   BadGatewayException,
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { UpdateUserDto } from 'src/user/dto/update-user.dto';
@@ -12,13 +13,20 @@ import { promises as fs } from 'fs';
 import { ProviderVerificationService } from 'src/provider-verification/provider-verification.service';
 import { CreateProviderVerificationDto } from 'src/provider-verification/dto/create-provider-verification.dto';
 import { AccountStatus, Prisma, UserRole } from '@prisma/client';
+import { CreateNotificationDto } from 'src/fcm/dto/create-notification.dto';
+import { FcmService } from 'src/fcm/fcm.service';
+import { getAccountStatusMessage } from 'src/common/utils/account.util';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly providerVerificationService: ProviderVerificationService,
+    private readonly fcmService: FcmService,
   ) {}
+
+  private readonly logger = new Logger(UserService.name);
 
   async findByPhone(phone: string) {
     return await this.prisma.user.findUnique({ where: { phone } });
@@ -44,6 +52,20 @@ export class UserService {
 
   async findByEmail(email: string) {
     return await this.prisma.user.findFirst({ where: { email } });
+  }
+
+  async checkIfHasPasswordByPhone(phone: string) {
+    const user = await this.findByPhone(phone);
+
+    if (!user) {
+      return false;
+    }
+
+    if (user.password != null) {
+      return true;
+    }
+
+    return false;
   }
 
   async deleteById(id: number) {
@@ -100,6 +122,29 @@ export class UserService {
     }
 
     const user = await this.findById(userId);
+
+    const message = getAccountStatusMessage(
+      dto.status ?? AccountStatus.pending,
+    );
+
+    if (!user) {
+      return new NotFoundException('User not found!');
+    }
+
+    try {
+      if (user.status != dto.status) {
+        const notificationDto: CreateNotificationDto = {
+          token: user.fcmToken ?? '',
+          title: message.title,
+          body: message.body,
+          userId: user.id,
+        };
+
+        await this.fcmService.sendPushNotification(notificationDto);
+      }
+    } catch (e) {
+      this.logger.error(`Can't message notification ${e}`);
+    }
 
     const updatedUser = this.prisma.user.update({
       where: { id: userId },
@@ -174,6 +219,8 @@ export class UserService {
         addressCategory: dto.addressCategory,
         addressLine: dto.addressLine,
         status: AccountStatus.onHold,
+        password:
+          dto.password != null ? await bcrypt.hash(dto.password, 10) : null,
       },
     });
 

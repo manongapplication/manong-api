@@ -55,4 +55,8 @@ export class CompleteProfileUserDto {
 
   @IsOptional()
   validId: Express.Multer.File;
+
+  @IsNotEmpty()
+  @IsString()
+  password: string;
 }

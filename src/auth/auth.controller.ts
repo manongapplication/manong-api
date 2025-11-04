@@ -88,4 +88,15 @@ export class AuthController {
   async login(@Body() dto: LoginDto) {
     return await this.authService.login(dto);
   }
+
+  @Post('has-password')
+  async checkIfVerified(@Body('phone') phone: string) {
+    const result = await this.authService.checkIfHasPassword(phone);
+
+    return {
+      success: true,
+      hasPassword: result,
+      message: 'Checked for password!',
+    };
+  }
 }

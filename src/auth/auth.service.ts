@@ -120,29 +120,53 @@ export class AuthService {
   }
 
   async validateUser(dto: LoginDto) {
-    const { email, password } = dto;
-    const user = await this.userService.findByEmail(email);
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    const { email, phone, password } = dto;
 
-    if (!user || !user.password) {
-      throw new UnauthorizedException('Invalid Credentials');
+    // Find user by email or phone
+    let user;
+    if (email) {
+      user = await this.userService.findByEmail(email);
+    } else if (phone) {
+      user = await this.userService.findByPhone(phone);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (!user || !user.password) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid)
-      throw new UnauthorizedException('Invalid Credentials');
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
 
     return user;
   }
 
   async login(dto: LoginDto) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const user = await this.validateUser(dto);
 
-    const payload = { sub: user.id, email: user.email };
+    const payload = {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      sub: user.id,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      email: user.email ?? null,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+      phone: user.phone ?? null,
+    };
+
     const token = this.jwt.sign(payload);
 
-    const isAdmin = user.role == UserRole.admin;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const isAdmin = user.role === UserRole.admin;
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     return { token, user, isAdmin };
+  }
+
+  async checkIfHasPassword(phone: string) {
+    return await this.userService.checkIfHasPasswordByPhone(phone);
   }
 }

@@ -12,6 +12,7 @@ import { ServiceRequestService } from 'src/service-request/service-request.servi
 import { AccountStatus, ManongStatus, UserRole } from '@prisma/client';
 import { UserService } from 'src/user/user.service';
 import { UpdateManongDto } from './dto/update-manong.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ManongService {
@@ -298,7 +299,8 @@ export class ManongService {
         phone,
         latitude,
         longitude,
-        password,
+        password:
+          dto.password != null ? await bcrypt.hash(dto.password, 10) : null,
         role: UserRole.manong,
         addressLine,
       },
@@ -386,7 +388,8 @@ export class ManongService {
         phone: dto.phone,
         latitude: dto.latitude,
         longitude: dto.longitude,
-        password: dto.password,
+        password:
+          dto.password != null ? await bcrypt.hash(dto.password, 10) : null,
         addressLine: dto.addressLine,
         status: dto.status,
       },

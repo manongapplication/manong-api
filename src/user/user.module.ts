@@ -4,12 +4,14 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { UserController } from './user.controller';
 import { ProviderVerificationModule } from 'src/provider-verification/provider-verification.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { FcmModule } from 'src/fcm/fcm.module';
 
 @Module({
   imports: [
     PrismaModule,
     ProviderVerificationModule,
     forwardRef(() => AuthModule),
+    FcmModule,
   ],
   providers: [UserService],
   exports: [UserService],

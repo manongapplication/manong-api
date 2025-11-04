@@ -3,18 +3,35 @@ import * as admin from 'firebase-admin';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UserNotificationService } from 'src/user-notification/user-notification.service';
 import { UserService } from 'src/user/user.service';
+import { ModuleRef } from '@nestjs/core';
 @Injectable()
 export class FcmService {
-  constructor(
-    private readonly userNotificationService: UserNotificationService,
-    private readonly userService: UserService,
-  ) {}
+  private userNotificationService: UserNotificationService;
+  private userService: UserService;
+
+  constructor(private readonly moduleRef: ModuleRef) {}
+
   private readonly logger = new Logger(FcmService.name);
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  private async initDependencies() {
+    if (!this.userNotificationService) {
+      this.userNotificationService = this.moduleRef.get(
+        UserNotificationService,
+        { strict: false }, // allow circular
+      );
+    }
+    if (!this.userService) {
+      this.userService = this.moduleRef.get(UserService, { strict: false });
+    }
+  }
 
   async sendPushNotification(
     dto: CreateNotificationDto,
     otherData?: Record<string, any>,
   ) {
+    await this.initDependencies();
+
     if (!dto.token || !dto.title || !dto.body) {
       this.logger.warn(`Missing required fields: ${JSON.stringify(dto)}`);
       return;
