@@ -265,6 +265,8 @@ export class ManongService {
       addressLine,
     } = dto;
 
+    if (!dto.password) throw new BadRequestException('Password is required');
+
     if (password != confirmPassword) {
       throw new BadRequestException(
         'Password and confirmation password do not match.',
@@ -299,10 +301,12 @@ export class ManongService {
         phone,
         latitude,
         longitude,
-        password:
-          dto.password != null ? await bcrypt.hash(dto.password, 10) : null,
+        ...(dto.password
+          ? { password: await bcrypt.hash(dto.password, 10) }
+          : {}),
         role: UserRole.manong,
         addressLine,
+        status: AccountStatus.onHold,
       },
     });
 
@@ -379,6 +383,10 @@ export class ManongService {
       throw new BadGatewayException('Manong not found!');
     }
 
+    if (dto.password) {
+      dto.password = await bcrypt.hash(dto.password, 10);
+    }
+
     const updated = await this.prisma.user.update({
       where: { id },
       data: {
@@ -388,8 +396,7 @@ export class ManongService {
         phone: dto.phone,
         latitude: dto.latitude,
         longitude: dto.longitude,
-        password:
-          dto.password != null ? await bcrypt.hash(dto.password, 10) : null,
+        password: dto.password,
         addressLine: dto.addressLine,
         status: dto.status,
       },

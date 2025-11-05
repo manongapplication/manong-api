@@ -257,7 +257,7 @@ export class ServiceRequestService {
     return updated;
   }
 
-  async showServiceRequest(id: number, userId: number) {
+  async showUserServiceRequest(id: number, userId: number) {
     const request = await this.prisma.serviceRequest.findFirst({
       where: { id, userId },
       include: {
@@ -267,6 +267,43 @@ export class ServiceRequestService {
         subServiceItem: true,
         urgencyLevel: true,
         paymentMethod: true,
+      },
+    });
+
+    return {
+      ...request,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      imagesPath:
+        request?.imagesPath != null && typeof request?.imagesPath == 'string'
+          ? JSON.parse(request.imagesPath)
+          : request?.imagesPath || [],
+    };
+  }
+
+  async showServiceRequest(id: number) {
+    const request = await this.prisma.serviceRequest.findFirst({
+      where: { id },
+      include: {
+        user: true,
+        manong: {
+          include: {
+            manongProfile: {
+              include: {
+                manongSpecialities: {
+                  include: {
+                    subServiceItem: true,
+                  },
+                },
+                manongAssistants: true,
+              },
+            },
+          },
+        },
+        serviceItem: true,
+        subServiceItem: true,
+        urgencyLevel: true,
+        paymentMethod: true,
+        feedback: true,
       },
     });
 

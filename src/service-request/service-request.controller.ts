@@ -116,15 +116,23 @@ export class ServiceRequestController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  async show(
+  @Get('user/:id')
+  async userShow(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUserId() userId: number,
   ) {
-    const request = await this.serviceRequestService.showServiceRequest(
+    const request = await this.serviceRequestService.showUserServiceRequest(
       id,
       userId,
     );
+
+    return { success: true, data: request };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async show(@Param('id', ParseIntPipe) id: number) {
+    const request = await this.serviceRequestService.showServiceRequest(id);
 
     return { success: true, data: request };
   }
