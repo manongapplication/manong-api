@@ -15,17 +15,17 @@ export class UrgencyLevelSeeder {
           {
             level: 'Priority',
             time: '1-2 business days',
-            price: new Prisma.Decimal(20),
+            price: new Prisma.Decimal(150),
           },
           {
             level: 'Urgent',
             time: 'Same-Day (book by 2PM)',
-            price: new Prisma.Decimal(30),
+            price: new Prisma.Decimal(300),
           },
           {
             level: 'Emergency',
             time: '3 Hours',
-            price: new Prisma.Decimal(30),
+            price: new Prisma.Decimal(500),
           },
         ],
       });
