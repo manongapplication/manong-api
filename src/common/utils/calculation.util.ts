@@ -49,8 +49,8 @@ export class CalculationUtil {
 
     if (serviceRequest == null) return 0;
 
-    if (serviceRequest.subServiceItem?.fee != null) {
-      total += Number(serviceRequest.subServiceItem.fee);
+    if (serviceRequest.subServiceItem?.cost != null) {
+      total += Number(serviceRequest.subServiceItem.cost);
     }
 
     if (serviceRequest.urgencyLevel?.price != null) {
