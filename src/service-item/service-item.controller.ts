@@ -12,11 +12,14 @@ import { ServiceItemService } from './service-item.service';
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 import { CreateServiceItems } from './dto/create-service-items.dto';
 import { CurrentUserId } from 'src/common/decorators/current-user-id.decorator';
+import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
+import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
 
 @Controller('api/service-items')
 export class ServiceItemController {
   constructor(private readonly serviceItemService: ServiceItemService) {}
 
+  @UseGuards(AppMaintenanceGuard)
   @Get()
   async index(
     @Headers('if-none-match') ifNoneMatch: string,
@@ -38,13 +41,15 @@ export class ServiceItemController {
       .json({ success: true, etag, data: serviceItems });
   }
 
+  @UseGuards(AppMaintenanceGuard)
   @Get('last-updated')
   async getLastUpdated() {
     const latest = await this.serviceItemService.getLastUpdated();
     return { success: true, lastUpdated: latest?.toISOString() ?? null };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @AdminOnly()
+  @UseGuards(JwtAuthGuard, AppMaintenanceGuard)
   @Post('save')
   async saveData(@Body() dto: CreateServiceItems) {
     const result = await this.serviceItemService.saveServiceItems(dto);
@@ -55,7 +60,8 @@ export class ServiceItemController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @AdminOnly()
+  @UseGuards(JwtAuthGuard, AppMaintenanceGuard)
   @Post('reset-defaults')
   async resetDefaults(@CurrentUserId() userId: number) {
     await this.serviceItemService.resetDefaults(userId);

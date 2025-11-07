@@ -20,6 +20,8 @@ import { UrgencyLevelService } from 'src/urgency-level/urgency-level.service';
 import { ServiceSettingsService } from 'src/service-settings/service-settings.service';
 import { ProviderVerificationService } from 'src/provider-verification/provider-verification.service';
 import { FeedbackService } from 'src/feedback/feedback.service';
+import { WordpressPostService } from 'src/wordpress-post/wordpress-post.service';
+import { AppMaintenanceService } from 'src/app-maintenance/app-maintenance.service';
 
 // 🧩 Add here any other frequently injected services
 // (so you won’t need to mock them manually later)
@@ -45,6 +47,8 @@ const defaultMocks = [
   { provide: ServiceSettingsService, useValue: {} },
   { provide: ProviderVerificationService, useValue: {} },
   { provide: FeedbackService, useValue: {} },
+  { provide: WordpressPostService, useValue: {} },
+  { provide: AppMaintenanceService, useValue: {} },
 ];
 
 export async function createTestingModule(

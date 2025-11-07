@@ -18,7 +18,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CompleteProfileUserDto } from './dto/complete-profile-user.dto';
 import { CurrentUserId } from 'src/common/decorators/current-user-id.decorator';
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
+import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
+import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 
+@UseGuards(JwtAuthGuard, AppMaintenanceGuard)
 @Controller('api/user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -32,7 +35,6 @@ export class UserController {
     return { success: true, data: updatedUser };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('complete')
   @UseInterceptors(FileInterceptor('validId'))
   async completeProfile(
@@ -51,7 +53,7 @@ export class UserController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @AdminOnly()
   @Get('all')
   async fetchManongs(
     @Query('page') page = '1',
@@ -67,7 +69,7 @@ export class UserController {
     return { success: true, data: users };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @AdminOnly()
   @Delete(':id')
   async deleteUser(
     @CurrentUserId() userId: number,
@@ -82,7 +84,7 @@ export class UserController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @AdminOnly()
   @Post('bulk-delete')
   async bulkDelete(
     @CurrentUserId() userId: number,

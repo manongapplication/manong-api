@@ -20,7 +20,9 @@ import { GoogleGeocodingService } from 'src/google-geocoding/google-geocoding.se
 import { CompleteServiceRequestDto } from './dto/complete-service-request.dto';
 import { PaymentStatus } from '@prisma/client';
 import { getFormattedAddressOSM } from 'src/common/utils/address.util';
+import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
 
+@UseGuards(JwtAuthGuard, AppMaintenanceGuard)
 @Controller('api/service-requests')
 export class ServiceRequestController {
   constructor(
@@ -29,7 +31,6 @@ export class ServiceRequestController {
   ) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FilesInterceptor('images', 3))
   async store(
     @CurrentUserId() userId: number,
@@ -66,7 +67,6 @@ export class ServiceRequestController {
     return { success: true, data: response };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('ongoing')
   async hasOngoingServiceRequest(@CurrentUserId() userId: number) {
     const result =
@@ -83,7 +83,6 @@ export class ServiceRequestController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -98,7 +97,6 @@ export class ServiceRequestController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
   async index(
     @CurrentUserId() userId: number,
@@ -115,7 +113,6 @@ export class ServiceRequestController {
     return { success: true, data: requests.data, isManong: requests.isManong };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('user/:id')
   async userShow(
     @Param('id', ParseIntPipe) id: number,
@@ -129,7 +126,6 @@ export class ServiceRequestController {
     return { success: true, data: request };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async show(@Param('id', ParseIntPipe) id: number) {
     const request = await this.serviceRequestService.showServiceRequest(id);
@@ -137,7 +133,6 @@ export class ServiceRequestController {
     return { success: true, data: request };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post(':id/complete')
   async completeRequest(
     @Param('id', ParseIntPipe) id: number,
@@ -183,7 +178,6 @@ export class ServiceRequestController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post(':id/accept')
   async acceptServiceRequest(
     @CurrentUserId() userId: number,
@@ -204,7 +198,6 @@ export class ServiceRequestController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post(':id/start')
   async startServiceRequest(
     @CurrentUserId() userId: number,
@@ -225,7 +218,6 @@ export class ServiceRequestController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post(':id/cancel')
   async cancelServiceRequest(
     @CurrentUserId() userId: number,
@@ -243,7 +235,6 @@ export class ServiceRequestController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post(':id/expired')
   async expiredServiceRequest(
     @CurrentUserId() userId: number,
@@ -261,7 +252,6 @@ export class ServiceRequestController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post(':id/mark-completed')
   async markServiceRequestCompleted(@Param('id', ParseIntPipe) id: number) {
     const result =

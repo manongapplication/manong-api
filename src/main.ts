@@ -2,9 +2,17 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import express from 'express';
+import { Reflector } from '@nestjs/core';
+import { AppMaintenanceGuard } from './common/guards/app-maintenance.guard';
+import { AppMaintenanceService } from './app-maintenance/app-maintenance.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Global App Maintenance Guard
+  app.useGlobalGuards(
+    new AppMaintenanceGuard(app.get(Reflector), app.get(AppMaintenanceService)),
+  );
 
   // Correctly set JSON & URL limits on Nest's underlying Express
   app.use(

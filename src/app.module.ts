@@ -57,6 +57,12 @@ import { FeedbackService } from './feedback/feedback.service';
 import { FeedbackController } from './feedback/feedback.controller';
 import { FeedbackModule } from './feedback/feedback.module';
 import { EnvController } from './env.controller';
+import { AppMaintenanceService } from './app-maintenance/app-maintenance.service';
+import { AppMaintenanceController } from './app-maintenance/app-maintenance.controller';
+import { AppMaintenanceModule } from './app-maintenance/app-maintenance.module';
+import { WordpressPostService } from './wordpress-post/wordpress-post.service';
+import { WordpressPostController } from './wordpress-post/wordpress-post.controller';
+import { WordpressPostModule } from './wordpress-post/wordpress-post.module';
 
 @Module({
   imports: [
@@ -98,6 +104,8 @@ import { EnvController } from './env.controller';
     UrgencyLevelModule,
     ProviderVerificationModule,
     FeedbackModule,
+    AppMaintenanceModule,
+    WordpressPostModule,
   ],
   controllers: [
     AppController,
@@ -115,6 +123,8 @@ import { EnvController } from './env.controller';
     ProviderVerificationController,
     FeedbackController,
     EnvController,
+    AppMaintenanceController,
+    WordpressPostController,
   ],
   providers: [
     UserService,
@@ -134,6 +144,8 @@ import { EnvController } from './env.controller';
     UrgencyLevelService,
     ProviderVerificationService,
     FeedbackService,
+    AppMaintenanceService,
+    WordpressPostService,
   ],
 })
 export class AppModule {

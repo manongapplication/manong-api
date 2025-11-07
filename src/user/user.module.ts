@@ -5,6 +5,8 @@ import { UserController } from './user.controller';
 import { ProviderVerificationModule } from 'src/provider-verification/provider-verification.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { FcmModule } from 'src/fcm/fcm.module';
+import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
+import { AppMaintenanceService } from 'src/app-maintenance/app-maintenance.service';
 
 @Module({
   imports: [
@@ -13,7 +15,7 @@ import { FcmModule } from 'src/fcm/fcm.module';
     forwardRef(() => AuthModule),
     FcmModule,
   ],
-  providers: [UserService],
+  providers: [UserService, AppMaintenanceGuard, AppMaintenanceService],
   exports: [UserService],
   controllers: [UserController],
 })

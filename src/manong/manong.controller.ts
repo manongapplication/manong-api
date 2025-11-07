@@ -19,12 +19,14 @@ import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 import { CreateManongDto } from './dto/create-manong.dto';
 import { CurrentUserId } from 'src/common/decorators/current-user-id.decorator';
 import { UpdateManongDto } from './dto/update-manong.dto';
+import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
+import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
 
 @Controller('api/manongs')
 export class ManongController {
   constructor(private readonly manongService: ManongService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AppMaintenanceGuard)
   @Post()
   async index(
     @Body() dto: FetchManongsQueryDto,
@@ -40,7 +42,8 @@ export class ManongController {
     return { success: true, data: manongs };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @AdminOnly()
+  @UseGuards(JwtAuthGuard, AppMaintenanceGuard)
   @Post('all')
   async fetchManongs(
     @Body() dto: FetchManongsQueryDto,
@@ -65,6 +68,7 @@ export class ManongController {
     return { success: true, data: manong };
   }
 
+  @UseGuards(AppMaintenanceGuard)
   @Post('register')
   @UseInterceptors(
     FileFieldsInterceptor(
@@ -104,7 +108,8 @@ export class ManongController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @AdminOnly()
+  @UseGuards(JwtAuthGuard, AppMaintenanceGuard)
   @Put(':id')
   async updateManong(
     @Param('id', ParseIntPipe) id: number,
@@ -118,7 +123,8 @@ export class ManongController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @AdminOnly()
+  @UseGuards(JwtAuthGuard, AppMaintenanceGuard)
   @Delete(':id')
   async deleteManong(
     @CurrentUserId() userId: number,
@@ -133,7 +139,8 @@ export class ManongController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @AdminOnly()
+  @UseGuards(JwtAuthGuard, AppMaintenanceGuard)
   @Post('bulk-delete')
   async bulkDelete(
     @CurrentUserId() userId: number,

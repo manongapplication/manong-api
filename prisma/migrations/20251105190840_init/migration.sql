@@ -299,6 +299,19 @@ CREATE TABLE "ServiceSettings" (
     CONSTRAINT "ServiceSettings_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "AppMaintenance" (
+    "id" SERIAL NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT false,
+    "startTime" TIMESTAMP(3),
+    "endTime" TIMESTAMP(3),
+    "message" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "AppMaintenance_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone");
 

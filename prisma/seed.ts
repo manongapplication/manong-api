@@ -1,4 +1,5 @@
 import { AdminSeeder } from './seeders/admin.seeder';
+import { AppMaintenanceSeeder } from './seeders/app-maintenance.seeder';
 import { PaymentMethodSeeder } from './seeders/payment-method.seeder';
 import { ServiceItemSeeder } from './seeders/service-item.seeder';
 import { ServiceSettingsSeeder } from './seeders/service-settings.seeder';
@@ -14,6 +15,7 @@ async function main() {
   await new PaymentMethodSeeder().run();
   // await new UserSeeder().run();
   await new AdminSeeder().run();
+  await new AppMaintenanceSeeder().run();
 }
 
 main()

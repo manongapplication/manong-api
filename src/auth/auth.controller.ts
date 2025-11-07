@@ -15,6 +15,7 @@ import { RegisterDto } from './dto/register.dto';
 import { CurrentUserId } from 'src/common/decorators/current-user-id.decorator';
 import { UpdateUserDto } from 'src/user/dto/update-user.dto';
 import { LoginDto } from './dto/login.dto';
+import { Public } from 'src/common/decorators/public.decorator';
 
 interface RequestWithUser extends Request {
   user: { id: number };
@@ -84,6 +85,7 @@ export class AuthController {
     };
   }
 
+  @Public()
   @Post('login')
   async login(@Body() dto: LoginDto) {
     return await this.authService.login(dto);

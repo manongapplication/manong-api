@@ -8,6 +8,8 @@ import { UserPaymentMethodModule } from 'src/user-payment-method/user-payment-me
 import { PaymongoModule } from 'src/paymongo/paymongo.module';
 import { UserModule } from 'src/user/user.module';
 import { FcmModule } from 'src/fcm/fcm.module';
+import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
+import { AppMaintenanceService } from 'src/app-maintenance/app-maintenance.service';
 
 @Module({
   imports: [
@@ -20,7 +22,11 @@ import { FcmModule } from 'src/fcm/fcm.module';
     FcmModule,
   ],
   controllers: [ServiceRequestController],
-  providers: [ServiceRequestService],
+  providers: [
+    ServiceRequestService,
+    AppMaintenanceGuard,
+    AppMaintenanceService,
+  ],
   exports: [ServiceRequestService],
 })
 export class ServiceRequestModule {}
