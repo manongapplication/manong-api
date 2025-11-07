@@ -215,13 +215,18 @@ export class ServiceItemService {
       throw new UnauthorizedException('Must be an admin to do this!');
     }
 
-    // Delete in correct order (sub first)
     await this.prisma.$transaction([
       this.prisma.subServiceItem.deleteMany(),
       this.prisma.serviceItem.deleteMany(),
     ]);
 
-    // Wait for deletions to fully complete before seeding
+    await this.prisma.$executeRawUnsafe(
+      `ALTER SEQUENCE "SubServiceItem_id_seq" RESTART WITH 1`,
+    );
+    await this.prisma.$executeRawUnsafe(
+      `ALTER SEQUENCE "ServiceItem_id_seq" RESTART WITH 1`,
+    );
+
     const serviceSeeder = new ServiceItemSeeder();
     const subServiceSeeder = new SubServiceItemSeeder();
 

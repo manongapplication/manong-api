@@ -107,8 +107,11 @@ export class UrgencyLevelService {
 
     await this.prisma.urgencyLevel.deleteMany();
 
-    const urgencyLevelSeeder = new UrgencyLevelSeeder();
+    await this.prisma.$executeRawUnsafe(
+      `ALTER SEQUENCE "UrgencyLevel_id_seq" RESTART WITH 1`,
+    );
 
+    const urgencyLevelSeeder = new UrgencyLevelSeeder();
     await urgencyLevelSeeder.run();
 
     return { success: true, message: 'Reset completed successfully' };
