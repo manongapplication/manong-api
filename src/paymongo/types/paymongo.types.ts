@@ -81,7 +81,12 @@ export interface PaymongoPaymentIntent {
       statement_descriptor: string;
       status: string;
       payment_method_allowed: Array<string>;
-      payments: [];
+      payments: [
+        {
+          id: string;
+          type: string;
+        },
+      ];
       next_action: {
         type: string;
         redirect: {
@@ -150,4 +155,27 @@ export interface PaymongoCustomer {
       };
     },
   ];
+}
+
+export interface PaymongoRefund {
+  data: {
+    id: string;
+    type: string;
+    attributes: {
+      amount: number;
+      balance_transaction_id: string | null;
+      currency: string | null;
+      livemode: boolean;
+      metadata: string | null;
+      notes: string | null;
+      payment_id: string | null;
+      payout_id: string | null;
+      reason: string;
+      status: string;
+      available_at: number;
+      created_at: number;
+      refunded_at: number | null;
+      updated_at: number;
+    };
+  };
 }

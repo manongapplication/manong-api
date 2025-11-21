@@ -4,6 +4,7 @@ export interface UpdateDataServiceRequestDto {
   // id?: number | null | undefined;
   userId?: number | null | undefined;
   manongId?: number | null | undefined;
+  manong?: any;
   serviceItemId?: number | null | undefined;
   subServiceItemId?: number | null | undefined;
   paymentMethodId?: number | null | undefined;
@@ -21,6 +22,8 @@ export interface UpdateDataServiceRequestDto {
   profilePhoto?: string | null | undefined;
   total?: number | null | undefined;
   paymentStatus?: PaymentStatus | null | undefined;
-  paymentTransactionId?: string | null | undefined;
+  paymentIntentId?: string | null | undefined;
+  paymentIdOnGateway?: string | null | undefined;
   paymentRedirectUrl?: string | null | undefined;
+  paymentTransactions?: any;
 }

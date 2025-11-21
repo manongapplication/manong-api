@@ -63,6 +63,15 @@ import { AppMaintenanceModule } from './app-maintenance/app-maintenance.module';
 import { WordpressPostService } from './wordpress-post/wordpress-post.service';
 import { WordpressPostController } from './wordpress-post/wordpress-post.controller';
 import { WordpressPostModule } from './wordpress-post/wordpress-post.module';
+import { PaymentTransactionService } from './payment-transaction/payment-transaction.service';
+import { PaymentTransactionController } from './payment-transaction/payment-transaction.controller';
+import { PaymentTransactionModule } from './payment-transaction/payment-transaction.module';
+import { RefundRequestService } from './refund-request/refund-request.service';
+import { RefundRequestController } from './refund-request/refund-request.controller';
+import { RefundRequestModule } from './refund-request/refund-request.module';
+import { ManongReportService } from './manong-report/manong-report.service';
+import { ManongReportController } from './manong-report/manong-report.controller';
+import { ManongReportModule } from './manong-report/manong-report.module';
 
 @Module({
   imports: [
@@ -106,6 +115,9 @@ import { WordpressPostModule } from './wordpress-post/wordpress-post.module';
     FeedbackModule,
     AppMaintenanceModule,
     WordpressPostModule,
+    PaymentTransactionModule,
+    RefundRequestModule,
+    ManongReportModule,
   ],
   controllers: [
     AppController,
@@ -125,6 +137,9 @@ import { WordpressPostModule } from './wordpress-post/wordpress-post.module';
     EnvController,
     AppMaintenanceController,
     WordpressPostController,
+    PaymentTransactionController,
+    RefundRequestController,
+    ManongReportController,
   ],
   providers: [
     UserService,
@@ -146,6 +161,9 @@ import { WordpressPostModule } from './wordpress-post/wordpress-post.module';
     FeedbackService,
     AppMaintenanceService,
     WordpressPostService,
+    PaymentTransactionService,
+    RefundRequestService,
+    ManongReportService,
   ],
 })
 export class AppModule {

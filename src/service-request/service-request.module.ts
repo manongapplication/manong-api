@@ -10,6 +10,8 @@ import { UserModule } from 'src/user/user.module';
 import { FcmModule } from 'src/fcm/fcm.module';
 import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
 import { AppMaintenanceService } from 'src/app-maintenance/app-maintenance.service';
+import { PaymentTransactionModule } from 'src/payment-transaction/payment-transaction.module';
+import { RefundRequestModule } from 'src/refund-request/refund-request.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { AppMaintenanceService } from 'src/app-maintenance/app-maintenance.servi
     forwardRef(() => PaymongoModule),
     UserModule,
     FcmModule,
+    PaymentTransactionModule,
+    forwardRef(() => RefundRequestModule),
   ],
   controllers: [ServiceRequestController],
   providers: [

@@ -101,4 +101,17 @@ export class AuthController {
       message: 'Checked for password!',
     };
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('reset-password')
+  async resetPassword(
+    @CurrentUserId() userId: number,
+    @Body('password') password: string,
+  ) {
+    await this.authService.resetPassword(userId, password);
+    return {
+      success: true,
+      message: 'Password changed successfully!',
+    };
+  }
 }

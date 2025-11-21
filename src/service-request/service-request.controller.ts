@@ -218,22 +218,22 @@ export class ServiceRequestController {
     };
   }
 
-  @Post(':id/cancel')
-  async cancelServiceRequest(
-    @CurrentUserId() userId: number,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
-    const result = await this.serviceRequestService.cancelServiceRequest(
-      userId,
-      id,
-    );
+  // @Post(':id/cancel')
+  // async cancelServiceRequest(
+  //   @CurrentUserId() userId: number,
+  //   @Param('id', ParseIntPipe) id: number,
+  // ) {
+  //   const result = await this.serviceRequestService.cancelServiceRequest(
+  //     userId,
+  //     id,
+  //   );
 
-    return {
-      success: true,
-      data: result,
-      message: 'The service request has been cancelled.',
-    };
-  }
+  //   return {
+  //     success: true,
+  //     data: result,
+  //     message: 'The service request has been cancelled.',
+  //   };
+  // }
 
   @Post(':id/expired')
   async expiredServiceRequest(
@@ -253,9 +253,14 @@ export class ServiceRequestController {
   }
 
   @Post(':id/mark-completed')
-  async markServiceRequestCompleted(@Param('id', ParseIntPipe) id: number) {
-    const result =
-      await this.serviceRequestService.markServiceRequestCompleted(id);
+  async markServiceRequestCompleted(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUserId() userId: number,
+  ) {
+    const result = await this.serviceRequestService.markServiceRequestCompleted(
+      id,
+      userId,
+    );
 
     return {
       success: true,

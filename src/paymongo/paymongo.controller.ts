@@ -11,6 +11,7 @@ import {
   ParseIntPipe,
   Query,
   Get,
+  Res,
 } from '@nestjs/common';
 import { PaymongoService } from './paymongo.service';
 import { CreateCardDto } from './dto/create-card.dto';
@@ -19,6 +20,9 @@ import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { CreateAttachIntentDto } from './dto/create-attach-intent.dto';
 import type { Response } from 'express';
+import { join } from 'path';
+import { FetchRefundPaymentDto } from './dto/fetch-refund-payment.dto';
+import { readFileSync } from 'fs';
 
 @Controller('api/paymongo')
 export class PaymongoController {
@@ -127,20 +131,31 @@ export class PaymongoController {
   // }
 
   @Get('payment-complete')
-  paymentcompleteOutside(
+  async paymentcompleteOutside(
     @Query('id') id: number,
     @Query('payment_intent_id') payment_intent_id: string,
+    @Res() res: Response,
   ) {
-    const result = this.paymongoService.paymentCompleteOutside(
+    const result = await this.paymongoService.paymentCompleteOutside(
       id,
       payment_intent_id,
     );
 
-    return {
-      success: true,
-      data: result,
-      message: result != null ? 'Successfull' : 'Failed',
-    };
+    if (!result) {
+      return res.status(400).send('Payment verification failed.');
+    }
+
+    // Generate a short-lived JWT token for the frontend
+    const token = result.token;
+
+    // Read static HTML
+    const filePath = join(process.cwd(), 'public', 'payment-successful.html');
+    let html = readFileSync(filePath, 'utf-8');
+
+    // Inject token into HTML
+    html = html.replace('%%JWT_TOKEN%%', token);
+
+    res.send(html);
   }
 
   // @UseGuards(JwtAuthGuard)
@@ -212,5 +227,19 @@ export class PaymongoController {
     }
 
     return { received: true };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  async fetchRefund(@Body() dto: FetchRefundPaymentDto) {
+    const result = await this.paymongoService.fetchRefund(
+      dto.userId,
+      dto.serviceRequest,
+    );
+
+    return {
+      success: true,
+      data: result,
+      message: 'Service Request refund fetched!',
+    };
   }
 }

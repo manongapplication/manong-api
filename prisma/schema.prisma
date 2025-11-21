@@ -72,9 +72,18 @@ model User {
   notifications         UserNotification[]
   providerVerifications ProviderVerification[] @relation("UserProviderVerifications")
   reviewedVerifications ProviderVerification[] @relation("ReviewerProviderVerifications")
+  paymentTransactions   PaymentTransaction[]
+
+  refundsRequested RefundRequest[]
+  refundsReviewed  RefundRequest[] @relation("RefundReviewer")
+
+  requestedAdjustments Adjustment[] @relation("AdjustmentRequester")
+  approvedAdjustments  Adjustment[] @relation("AdjustmentApprover")
 
   givenFeedbacks    Feedback[] @relation("Reviewer")
   receivedFeedbacks Feedback[] @relation("Reviewee")
+
+  manongReports ManongReport[]
 }
 
 model PasswordResetToken {
@@ -179,10 +188,12 @@ enum ServiceRequestStatus {
   paused
   pending
   expired
+  refunding
 }
 
 model ServiceRequest {
   id               Int     @id @default(autoincrement())
+  requestNumber    String  @unique
   userId           Int
   manongId         Int?
   serviceItemId    Int
@@ -197,21 +208,23 @@ model ServiceRequest {
   customerLat         Decimal @db.Decimal(10, 7)
   customerLng         Decimal @db.Decimal(10, 7)
 
-  notes                String?
-  status               ServiceRequestStatus?
-  total                Decimal?              @db.Decimal(10, 2)
-  paymentStatus        PaymentStatus         @default(unpaid)
-  paymentTransactionId String?               @unique
-  paymentRedirectUrl   String?
+  notes         String?
+  status        ServiceRequestStatus?
+  total         Decimal?              @db.Decimal(10, 2)
+  paymentStatus PaymentStatus         @default(unpaid)
 
-  user           User            @relation("UserRequests", fields: [userId], references: [id], onDelete: Cascade)
-  manong         User?           @relation("ManongRequests", fields: [manongId], references: [id], onDelete: Cascade)
-  serviceItem    ServiceItem     @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
-  subServiceItem SubServiceItem? @relation(fields: [subServiceItemId], references: [id], onDelete: Cascade)
-  paymentMethod  PaymentMethod?  @relation(fields: [paymentMethodId], references: [id], onDelete: Cascade)
-  urgencyLevel   UrgencyLevel    @relation(fields: [urgencyLevelId], references: [id], onDelete: Cascade)
-  messages       Message[]
-  feedback       Feedback?
+  user                User                 @relation("UserRequests", fields: [userId], references: [id], onDelete: Cascade)
+  manong              User?                @relation("ManongRequests", fields: [manongId], references: [id], onDelete: Cascade)
+  serviceItem         ServiceItem          @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
+  subServiceItem      SubServiceItem?      @relation(fields: [subServiceItemId], references: [id], onDelete: Cascade)
+  paymentMethod       PaymentMethod?       @relation(fields: [paymentMethodId], references: [id], onDelete: Cascade)
+  urgencyLevel        UrgencyLevel         @relation(fields: [urgencyLevelId], references: [id], onDelete: Cascade)
+  messages            Message[]
+  feedback            Feedback?
+  paymentTransactions PaymentTransaction[]
+  refundRequests      RefundRequest[]
+  manongReport        ManongReport?
+  adjustments         Adjustment[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -227,6 +240,79 @@ model ServiceRequest {
   @@index([manongId])
   @@index([status])
   @@index([createdAt])
+}
+
+enum TransactionType {
+  payment
+  refund
+  adjustment
+}
+
+model PaymentTransaction {
+  id                 Int             @id @default(autoincrement())
+  serviceRequestId   Int
+  userId             Int
+  provider           String // 'paymongo', 'stripe', etc.
+  paymentIntentId    String? // store payment_intent_id (optional if you want both)
+  paymentIdOnGateway String? // Payment ID for refunds
+  refundIdOnGateway  String? // for refund ID
+  handledManually    Boolean         @default(false)
+  amount             Decimal         @db.Decimal(10, 2)
+  currency           String          @default("PHP")
+  status             PaymentStatus   @default(pending)
+  type               TransactionType @default(payment)
+  description        String?
+  metadata           String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  seenAt    DateTime?
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  refundRequest  RefundRequest?
+  adjustments    Adjustment[]
+
+  @@index([serviceRequestId])
+  @@index([userId])
+  @@index([status])
+}
+
+enum RefundStatus {
+  pending
+  approved
+  rejected
+  failed
+  requiresAction
+  processing
+  processed
+}
+
+model RefundRequest {
+  id                   Int          @id @default(autoincrement())
+  serviceRequestId     Int
+  userId               Int
+  paymentTransactionId Int?         @unique
+  reason               String
+  evidenceUrl          String?
+  amount               Decimal?     @db.Decimal(10, 2)
+  status               RefundStatus @default(pending)
+  handledManually      Boolean      @default(false)
+  reviewedBy           Int?
+  remarks              String?
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  reviewedAt DateTime?
+
+  serviceRequest     ServiceRequest      @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentTransaction PaymentTransaction? @relation(fields: [paymentTransactionId], references: [id], onDelete: Cascade)
+  reviewedByUser     User?               @relation("RefundReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([serviceRequestId])
+  @@index([userId])
+  @@index([status])
 }
 
 model Feedback {
@@ -306,6 +392,32 @@ model ManongAssistant {
   deletedAt       DateTime?
 
   manongProfile ManongProfile @relation(fields: [manongProfileId], references: [id], onDelete: Cascade)
+}
+
+model ManongReport {
+  id               Int      @id @default(autoincrement())
+  serviceRequestId Int      @unique
+  manongId         Int
+  summary          String // Short description: "Replaced AC capacitor"
+  details          String? // Optional detailed report
+  materialsUsed    String? // e.g., "2m wire, 1x filter"
+  laborDuration    Int? // Minutes or hours worked
+  imagesPath       String // Optional: before/after photos
+  issuesFound      String? // If any
+  customerPresent  Boolean? // Whether customer was there at completion
+  verifiedByUser   Boolean? @default(false) // Customer confirms job done
+
+  totalCost       Decimal? @db.Decimal(10, 2) // Materials + labor total
+  warrantyInfo    String? // "30-day labor warranty"
+  recommendations String? // "Suggest AC maintenance every 6 months"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  manong         User           @relation(fields: [manongId], references: [id], onDelete: Cascade)
+
+  @@index([manongId])
 }
 
 enum VerificationStatus {
@@ -424,4 +536,54 @@ model AppMaintenance {
   message   String? // optional message to show to users
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+}
+
+enum AdjustmentType {
+  refund
+  discount
+  fee
+  correction
+  promotion
+  penalty
+}
+
+enum AdjustmentStatus {
+  pending
+  approved
+  rejected
+  applied
+  failed
+}
+
+model Adjustment {
+  id                   Int              @id @default(autoincrement())
+  serviceRequestId     Int
+  paymentTransactionId Int? // Link to original payment transaction
+  type                 AdjustmentType
+  status               AdjustmentStatus @default(pending)
+
+  amount      Decimal @db.Decimal(10, 2) // Positive for charges, negative for refunds
+  currency    String  @default("PHP")
+  reason      String // Why this adjustment was made
+  description String? // Detailed explanation
+
+  requestedBy Int? // User who requested (for refunds)
+  approvedBy  Int? // Admin who approved
+  metadata    String? // Additional data (gateway responses, etc.)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  requestedAt DateTime?
+  approvedAt  DateTime?
+  processedAt DateTime?
+
+  serviceRequest     ServiceRequest      @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  paymentTransaction PaymentTransaction? @relation(fields: [paymentTransactionId], references: [id], onDelete: SetNull)
+  requestedByUser    User?               @relation("AdjustmentRequester", fields: [requestedBy], references: [id], onDelete: SetNull)
+  approvedByUser     User?               @relation("AdjustmentApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
+
+  @@index([serviceRequestId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
 }

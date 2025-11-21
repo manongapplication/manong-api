@@ -342,6 +342,6 @@ export class UserSeeder {
       });
     }
 
-    console.log('✅ Users, manongs, and customers seeded successfully!');
+    console.log('Users, manongs, and customers seeded successfully!');
   }
 }

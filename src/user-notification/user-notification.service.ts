@@ -48,6 +48,18 @@ export class UserNotificationService {
     });
   }
 
+  async seenAllNotification(userId: number) {
+    return await this.prisma.userNotification.updateMany({
+      where: {
+        userId,
+        seenAt: null,
+      },
+      data: {
+        seenAt: new Date(),
+      },
+    });
+  }
+
   async hasUnreadNotification(userId: number) {
     const count = await this.prisma.userNotification.count({
       where: {

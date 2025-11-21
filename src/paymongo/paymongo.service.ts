@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { PaymentMethodService } from 'src/payment-method/payment-method.service';
 import { UserPaymentMethodService } from 'src/user-payment-method/user-payment-method.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import {
@@ -8,6 +7,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { CreateAttachIntentDto } from './dto/create-attach-intent.dto';
@@ -16,10 +16,16 @@ import {
   PaymongoAttach,
   PaymongoPaymentIntent,
   PaymongoPaymentMethod,
+  PaymongoRefund,
 } from './types/paymongo.types';
 import { ServiceRequestService } from 'src/service-request/service-request.service';
 import { UpdateServiceRequestDto } from 'src/service-request/dto/update-service-request.dto';
-import { PaymentStatus } from '@prisma/client';
+import { PaymentStatus, ServiceRequestStatus } from '@prisma/client';
+import { mapPaymongoRefundStatus } from 'src/common/utils/payment.util';
+import { AuthService } from 'src/auth/auth.service';
+import { FIVE_MINUTES } from 'src/common/utils/time.util';
+import { calculateRefundAmount } from 'src/common/utils/refund.util';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class PaymongoService {
@@ -29,7 +35,8 @@ export class PaymongoService {
     private readonly userPaymentMethod: UserPaymentMethodService,
     @Inject(forwardRef(() => ServiceRequestService))
     private readonly serviceRequestService: ServiceRequestService,
-    private readonly paymentMethod: PaymentMethodService,
+    private readonly authService: AuthService,
+    private readonly userService: UserService,
   ) {}
 
   private baseUrl = 'https://api.paymongo.com/v1';
@@ -194,13 +201,18 @@ export class PaymongoService {
         `userPaymentMethod ${JSON.stringify(userPaymentMethod)}`,
       );
 
-      if (userPaymentMethod.paymentMethod.code == 'gcash') {
+      if (
+        userPaymentMethod.paymentMethod.code == 'gcash' ||
+        userPaymentMethod.paymentMethod.code == 'paymaya'
+      ) {
         const cardDto: CreateCardDto = {
-          type: 'gcash',
+          type: userPaymentMethod.paymentMethod.code,
         };
 
         await this.createPaymentMethod(userId, cardDto);
-        this.logger.debug(`Payment created for gcash`);
+        this.logger.debug(
+          `Payment created for ${userPaymentMethod.paymentMethod.code}`,
+        );
 
         userPaymentMethod =
           await this.userPaymentMethod.getUserDefaultPaymentMethod(userId);
@@ -272,15 +284,67 @@ export class PaymongoService {
   //   }
   // }
 
-  async paymentCompleteOutside(id: number, payment_intent_id: string) {
+  async fetchPaymentIntent(
+    payment_intent_id: string,
+  ): Promise<PaymongoPaymentIntent | null> {
+    try {
+      const response = await axios.get<PaymongoPaymentIntent>(
+        `${this.baseUrl}/payment_intents/${payment_intent_id}`,
+        {
+          headers: this.headers,
+        },
+      );
+
+      return response.data;
+    } catch (e) {
+      this.logger.error(`Error fetching payment ${e}`);
+      return null;
+    }
+  }
+
+  async paymentCompleteOutside(
+    id: number,
+    payment_intent_id: string,
+  ): Promise<{ redirectUrl: string; token: string } | null> {
     if (payment_intent_id == null) {
       throw new BadGatewayException('Payment intent id is required.');
     }
 
+    const serviceRequest = await this.serviceRequestService.findById(id);
+
+    if (!serviceRequest) {
+      throw new NotFoundException('Service Request not found!');
+    }
+
+    let token: string = '';
+
+    const createdAt: any = new Date(serviceRequest.createdAt);
+    const now: any = new Date();
+    const diff = now - createdAt;
+
+    if (
+      serviceRequest.paymentStatus === PaymentStatus.paid &&
+      diff > FIVE_MINUTES
+    ) {
+      token = '';
+    } else {
+      token = this.authService.giveTemporaryToken(serviceRequest.userId);
+    }
+
     const dto: UpdateServiceRequestDto = {
-      status: 'awaitingAcceptance',
+      status: ServiceRequestStatus.awaitingAcceptance,
       paymentStatus: PaymentStatus.paid,
     };
+
+    const paymentIntent = await this.fetchPaymentIntent(payment_intent_id);
+
+    if (!paymentIntent) {
+      this.logger.error('Failed to fetch payment intent');
+      return null;
+    }
+
+    const paymentIdOnGateway = paymentIntent.data.attributes.payments[0]?.id;
+    dto.paymentIdOnGateway = paymentIdOnGateway;
 
     const result = await this.serviceRequestService.updateServiceRequest(
       id,
@@ -289,6 +353,164 @@ export class PaymongoService {
 
     this.logger.debug(`paymentcompleteOutside: ${JSON.stringify(result)}`);
 
-    return `manong_application://payment-complete?payment_intent_id=${payment_intent_id}`;
+    return {
+      redirectUrl: `manong_application://payment-complete?payment_intent_id=${payment_intent_id}`,
+      token,
+    };
+  }
+
+  async requestRefund(
+    userId: number,
+    serviceRequestId: number,
+  ): Promise<{ data: PaymongoRefund; refundAmount: number } | null> {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found!');
+    }
+
+    const serviceRequest =
+      await this.serviceRequestService.findByIdIncludesPaymentTransaction(
+        serviceRequestId,
+      );
+
+    if (!serviceRequest) {
+      throw new NotFoundException('Service Request not found!');
+    }
+
+    if (serviceRequest.userId !== userId) {
+      throw new BadGatewayException('User is not permitted!');
+    }
+
+    const paymentIntentId: any =
+      serviceRequest.paymentTransactions[0].paymentIntentId;
+
+    if (!paymentIntentId) {
+      throw new NotFoundException('Service Request intent id not found!');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const paymentIntent = await this.fetchPaymentIntent(paymentIntentId);
+    const paymentId = paymentIntent?.data.attributes.payments[0].id;
+
+    if (!paymentId) {
+      throw new NotFoundException('Payment Id not found!');
+    }
+
+    // Calculate refund amount
+    const refundAmount = calculateRefundAmount(
+      serviceRequest.status!,
+      Number(serviceRequest.paymentTransactions[0].amount),
+    );
+
+    // Check if this is a same-day payment
+    const paymentCreatedAt = new Date(serviceRequest.createdAt);
+    const now = new Date();
+    const isSameDay = paymentCreatedAt.toDateString() === now.toDateString();
+
+    // Check if this is a partial refund
+    const originalAmount = Number(serviceRequest.paymentTransactions[0].amount);
+    const isPartialRefund = refundAmount < originalAmount;
+
+    // Paymongo doesn't allow same-day partial refunds
+    if (isSameDay && isPartialRefund) {
+      this.logger.error(
+        'Paymongo Error: Cannot partially refund for payments done on the same day',
+      );
+      throw new BadGatewayException('same_day_partial_refund_not_allowed');
+    }
+
+    const data = {
+      attributes: {
+        amount: refundAmount * 100,
+        payment_id: paymentId,
+        reason: 'requested_by_customer',
+      },
+    };
+
+    console.log(`requestRefund ${JSON.stringify(data)}`);
+
+    try {
+      const response = await axios.post<PaymongoRefund>(
+        `${this.baseUrl}/refunds`,
+        {
+          data,
+        },
+        {
+          headers: this.headers,
+        },
+      );
+
+      const dto: UpdateServiceRequestDto = {
+        refundIdOnGateway: response.data.data.id,
+        paymentStatus: mapPaymongoRefundStatus(
+          response.data.data.attributes.status ?? '',
+        ),
+      };
+
+      await this.serviceRequestService.updateServiceRequestStatusForRefund(
+        serviceRequest.id,
+        dto,
+      );
+
+      return { data: response.data, refundAmount };
+    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (axios.isAxiosError(e) && e.response?.data?.errors) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const errors = e.response.data.errors;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const firstError = errors[0];
+        this.logger.error(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          `Paymongo Refund Error - Code: ${firstError.code}, Detail: ${firstError.detail}`,
+        );
+        this.logger.debug(JSON.stringify(data));
+
+        // Re-throw specific errors so they can be handled upstream
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (firstError.code === 'same_day_partial_refund_not_allowed') {
+          throw new BadGatewayException('same_day_partial_refund_not_allowed');
+        }
+      } else {
+        this.logger.error(`Unexpected refund error: ${e}`);
+      }
+    }
+
+    return null;
+  }
+
+  async fetchRefund(
+    userId: number,
+    serviceRequestId: number,
+  ): Promise<PaymongoRefund | null> {
+    const serviceRequest =
+      await this.serviceRequestService.findByIdIncludesPaymentTransaction(
+        serviceRequestId,
+      );
+
+    if (!serviceRequest) {
+      throw new NotFoundException('Service Request not found!');
+    }
+
+    if (serviceRequest.userId != userId) {
+      throw new BadGatewayException('User is not permitted!');
+    }
+
+    const refundId = serviceRequest.paymentTransactions[0].refundIdOnGateway;
+
+    try {
+      const response = await axios.get<PaymongoRefund>(
+        `${this.baseUrl}/refunds/${refundId}`,
+        {
+          headers: this.headers,
+        },
+      );
+
+      return response.data;
+    } catch (e) {
+      this.logger.error(`Error fetching refund ${e}`);
+    }
+
+    return null;
   }
 }

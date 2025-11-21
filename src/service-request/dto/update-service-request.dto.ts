@@ -107,4 +107,12 @@ export class UpdateServiceRequestDto {
   @Type(() => Date)
   @IsDate()
   deletedAt?: string;
+
+  @IsOptional()
+  @IsString()
+  paymentIdOnGateway?: string;
+
+  @IsOptional()
+  @IsString()
+  refundIdOnGateway?: string;
 }

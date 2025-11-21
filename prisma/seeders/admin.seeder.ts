@@ -22,6 +22,6 @@ export class AdminSeeder {
       },
     });
 
-    console.log('✅ Admin seeded successfully!');
+    console.log('Admin seeded successfully!');
   }
 }

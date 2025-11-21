@@ -16,3 +16,19 @@ export function mapPaymongoStatus(status: string): PaymentStatus {
       return PaymentStatus.unpaid; // fallback
   }
 }
+
+export function mapPaymongoRefundStatus(refundStatus: string): PaymentStatus {
+  switch (refundStatus) {
+    case 'pending':
+      return PaymentStatus.pending;
+      break;
+    case 'succeeded':
+      return PaymentStatus.refunded;
+      break;
+    case 'failed':
+      return PaymentStatus.failed;
+      break;
+    default:
+      return PaymentStatus.pending; // fallback
+  }
+}

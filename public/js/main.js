@@ -3,20 +3,20 @@ let API_URL = '';
 async function loadEnv() {
   const currentHost = window.location.hostname;
 
-  // ✅ If inside WordPress or your production domain
+  // If inside WordPress or your production domain
   if (currentHost === 'manongapp.com' || currentHost === 'www.manongapp.com') {
     API_URL = `https://api.manongapp.com/api`;
-    console.log('✅ Using API_URL (WordPress):', API_URL);
+    console.log('Using API_URL (WordPress):', API_URL);
     return;
   }
 
-  // ✅ Otherwise (like local dev or test), try fetching /env
+  // Otherwise (like local dev or test), try fetching /env
   try {
     const res = await fetch('/env');
     if (!res.ok) throw new Error('No /env found');
     const data = await res.json();
     API_URL = data.API_URL || 'http://localhost:3000/api';
-    console.log('✅ Using API_URL (from /env):', API_URL);
+    console.log('Using API_URL (from /env):', API_URL);
   } catch (e) {
     // fallback for local
     API_URL = 'http://localhost:3000/api';
@@ -131,7 +131,7 @@ const initCurrentLocBtn = () => {
         // Reverse geocode to get address and update input
         await reverseGeocode(latitude, longitude);
 
-        note.textContent = '✅ Current location set!';
+        note.textContent = 'Current location set!';
         note.className = 'text-sm font-semibold text-green-600 mb-2';
 
         // Clear previous search results
@@ -445,7 +445,7 @@ function initMap() {
         document.getElementById('longitude').value = lng;
         reverseGeocode(lat, lng);
         const note = document.getElementById('searchImportantNote');
-        note.textContent = '✅ Current location detected!';
+        note.textContent = 'Current location detected!';
         note.className = 'text-sm font-semibold text-green-600 mb-2';
       },
       (error) => {
@@ -562,7 +562,7 @@ function selectLocation(result) {
   marker.setLatLng([lat, lon]);
 
   const note = document.getElementById('searchImportantNote');
-  note.textContent = '✅ Location set!';
+  note.textContent = 'Location set!';
   note.className = 'text-sm font-semibold text-green-600 mb-2';
 
   // Hide results

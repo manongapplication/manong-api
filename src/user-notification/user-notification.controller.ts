@@ -72,6 +72,18 @@ export class UserNotificationController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('seenAll')
+  async seenAllNotification(@CurrentUserId() userId: number) {
+    const data = await this.userNotificationService.seenAllNotification(userId);
+
+    return {
+      success: true,
+      data,
+      message: 'Seened All notificaitons',
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('unread/count')
   async getUnreadCount(@CurrentUserId() userId: number) {
     const result =

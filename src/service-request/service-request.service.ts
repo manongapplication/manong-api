@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   Injectable,
   Logger,
@@ -13,8 +14,11 @@ import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import {
   AccountStatus,
   PaymentStatus,
+  PaymentTransaction,
   Prisma,
+  ServiceRequest,
   ServiceRequestStatus,
+  TransactionType,
   UserRole,
 } from '@prisma/client';
 import { CalculationUtil } from 'src/common/utils/calculation.util';
@@ -26,10 +30,19 @@ import { PaymongoError } from 'src/paymongo/types/paymongo-error.types';
 import { CreatePaymentIntentDto } from 'src/paymongo/dto/create-payment-intent.dto';
 import { CompleteServiceRequestDto } from './dto/complete-service-request.dto';
 import { CompleteServiceRequest } from './types/service-request.types';
-import { mapPaymongoStatus } from 'src/common/utils/payment.util';
+import {
+  mapPaymongoRefundStatus,
+  mapPaymongoStatus,
+} from 'src/common/utils/payment.util';
 import { UserService } from 'src/user/user.service';
 import { FcmService } from 'src/fcm/fcm.service';
 import { CreateNotificationDto } from 'src/fcm/dto/create-notification.dto';
+import { generateRequestNumber } from 'src/common/utils/request.util';
+import { PaymentTransactionService } from 'src/payment-transaction/payment-transaction.service';
+import { CreatePaymentTransactionDto } from 'src/payment-transaction/dto/create-payment-transaction.dto';
+import { RefundRequestService } from 'src/refund-request/refund-request.service';
+import { PaymongoRefund } from 'src/paymongo/types/paymongo.types';
+import { calculateRefundAmount } from 'src/common/utils/refund.util';
 
 @Injectable()
 export class ServiceRequestService {
@@ -37,9 +50,11 @@ export class ServiceRequestService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly userPaymentMethodService: UserPaymentMethodService,
-    private readonly paymongService: PaymongoService,
+    private readonly paymongoService: PaymongoService,
     private readonly userService: UserService,
     private readonly fcmService: FcmService,
+    private readonly paymentTransactionService: PaymentTransactionService,
+    private readonly refundRequestService: RefundRequestService,
   ) {}
 
   async findById(id: number) {
@@ -53,12 +68,23 @@ export class ServiceRequestService {
     });
   }
 
+  async findByIdIncludesPaymentTransaction(id: number) {
+    return this.prisma.serviceRequest.findUnique({
+      where: { id },
+      include: {
+        paymentTransactions: true,
+      },
+    });
+  }
+
   async findByIdIncludesUserAndManong(id: number) {
     return this.prisma.serviceRequest.findUnique({
       where: { id },
       include: {
         user: true,
         manong: true,
+        serviceItem: true,
+        subServiceItem: true,
       },
     });
   }
@@ -153,10 +179,13 @@ export class ServiceRequestService {
       imagePaths.push(filePath);
     }
 
+    const requestNumber = generateRequestNumber();
+
     // Create the service request
     const created = await this.prisma.serviceRequest.create({
       data: {
         userId,
+        requestNumber,
         serviceItemId: dto.serviceItemId,
         subServiceItemId: dto.subServiceItemId,
         paymentMethodId: dto.paymentMethodId,
@@ -212,6 +241,13 @@ export class ServiceRequestService {
           },
         },
         feedback: true,
+        paymentTransactions: {
+          include: {
+            refundRequest: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        refundRequests: true,
       },
       skip,
       take: limit,
@@ -246,11 +282,85 @@ export class ServiceRequestService {
         customerLat: dto.customerLat,
         customerLng: dto.customerLng,
         status: dto.status,
-        paymentTransactionId: dto.paymentTransactionId,
-        paymentRedirectUrl: dto.paymentRedirectUrl,
         paymentStatus: dto.paymentStatus,
         deletedAt: dto.deletedAt,
         arrivedAt: dto.arrivedAt,
+      },
+      include: {
+        paymentTransactions: true,
+      },
+    });
+
+    const latest = await this.prisma.paymentTransaction.findFirst({
+      where: { serviceRequestId: id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (
+      latest &&
+      dto.paymentStatus !== undefined &&
+      dto.paymentStatus !== null
+    ) {
+      await this.prisma.paymentTransaction.update({
+        where: { id: latest.id },
+        data: {
+          status: dto.paymentStatus,
+          ...(dto.paymentIdOnGateway && {
+            paymentIdOnGateway: dto.paymentIdOnGateway,
+          }),
+          ...(dto.refundIdOnGateway && {
+            refundIdOnGateway: dto.refundIdOnGateway,
+          }),
+        },
+      });
+    }
+
+    return updated;
+  }
+
+  async updateServiceRequestPaymentStatus(
+    id: number,
+    paymentStatus: PaymentStatus,
+  ) {
+    const request = await this.findOrFail(id);
+
+    if (!request) {
+      throw new NotFoundException(`ServiceRequest with id ${id} not found`);
+    }
+
+    return await this.prisma.serviceRequest.update({
+      where: { id },
+      data: {
+        paymentStatus,
+      },
+      include: {
+        paymentTransactions: true,
+      },
+    });
+  }
+
+  async updateServiceRequestStatusForRefund(
+    id: number,
+    dto: UpdateServiceRequestDto,
+  ) {
+    const request = await this.findOrFail(id);
+
+    if (!request) {
+      throw new NotFoundException(`ServiceRequest with id ${id} not found`);
+    }
+
+    const updated = await this.prisma.serviceRequest.update({
+      where: { id },
+      data: {
+        paymentStatus: dto.paymentStatus,
+        paymentTransactions: {
+          updateMany: {
+            where: { type: TransactionType.payment },
+            data: {
+              refundIdOnGateway: dto.refundIdOnGateway,
+            },
+          },
+        },
       },
     });
 
@@ -267,6 +377,7 @@ export class ServiceRequestService {
         subServiceItem: true,
         urgencyLevel: true,
         paymentMethod: true,
+        refundRequests: true,
       },
     });
 
@@ -304,6 +415,9 @@ export class ServiceRequestService {
         urgencyLevel: true,
         paymentMethod: true,
         feedback: true,
+        paymentTransactions: true,
+        refundRequests: true,
+        manongReport: true,
       },
     });
 
@@ -337,7 +451,7 @@ export class ServiceRequestService {
         `updateServiceRequestData ${JSON.stringify(intentDto)}`,
       );
 
-      const result = await this.paymongService.createPayment(
+      const result = await this.paymongoService.createPayment(
         userId,
         intentDto,
         serviceRequestId,
@@ -354,7 +468,8 @@ export class ServiceRequestService {
       this.logger.debug(`paymentStatus ${paymentStatus}`);
 
       updateData.paymentStatus = mapPaymongoStatus(paymentStatus);
-      updateData.paymentTransactionId = result.data.id;
+      dto.paymentStatus = updateData.paymentStatus;
+      updateData.paymentIntentId = result.data.id;
       updateData.paymentRedirectUrl =
         result.data.attributes.next_action?.redirect?.url ?? null;
     } catch (err) {
@@ -380,6 +495,7 @@ export class ServiceRequestService {
         paymentMethod: true,
         subServiceItem: true,
         urgencyLevel: true,
+        serviceItem: true,
       },
     });
 
@@ -435,11 +551,69 @@ export class ServiceRequestService {
           this.logger.debug('Gcash payment!');
         }
         break;
+      case 'paymaya':
+        {
+          await this.updateServiceRequestData(
+            userId,
+            updateData,
+            dto,
+            exists.id,
+            exists.subServiceItem?.title,
+          );
+          this.logger.debug('Maya payment!');
+        }
+        break;
 
       default:
         updateData.paymentStatus = PaymentStatus.failed;
         updateData.status = 'failed';
         break;
+    }
+
+    if (updateData.manongId) {
+      updateData.manong = { connect: { id: updateData.manongId } };
+      delete updateData.manongId;
+    }
+
+    const metadata = {
+      requestNumber: exists.requestNumber,
+      userId: userId,
+      serviceType: exists.serviceItem.title,
+      subServiceType: exists.subServiceItem?.title,
+    };
+
+    if (paymentMethod?.code != 'cash') {
+      updateData.paymentTransactions = {
+        create: {
+          user: { connect: { id: userId } },
+          provider: paymentMethod.code,
+          amount: updateData.total ?? 0,
+          currency: dto.currency,
+          status: dto.paymentStatus,
+          type: TransactionType.payment,
+        },
+      };
+
+      if (updateData.paymentIntentId || updateData.paymentRedirectUrl) {
+        updateData.paymentTransactions = {
+          create: {
+            user: { connect: { id: userId } },
+            provider: paymentMethod.code,
+            amount: updateData.total ?? 0,
+            currency: dto.currency,
+            status: dto.paymentStatus,
+            type: TransactionType.payment,
+            paymentIntentId: updateData.paymentIntentId!,
+            metadata: JSON.stringify({
+              ...metadata,
+              paymentRedirectUrl: updateData.paymentRedirectUrl,
+            }),
+          },
+        };
+
+        delete updateData.paymentIntentId;
+        delete updateData.paymentRedirectUrl;
+      }
     }
 
     const updated = await this.prisma.serviceRequest.update({
@@ -449,6 +623,7 @@ export class ServiceRequestService {
         user: true,
         serviceItem: true,
         subServiceItem: true,
+        paymentTransactions: true,
       },
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: updateData as any,
@@ -470,7 +645,7 @@ export class ServiceRequestService {
       throw error;
     }
 
-    return updated;
+    return { ...updated };
   }
 
   async acceptServiceRequest(userId: number, id: number) {
@@ -483,7 +658,7 @@ export class ServiceRequestService {
     const result = await this.prisma.serviceRequest.update({
       where: { id },
       data: {
-        status: 'accepted',
+        status: ServiceRequestStatus.accepted,
       },
     });
 
@@ -498,7 +673,11 @@ export class ServiceRequestService {
     }
 
     const ongoing = await this.prisma.serviceRequest.findFirst({
-      where: { manongId: userId, status: ServiceRequestStatus.inProgress },
+      where: {
+        manongId: userId,
+        status: ServiceRequestStatus.inProgress,
+        refundRequests: { none: {} },
+      },
     });
 
     if (ongoing) {
@@ -533,7 +712,11 @@ export class ServiceRequestService {
     const isManong = role == UserRole.manong;
 
     const ongoing = await this.prisma.serviceRequest.findFirst({
-      where: { ...where, status: ServiceRequestStatus.inProgress },
+      where: {
+        ...where,
+        status: ServiceRequestStatus.inProgress,
+        refundRequests: { none: {} },
+      },
       include: {
         user: true,
         manong: {
@@ -552,6 +735,7 @@ export class ServiceRequestService {
         serviceItem: true,
         subServiceItem: true,
         urgencyLevel: true,
+        refundRequests: true,
       },
     });
 
@@ -568,33 +752,193 @@ export class ServiceRequestService {
     return request?.status;
   }
 
-  async cancelServiceRequest(userId: number, id: number) {
+  async cancelServiceRequest(
+    userId: number,
+    id: number,
+    isAdmin?: boolean,
+  ): Promise<{
+    serviceRequest: ServiceRequest;
+    paymentTransaction?: PaymentTransaction;
+    message?: string;
+  } | null> {
     const data = await this.prisma.serviceRequest.findUnique({
       where: {
         id,
       },
+      include: {
+        paymentTransactions: true,
+        serviceItem: true,
+        subServiceItem: true,
+      },
     });
 
-    let status: ServiceRequestStatus | null = null;
-
-    if (data?.paymentStatus == PaymentStatus.paid) {
-      status = ServiceRequestStatus.completed;
-    } else {
-      status = ServiceRequestStatus.cancelled;
+    if (!data) {
+      throw new NotFoundException('Service request not found!');
     }
 
-    const updated = await this.prisma.serviceRequest.update({
-      where: {
-        id,
-        userId,
-      },
-      data: {
-        status: status,
-        deletedAt: new Date(),
-      },
-    });
+    let status: ServiceRequestStatus = ServiceRequestStatus.cancelled;
+    let paymentStatus: PaymentStatus | null = PaymentStatus.unpaid;
 
-    return updated;
+    const userIdFinal = isAdmin ? data.userId : userId;
+
+    try {
+      // If payment was made, process refund
+      let refunding: {
+        data: PaymongoRefund;
+        refundAmount: number;
+      } | null = null;
+
+      if (data.paymentStatus == PaymentStatus.paid) {
+        // Request refund from PayMongo
+        refunding = await this.paymongoService.requestRefund(
+          userIdFinal,
+          data.id,
+        );
+
+        if (!refunding) {
+          throw new BadGatewayException(
+            'Failed to process refund with payment gateway',
+          );
+        }
+
+        // Fetch refund status to confirm
+        const fetchedRefund = await this.paymongoService.fetchRefund(
+          userIdFinal,
+          data.id,
+        );
+
+        if (!fetchedRefund) {
+          throw new BadGatewayException('Failed to verify refund status');
+        }
+
+        // Use the most current refund status
+        const finalRefundStatus =
+          fetchedRefund?.data.attributes.status ??
+          refunding?.data.data.attributes.status;
+        paymentStatus = mapPaymongoRefundStatus(finalRefundStatus);
+        console.log(finalRefundStatus);
+
+        // If refund failed, throw error to stop the process
+        if (paymentStatus === PaymentStatus.failed) {
+          throw new BadGatewayException(
+            `Refund processing failed with status: ${finalRefundStatus}`,
+          );
+        }
+
+        status = ServiceRequestStatus.cancelled;
+      }
+
+      // Update service request status
+      const updated = await this.prisma.serviceRequest.update({
+        where: {
+          id,
+          userId: userIdFinal,
+        },
+        data: {
+          status: status,
+          deletedAt: new Date(),
+          ...(paymentStatus != null && {
+            paymentStatus: paymentStatus,
+          }),
+        },
+        include: {
+          paymentTransactions: true,
+          refundRequests: true,
+        },
+      });
+
+      let transaction: PaymentTransaction | null = null;
+
+      // Create refund transaction record only if refund was successful
+      if (data.paymentStatus == PaymentStatus.paid && paymentStatus) {
+        const paymentTransactions: CreatePaymentTransactionDto = {
+          userId: userIdFinal,
+          serviceRequestId: updated.id,
+          provider: updated.paymentTransactions[0].provider ?? 'unknown',
+          amount:
+            refunding?.refundAmount ??
+            Number(updated.paymentTransactions[0].amount),
+          currency: updated.paymentTransactions[0].currency ?? 'PHP',
+          status: paymentStatus,
+          type: TransactionType.refund,
+          paymentIntentId: updated.paymentTransactions[0].paymentIntentId,
+          paymentIdOnGateway: updated.paymentTransactions[0].paymentIdOnGateway,
+          refundIdOnGateway: updated.paymentTransactions[0].refundIdOnGateway,
+          metadata: updated.paymentTransactions[0].metadata,
+        };
+
+        transaction =
+          await this.paymentTransactionService.createPaymentTransactionService(
+            paymentTransactions,
+          );
+
+        await this.paymentTransactionService.sendPushNotificationForTransactionStatus(
+          transaction.id,
+        );
+      }
+
+      return {
+        serviceRequest: updated,
+        ...(transaction != null && { paymentTransaction: transaction }),
+        message:
+          "Refund request submitted successfully! Please wait for admin review. We'll notify you once it is processed..",
+      };
+    } catch (error) {
+      // Handle the specific Paymongo same-day partial refund error
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      if (error.message?.includes('same_day_partial_refund_not_allowed')) {
+        console.log(
+          'Paymongo Error: Cannot partially refund for payments done on the same day',
+        );
+
+        const refundAmount = calculateRefundAmount(
+          data.status!,
+          Number(data.paymentTransactions[0].amount),
+        );
+
+        // Update service request to reflect the manual processing needed
+        const updated = await this.prisma.serviceRequest.update({
+          where: {
+            id,
+            userId: userIdFinal,
+          },
+          data: {
+            refundRequests: {
+              updateMany: {
+                where: {},
+                data: {
+                  remarks: `Partial refund of ₱${refundAmount} - Same-day payment requires manual processing. Refund will be processed in 1-2 business days.`,
+                },
+              },
+            },
+          },
+          include: {
+            paymentTransactions: true,
+            refundRequests: true,
+          },
+        });
+
+        return {
+          serviceRequest: updated,
+          message: `Partial refund of ₱${refundAmount} - Same-day payment requires manual processing. Refund will be processed in 1-2 business days.`,
+        };
+      }
+
+      // If it's already a known exception, re-throw it
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadGatewayException
+      ) {
+        throw error;
+      }
+
+      // Log unexpected errors and throw
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      this.logger.error(`Error cancelling service request: ${error.message}`);
+      throw new BadGatewayException(
+        'Failed to cancel service request due to payment processing error',
+      );
+    }
   }
 
   async expiredServiceRequest(userId: number, id: number) {
@@ -615,15 +959,15 @@ export class ServiceRequestService {
 
     if (exists.arrivedAt == null) {
       if (exists.paymentStatus == PaymentStatus.paid) {
-        data = { status: 'refunding' };
+        data = { status: ServiceRequestStatus.refunding };
       } else {
         data = {
-          status: 'expired',
+          status: ServiceRequestStatus.expired,
           deletedAt: new Date(),
         };
       }
     } else if (exists.status == ServiceRequestStatus.inProgress) {
-      data = { status: 'completed' };
+      data = { status: ServiceRequestStatus.completed };
     }
 
     const updated = await this.prisma.serviceRequest.update({
@@ -636,16 +980,70 @@ export class ServiceRequestService {
     return updated;
   }
 
-  async markServiceRequestCompleted(id: number) {
+  async markServiceRequestCompleted(id: number, userId: number) {
+    const request = await this.prisma.serviceRequest.findUnique({
+      where: { id },
+      include: {
+        refundRequests: true,
+        manong: true,
+      },
+    });
+
+    if (!request) {
+      throw new NotFoundException('Service request not found!');
+    }
+
+    // Check if the user is the assigned Manong
+    if (request.manongId !== userId) {
+      throw new BadRequestException(
+        'Only the assigned Manong can mark this service as completed.',
+      );
+    }
+
+    // Check if there are any refund requests
+    if (request.refundRequests && request.refundRequests.length > 0) {
+      throw new BadRequestException(
+        'Cannot complete service request with active refund requests. Please resolve refund requests first.',
+      );
+    }
+
     const completed = await this.prisma.serviceRequest.update({
       where: { id },
       data: {
         status: ServiceRequestStatus.completed,
+        paymentStatus: PaymentStatus.paid,
       },
       include: {
         user: true,
+        paymentMethod: true,
+        serviceItem: true,
+        subServiceItem: true,
       },
     });
+
+    if (completed.paymentMethod?.code == 'cash') {
+      const metadata = {
+        requestNumber: completed.requestNumber,
+        userId: completed.userId,
+        serviceType: completed.serviceItem.title,
+        subServiceType: completed.subServiceItem?.title,
+      };
+      const paymentTransactions: CreatePaymentTransactionDto = {
+        userId: completed.userId,
+        serviceRequestId: completed.id,
+        provider: completed.paymentMethod.code,
+        amount: Number(completed.total),
+        currency: 'PHP',
+        status: PaymentStatus.paid,
+        type: TransactionType.payment,
+        handledManually: true,
+        metadata: JSON.stringify(metadata),
+      };
+
+      await this.paymentTransactionService.createPaymentTransactionService(
+        paymentTransactions,
+      );
+    }
 
     const notificationDto: CreateNotificationDto = {
       token: completed.user?.fcmToken ?? '',

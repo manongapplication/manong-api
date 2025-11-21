@@ -216,7 +216,9 @@ export class UserPaymentMethodService {
       }
     } else {
       provider =
-        paymentMethod!.code == 'gcash' ? 'paymongo' : paymentMethod!.code;
+        paymentMethod!.code == 'gcash' || paymentMethod!.code == 'paymaya'
+          ? 'paymongo'
+          : paymentMethod!.code;
 
       exists = await this.prisma.userPaymentMethod.findFirst({
         where: { userId, paymentMethodId: dto.paymentMethodId },

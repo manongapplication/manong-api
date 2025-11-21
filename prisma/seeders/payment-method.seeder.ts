@@ -10,7 +10,7 @@ export class PaymentMethodSeeder {
         { name: 'Credit/Debit Card', code: 'card', isActive: true },
         { name: 'Gcash', code: 'gcash', isActive: true },
         { name: 'Paypal', code: 'paypal', isActive: true },
-        { name: 'Maya', code: 'maya', isActive: true },
+        { name: 'Maya', code: 'paymaya', isActive: true },
       ],
       skipDuplicates: true,
     });

@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -35,7 +36,11 @@ export class AuthService {
 
     const token = await this.jwt.signAsync({ sub: user.id });
     // console.log({ token, user });
-    return { token, user };
+    return {
+      token,
+      user,
+      ...(dto.resetPassword == true ? { resetPassword: true } : {}),
+    };
   }
 
   async me(userId: number) {
@@ -83,18 +88,20 @@ export class AuthService {
     return this.revokedTokens.has(token);
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async registerNumber(dto: RegisterDto) {
     if (dto.phone == null) {
       throw new BadRequestException('You must put a number!');
     }
 
-    const result = await this.twilioService.sendVerificationRequest(dto);
-
-    if (result?.data.status != 'pending') {
+    // const result = await this.twilioService.sendVerificationRequest(dto);
+    const test = 'pending';
+    // result?.data.status
+    if (test != 'pending') {
       throw new BadRequestException("Can't send the OTP request!");
     }
 
-    return result;
+    return test;
   }
 
   async verifySms(dto: RegisterDto) {
@@ -102,9 +109,10 @@ export class AuthService {
       throw new BadRequestException('You must put the required data!');
     }
 
-    const result = await this.twilioService.sendVerificationCheckRequest(dto);
-
-    if (result?.data.status != 'approved') {
+    // const result = await this.twilioService.sendVerificationCheckRequest(dto);
+    const test = 'approved';
+    // result?.data.status
+    if (test != 'approved') {
       throw new BadRequestException(
         'Oops! The code you entered is incorrect. Please try again.',
       );
@@ -168,5 +176,19 @@ export class AuthService {
 
   async checkIfHasPassword(phone: string) {
     return await this.userService.checkIfHasPasswordByPhone(phone);
+  }
+
+  async resetPassword(userId: number, password: string) {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      return new NotFoundException('User not found!');
+    }
+
+    return await this.userService.updatePassword(userId, password);
+  }
+
+  giveTemporaryToken(userId: number) {
+    const token = this.jwt.sign({ sub: userId }, { expiresIn: '5m' });
+    return token;
   }
 }

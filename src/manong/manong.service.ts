@@ -98,6 +98,7 @@ export class ManongService {
           },
         }),
       },
+      orderBy: { createdAt: 'desc' },
       include: {
         manongProfile: {
           include: {

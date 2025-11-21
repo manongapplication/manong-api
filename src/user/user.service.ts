@@ -36,6 +36,18 @@ export class UserService {
     return await this.prisma.user.findUnique({ where: { id } });
   }
 
+  async isAdmin(id: number) {
+    return await this.prisma.user.findUnique({
+      where: { id, role: UserRole.admin },
+    });
+  }
+
+  async isManong(id: number) {
+    return await this.prisma.user.findUnique({
+      where: { id, role: UserRole.manong },
+    });
+  }
+
   async findByIdIncludes(id: number, include?: Prisma.UserInclude) {
     return this.prisma.user.findUnique({
       where: { id },
@@ -123,29 +135,27 @@ export class UserService {
 
     const user = await this.findById(userId);
 
-    const message = getAccountStatusMessage(
-      dto.status ?? AccountStatus.pending,
-    );
-
     if (!user) {
       return new NotFoundException('User not found!');
     }
 
-    try {
-      if (user.status != dto.status) {
-        const notificationDto: CreateNotificationDto = {
-          token: user.fcmToken ?? '',
-          title: message.title,
-          body: message.body,
-          userId: user.id,
-        };
+    if (dto.status != null) {
+      try {
+        if (user.status != dto.status) {
+          const message = getAccountStatusMessage(dto.status);
+          const notificationDto: CreateNotificationDto = {
+            token: user.fcmToken ?? '',
+            title: message.title,
+            body: message.body,
+            userId: user.id,
+          };
 
-        await this.fcmService.sendPushNotification(notificationDto);
+          await this.fcmService.sendPushNotification(notificationDto);
+        }
+      } catch (e) {
+        this.logger.error(`Can't message notification ${e}`);
       }
-    } catch (e) {
-      this.logger.error(`Can't message notification ${e}`);
     }
-
     const updatedUser = this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -238,6 +248,21 @@ export class UserService {
     return updated;
   }
 
+  async updatePassword(userId: number, password: string) {
+    const user = await this.findById(userId);
+
+    if (!user) {
+      return new NotFoundException('User not found!');
+    }
+
+    return await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: await bcrypt.hash(password, 10),
+      },
+    });
+  }
+
   async fetchUsers(userId: number, page = 1, limit = 10) {
     const user = await this.findById(userId);
 
@@ -256,6 +281,7 @@ export class UserService {
       include: {
         providerVerifications: true,
       },
+      orderBy: { createdAt: 'desc' },
       skip,
       take: limit * 2,
     });

@@ -22,6 +22,7 @@ import { ProviderVerificationService } from 'src/provider-verification/provider-
 import { FeedbackService } from 'src/feedback/feedback.service';
 import { WordpressPostService } from 'src/wordpress-post/wordpress-post.service';
 import { AppMaintenanceService } from 'src/app-maintenance/app-maintenance.service';
+import { PaymentTransactionService } from 'src/payment-transaction/payment-transaction.service';
 
 // 🧩 Add here any other frequently injected services
 // (so you won’t need to mock them manually later)
@@ -49,6 +50,7 @@ const defaultMocks = [
   { provide: FeedbackService, useValue: {} },
   { provide: WordpressPostService, useValue: {} },
   { provide: AppMaintenanceService, useValue: {} },
+  { provide: PaymentTransactionService, useValue: {} },
 ];
 
 export async function createTestingModule(

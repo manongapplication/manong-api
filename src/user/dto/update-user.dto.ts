@@ -53,4 +53,8 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(AccountStatus, { message: 'status not valid.' })
   status?: AccountStatus;
+
+  @IsOptional()
+  @IsString()
+  password?: string;
 }
