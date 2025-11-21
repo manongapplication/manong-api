@@ -11,7 +11,7 @@ export class AdminSeeder {
         firstName: 'Admin',
         lastName: 'User',
         nickname: 'SuperAdmin',
-        email: 'admin@example.com',
+        email: 'admin@admin.com',
         phone: '+639111111111',
         password: await bcrypt.hash('adminpassword', 10),
         role: UserRole.admin,
