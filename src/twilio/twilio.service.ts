@@ -38,11 +38,21 @@ export class TwilioService {
         e?.response?.data || e.message,
       );
 
-      // Forward error details back to controller
+      // Extract the actual Twilio error details
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const twilioError = e?.response?.data;
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (twilioError?.code === 60410) {
+        throw new BadRequestException(
+          `This number prefix is temporarily blocked. ${dto.phone} prefix is blocked for SMS. Please try a different number.`,
+        );
+      }
+
+      // Throw the actual Twilio error message
       throw new BadRequestException(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        e?.response?.data?.message ||
-          'Failed to send SMS. Please try again later.',
+        twilioError?.message || 'Failed to send SMS. Please try again later.',
       );
     }
   }
@@ -62,9 +72,28 @@ export class TwilioService {
         { headers: this.headers },
       );
 
+      // Check if verification was successful
+      if (result.data.status !== 'approved') {
+        throw new BadRequestException(
+          'Oops! The code you entered is incorrect. Please try again.',
+        );
+      }
+
       return result;
-    } catch (e) {
-      this.logger.error('Error verifying sms.', e);
+    } catch (e: any) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      this.logger.error('Error verifying sms.', e?.response?.data || e.message);
+
+      // Re-throw the error so it propagates to the frontend
+      if (e instanceof BadRequestException) {
+        throw e;
+      }
+
+      throw new BadRequestException(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        e?.response?.data?.message ||
+          'Failed to verify SMS code. Please try again.',
+      );
     }
   }
 }

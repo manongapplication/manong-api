@@ -12,6 +12,8 @@ import { TwilioService } from 'src/twilio/twilio.service';
 import { ServiceRequestStatus, UserRole } from '@prisma/client';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
+import { ReferralCodeService } from 'src/referral-code/referral-code.service';
+import { CreateReferralCodeUsageDto } from 'src/referral-code-usage/dto/create-referral-code-usage.dto';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +21,7 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwt: JwtService,
     private readonly twilioService: TwilioService,
+    private readonly referralCodeService: ReferralCodeService,
   ) {}
 
   private revokedTokens = new Set<string>();
@@ -35,7 +38,26 @@ export class AuthService {
     }
 
     const token = await this.jwt.signAsync({ sub: user.id });
-    // console.log({ token, user });
+
+    // FIX: Only process referral code if BOTH code and deviceId are provided
+    if (
+      dto.referralCode != null &&
+      dto.referralCode.trim() !== '' &&
+      dto.deviceId != null
+    ) {
+      try {
+        const usageDto: CreateReferralCodeUsageDto = {
+          userId: user.id,
+          deviceId: dto.deviceId,
+        };
+        await this.referralCodeService.createUsage(dto.referralCode, usageDto);
+      } catch (error) {
+        // Don't block registration if referral code fails
+        console.error('Referral code processing failed:', error);
+        // Continue with registration even if referral code fails
+      }
+    }
+
     return {
       token,
       user,
@@ -88,20 +110,22 @@ export class AuthService {
     return this.revokedTokens.has(token);
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
   async registerNumber(dto: RegisterDto) {
     if (dto.phone == null) {
       throw new BadRequestException('You must put a number!');
     }
 
-    // const result = await this.twilioService.sendVerificationRequest(dto);
-    const test = 'pending';
-    // result?.data.status
-    if (test != 'pending') {
+    const result = await this.twilioService.sendVerificationRequest(dto);
+
+    if (result?.data.status != 'pending') {
       throw new BadRequestException("Can't send the OTP request!");
     }
 
-    return test;
+    return {
+      success: true,
+      status: result.data.status,
+      message: 'Verification code sent successfully',
+    };
   }
 
   async verifySms(dto: RegisterDto) {
@@ -109,10 +133,8 @@ export class AuthService {
       throw new BadRequestException('You must put the required data!');
     }
 
-    // const result = await this.twilioService.sendVerificationCheckRequest(dto);
-    const test = 'approved';
-    // result?.data.status
-    if (test != 'approved') {
+    const result = await this.twilioService.sendVerificationCheckRequest(dto);
+    if (result?.data.status != 'approved') {
       throw new BadRequestException(
         'Oops! The code you entered is incorrect. Please try again.',
       );

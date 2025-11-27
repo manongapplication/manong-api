@@ -411,6 +411,27 @@ CREATE TABLE "Adjustment" (
     CONSTRAINT "Adjustment_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "ReferralCode" (
+    "id" SERIAL NOT NULL,
+    "code" TEXT NOT NULL,
+    "ownerId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ReferralCode_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ReferralCodeUsage" (
+    "id" SERIAL NOT NULL,
+    "referralCodeId" INTEGER NOT NULL,
+    "userId" INTEGER,
+    "deviceId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ReferralCodeUsage_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone");
 
@@ -516,6 +537,12 @@ CREATE INDEX "Adjustment_status_idx" ON "Adjustment"("status");
 -- CreateIndex
 CREATE INDEX "Adjustment_createdAt_idx" ON "Adjustment"("createdAt");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "ReferralCode_code_key" ON "ReferralCode"("code");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ReferralCodeUsage_deviceId_referralCodeId_key" ON "ReferralCodeUsage"("deviceId", "referralCodeId");
+
 -- AddForeignKey
 ALTER TABLE "SubServiceItem" ADD CONSTRAINT "SubServiceItem_serviceItemId_fkey" FOREIGN KEY ("serviceItemId") REFERENCES "ServiceItem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -614,3 +641,12 @@ ALTER TABLE "Adjustment" ADD CONSTRAINT "Adjustment_requestedBy_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "Adjustment" ADD CONSTRAINT "Adjustment_approvedBy_fkey" FOREIGN KEY ("approvedBy") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReferralCode" ADD CONSTRAINT "ReferralCode_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReferralCodeUsage" ADD CONSTRAINT "ReferralCodeUsage_referralCodeId_fkey" FOREIGN KEY ("referralCodeId") REFERENCES "ReferralCode"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReferralCodeUsage" ADD CONSTRAINT "ReferralCodeUsage_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;

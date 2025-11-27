@@ -263,7 +263,7 @@ export class UserService {
     });
   }
 
-  async fetchUsers(userId: number, page = 1, limit = 10) {
+  async fetchUsers(userId: number, page = 1, limit = 10, search?: string) {
     const user = await this.findById(userId);
 
     if (!user) return;
@@ -274,10 +274,38 @@ export class UserService {
 
     const skip = (page - 1) * limit;
 
+    const where: Prisma.UserWhereInput = {
+      role: UserRole.customer,
+    };
+
+    if (search && search.trim()) {
+      const searchTerm = search.trim();
+      where.OR = [
+        { firstName: { contains: searchTerm, mode: 'insensitive' } },
+        { lastName: { contains: searchTerm, mode: 'insensitive' } },
+        { email: { contains: searchTerm, mode: 'insensitive' } },
+        { phone: { contains: searchTerm } },
+        {
+          AND: [
+            {
+              firstName: {
+                contains: searchTerm.split(' ')[0],
+                mode: 'insensitive',
+              },
+            },
+            {
+              lastName: {
+                contains: searchTerm.split(' ')[1] || searchTerm.split(' ')[0],
+                mode: 'insensitive',
+              },
+            },
+          ],
+        },
+      ];
+    }
+
     const users = await this.prisma.user.findMany({
-      where: {
-        role: UserRole.customer,
-      },
+      where,
       include: {
         providerVerifications: true,
       },

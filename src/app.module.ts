@@ -72,6 +72,12 @@ import { RefundRequestModule } from './refund-request/refund-request.module';
 import { ManongReportService } from './manong-report/manong-report.service';
 import { ManongReportController } from './manong-report/manong-report.controller';
 import { ManongReportModule } from './manong-report/manong-report.module';
+import { ReferralCodeService } from './referral-code/referral-code.service';
+import { ReferralCodeController } from './referral-code/referral-code.controller';
+import { ReferralCodeModule } from './referral-code/referral-code.module';
+import { ReferralCodeUsageService } from './referral-code-usage/referral-code-usage.service';
+import { ReferralCodeUsageController } from './referral-code-usage/referral-code-usage.controller';
+import { ReferralCodeUsageModule } from './referral-code-usage/referral-code-usage.module';
 
 @Module({
   imports: [
@@ -118,6 +124,8 @@ import { ManongReportModule } from './manong-report/manong-report.module';
     PaymentTransactionModule,
     RefundRequestModule,
     ManongReportModule,
+    ReferralCodeModule,
+    ReferralCodeUsageModule,
   ],
   controllers: [
     AppController,
@@ -140,6 +148,8 @@ import { ManongReportModule } from './manong-report/manong-report.module';
     PaymentTransactionController,
     RefundRequestController,
     ManongReportController,
+    ReferralCodeController,
+    ReferralCodeUsageController,
   ],
   providers: [
     UserService,
@@ -164,6 +174,8 @@ import { ManongReportModule } from './manong-report/manong-report.module';
     PaymentTransactionService,
     RefundRequestService,
     ManongReportService,
+    ReferralCodeService,
+    ReferralCodeUsageService,
   ],
 })
 export class AppModule {

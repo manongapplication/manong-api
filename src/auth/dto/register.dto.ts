@@ -19,4 +19,12 @@ export class RegisterDto {
   @IsOptional()
   @IsBoolean()
   resetPassword?: boolean;
+
+  @IsOptional()
+  @IsString()
+  referralCode?: string;
+
+  @IsOptional()
+  @IsString()
+  deviceId?: string;
 }

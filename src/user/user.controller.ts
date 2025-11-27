@@ -59,11 +59,13 @@ export class UserController {
     @Query('page') page = '1',
     @Query('limit') limit = '10',
     @CurrentUserId() userId: number,
+    @Query('search') search?: string, // Add optional search parameter
   ) {
     const users = await this.userService.fetchUsers(
       userId,
       parseInt(page),
       parseInt(limit),
+      search,
     );
 
     return { success: true, data: users };

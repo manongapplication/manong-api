@@ -25,6 +25,8 @@ import { AppMaintenanceService } from 'src/app-maintenance/app-maintenance.servi
 import { PaymentTransactionService } from 'src/payment-transaction/payment-transaction.service';
 import { ManongReportService } from 'src/manong-report/manong-report.service';
 import { RefundRequestService } from 'src/refund-request/refund-request.service';
+import { ReferralCodeService } from 'src/referral-code/referral-code.service';
+import { ReferralCodeUsageService } from 'src/referral-code-usage/referral-code-usage.service';
 
 // 🧩 Add here any other frequently injected services
 // (so you won’t need to mock them manually later)
@@ -55,6 +57,8 @@ const defaultMocks = [
   { provide: PaymentTransactionService, useValue: {} },
   { provide: RefundRequestService, useValue: {} },
   { provide: ManongReportService, useValue: {} },
+  { provide: ReferralCodeService, useValue: {} },
+  { provide: ReferralCodeUsageService, useValue: {} },
 ];
 
 export async function createTestingModule(
