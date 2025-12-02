@@ -359,6 +359,85 @@ export class PaymongoService {
     };
   }
 
+  async getPayment(paymentId: string) {
+    try {
+      const response = await axios.get(
+        `${this.baseUrl}/payments/${paymentId}`,
+        { headers: this.headers },
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      return response.data.data;
+    } catch (error) {
+      this.logger.error(`Error fetching payment ${paymentId}`, error);
+      throw error;
+    }
+  }
+
+  async canRefundPayment(
+    paymentId: string,
+  ): Promise<{ canRefund: boolean; availableDate?: Date; reason?: string }> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const payment = await this.getPayment(paymentId);
+
+      // Check if payment is paid
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (payment.attributes.status !== 'paid') {
+        return {
+          canRefund: false,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          reason: `Payment status is ${payment.attributes.status}, not paid.`,
+        };
+      }
+
+      // Check available_at field - THIS IS THE KEY!
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const availableAt = payment.attributes.available_at;
+      const now = Math.floor(Date.now() / 1000); // Current Unix timestamp
+
+      if (availableAt && now < availableAt) {
+        const availableDate = new Date(availableAt * 1000);
+        const daysRemaining = Math.ceil((availableAt - now) / 86400); // Convert seconds to days
+
+        return {
+          canRefund: false,
+          availableDate,
+          reason: `Funds will be available for refund on ${availableDate.toDateString()} (${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} from now).`,
+        };
+      }
+
+      // Check if already refunded
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (payment.attributes.refunds && payment.attributes.refunds.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        const totalRefunded = payment.attributes.refunds.reduce(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          (sum: number, refund: any) => sum + refund.attributes.amount,
+          0,
+        );
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (totalRefunded >= payment.attributes.amount) {
+          return {
+            canRefund: false,
+            reason: 'Payment has already been fully refunded.',
+          };
+        }
+      }
+
+      return { canRefund: true };
+    } catch (error) {
+      this.logger.error(
+        `Error checking refund eligibility for ${paymentId}`,
+        error,
+      );
+      return {
+        canRefund: false,
+        reason: 'Unable to verify payment status.',
+      };
+    }
+  }
+
   async requestRefund(
     userId: number,
     serviceRequestId: number,
@@ -395,6 +474,14 @@ export class PaymongoService {
     if (!paymentId) {
       throw new NotFoundException('Payment Id not found!');
     }
+
+    const eligibility = await this.canRefundPayment(paymentId);
+    if (!eligibility.canRefund) {
+      throw new BadGatewayException(
+        eligibility.reason || 'Refund cannot be processed at this time.',
+      );
+    }
+    // ============ END OF NEW CHECK ============
 
     // Calculate refund amount
     const refundAmount = calculateRefundAmount(
@@ -470,6 +557,13 @@ export class PaymongoService {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (firstError.code === 'same_day_partial_refund_not_allowed') {
           throw new BadGatewayException('same_day_partial_refund_not_allowed');
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (firstError.code === 'available_balance_insufficient') {
+          throw new BadGatewayException(
+            `available_balance_insufficient: ${eligibility.reason || 'Funds not available for refund yet.'}`,
+          );
         }
       } else {
         this.logger.error(`Unexpected refund error: ${e}`);

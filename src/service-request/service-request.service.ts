@@ -924,6 +924,47 @@ export class ServiceRequestService {
         };
       }
 
+      if (
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        error.message?.includes('available_balance_insufficient') ||
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        error.message?.includes('Funds will be available')
+      ) {
+        // Extract date from error message
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, prettier/prettier, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        const dateMatch = error.message.match(/available for refund on (.+?) \(/);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const availableDate = dateMatch ? dateMatch[1] : 'in 3-7 days';
+
+        // Update service request
+        const updated = await this.prisma.serviceRequest.update({
+          where: {
+            id,
+            userId: userIdFinal,
+          },
+          data: {
+            refundRequests: {
+              updateMany: {
+                where: {},
+                data: {
+                  remarks: `Refund scheduled for ${availableDate}. Paymongo holds funds before refunds can be processed.`,
+                  status: 'pending',
+                },
+              },
+            },
+          },
+          include: {
+            paymentTransactions: true,
+            refundRequests: true,
+          },
+        });
+
+        return {
+          serviceRequest: updated,
+          message: `Refund scheduled for ${availableDate}. Paymongo holds funds before refunds can be processed.`,
+        };
+      }
+
       // If it's already a known exception, re-throw it
       if (
         error instanceof NotFoundException ||
