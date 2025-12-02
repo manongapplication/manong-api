@@ -204,6 +204,7 @@ CREATE TABLE "RefundRequest" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "reviewedAt" TIMESTAMP(3),
+    "availableAt" TIMESTAMP(3),
 
     CONSTRAINT "RefundRequest_pkey" PRIMARY KEY ("id")
 );

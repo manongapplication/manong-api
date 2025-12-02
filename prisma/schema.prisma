@@ -303,9 +303,10 @@ model RefundRequest {
   reviewedBy           Int?
   remarks              String?
 
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  reviewedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  reviewedAt  DateTime?
+  availableAt DateTime?
 
   serviceRequest     ServiceRequest      @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
