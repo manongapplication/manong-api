@@ -947,7 +947,7 @@ export class ServiceRequestService {
               updateMany: {
                 where: {},
                 data: {
-                  remarks: `Refund scheduled for ${availableDate}. Paymongo holds funds before refunds can be processed.`,
+                  remarks: `Refund scheduled for ${availableDate}. Our payment processor holds funds for security before refunds can be processed.`,
                   status: 'pending',
                 },
               },
@@ -961,7 +961,7 @@ export class ServiceRequestService {
 
         return {
           serviceRequest: updated,
-          message: `Refund scheduled for ${availableDate}. Paymongo holds funds before refunds can be processed.`,
+          message: `Refund scheduled for ${availableDate}. Our payment processor holds funds for security before refunds can be processed.`,
         };
       }
 
