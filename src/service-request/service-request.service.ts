@@ -811,9 +811,7 @@ export class ServiceRequestService {
                   userId: userIdFinal,
                 },
                 data: {
-                  status: ServiceRequestStatus.cancelled,
                   deletedAt: new Date(),
-                  paymentStatus: PaymentStatus.pending,
                   refundRequests: {
                     updateMany: {
                       where: {},
