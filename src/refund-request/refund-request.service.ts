@@ -76,6 +76,7 @@ export class RefundRequestService {
       serviceRequest: ServiceRequest;
       paymentTransaction?: PaymentTransaction;
       message?: string;
+      availableAt?: Date;
     } | null = null;
 
     try {
@@ -91,15 +92,30 @@ export class RefundRequestService {
           ? RefundStatus.approved
           : RefundStatus.pending;
 
+      // Prepare update data
+      const updateData: any = {
+        status:
+          pendingRefund.status === RefundStatus.approved
+            ? RefundStatus.approved
+            : serviceRefundRequestStatus,
+        paymentTransactionId: cancelServiceRequest?.paymentTransaction?.id,
+      };
+
+      // Add availableAt if it exists from Paymongo
+      if (cancelServiceRequest?.availableAt) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        updateData.availableAt = cancelServiceRequest.availableAt;
+
+        // Also update remarks to include the scheduled date
+        const formattedDate = cancelServiceRequest.availableAt.toDateString();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        updateData.remarks = `Refund scheduled for ${formattedDate}. Our payment processor holds funds for security before refunds can be processed.`;
+      }
+
       refund = await this.prisma.refundRequest.update({
         where: { id: pendingRefund.id },
-        data: {
-          status:
-            pendingRefund.status === RefundStatus.approved
-              ? RefundStatus.approved // Keep it approved if it was already approved
-              : serviceRefundRequestStatus, // Otherwise use the new status,
-          paymentTransactionId: cancelServiceRequest?.paymentTransaction?.id,
-        },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        data: updateData,
       });
 
       await this.sendPushNotificationForManong(request.id);
@@ -145,6 +161,7 @@ export class RefundRequestService {
     serviceRequest: ServiceRequest;
     paymentTransaction?: PaymentTransaction;
     message?: string;
+    availableAt?: Date;
   } | null> {
     const existRequest =
       await this.serviceRequestService.findById(serviceRequestId);

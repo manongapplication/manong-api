@@ -760,6 +760,7 @@ export class ServiceRequestService {
     serviceRequest: ServiceRequest;
     paymentTransaction?: PaymentTransaction;
     message?: string;
+    availableAt?: Date;
   } | null> {
     const data = await this.prisma.serviceRequest.findUnique({
       where: {
@@ -778,6 +779,7 @@ export class ServiceRequestService {
 
     let status: ServiceRequestStatus = ServiceRequestStatus.cancelled;
     let paymentStatus: PaymentStatus | null = PaymentStatus.unpaid;
+    let availableAt: Date | null = null;
 
     const userIdFinal = isAdmin ? data.userId : userId;
 
@@ -789,6 +791,58 @@ export class ServiceRequestService {
       } | null = null;
 
       if (data.paymentStatus == PaymentStatus.paid) {
+        const paymentId = data.paymentTransactions[0]?.paymentIdOnGateway;
+
+        if (paymentId) {
+          try {
+            // Call canRefundPayment to check eligibility and get available date
+            const eligibility =
+              await this.paymongoService.canRefundPayment(paymentId);
+
+            if (!eligibility.canRefund && eligibility.availableDate) {
+              // Funds are held until a specific date
+              availableAt = eligibility.availableDate;
+              const message = `Refund scheduled for ${availableAt.toDateString()}. Our payment processor holds funds for security before refunds can be processed.`;
+
+              // Update service request
+              const updated = await this.prisma.serviceRequest.update({
+                where: {
+                  id,
+                  userId: userIdFinal,
+                },
+                data: {
+                  status: ServiceRequestStatus.cancelled,
+                  deletedAt: new Date(),
+                  paymentStatus: PaymentStatus.pending,
+                  refundRequests: {
+                    updateMany: {
+                      where: {},
+                      data: {
+                        remarks: message,
+                        status: 'pending',
+                        ...(availableAt && { availableAt }),
+                      },
+                    },
+                  },
+                },
+                include: {
+                  paymentTransactions: true,
+                  refundRequests: true,
+                },
+              });
+
+              return {
+                serviceRequest: updated,
+                message,
+                availableAt,
+              };
+            }
+          } catch (eligibilityError) {
+            this.logger.error(
+              `Error checking refund eligibility: ${eligibilityError}`,
+            );
+          }
+        }
         // Request refund from PayMongo
         refunding = await this.paymongoService.requestRefund(
           userIdFinal,
@@ -880,6 +934,7 @@ export class ServiceRequestService {
       return {
         serviceRequest: updated,
         ...(transaction != null && { paymentTransaction: transaction }),
+        ...(availableAt && { availableAt }),
         message:
           "Refund request submitted successfully! Please wait for admin review. We'll notify you once it is processed..",
       };
@@ -949,6 +1004,7 @@ export class ServiceRequestService {
                 data: {
                   remarks: `Refund scheduled for ${availableDate}. Our payment processor holds funds for security before refunds can be processed.`,
                   status: 'pending',
+                  ...(availableAt && { availableAt }),
                 },
               },
             },
@@ -962,6 +1018,7 @@ export class ServiceRequestService {
         return {
           serviceRequest: updated,
           message: `Refund scheduled for ${availableDate}. Our payment processor holds funds for security before refunds can be processed.`,
+          ...(availableAt && { availableAt }),
         };
       }
 
