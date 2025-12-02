@@ -5,7 +5,6 @@ import express from 'express';
 import { Reflector } from '@nestjs/core';
 import { AppMaintenanceGuard } from './common/guards/app-maintenance.guard';
 import { AppMaintenanceService } from './app-maintenance/app-maintenance.service';
-import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,52 +14,80 @@ async function bootstrap() {
     new AppMaintenanceGuard(app.get(Reflector), app.get(AppMaintenanceService)),
   );
 
-  // Correctly set JSON & URL limits on Nest's underlying Express
-  app.use(bodyParser.json({ limit: '50mb' }));
-  app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+  // Set JSON & URL limits
+  app.use(
+    express.json({ limit: '50mb' }),
+    express.urlencoded({ limit: '50mb', extended: true }),
+  );
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const expressApp = app.getHttpAdapter().getInstance();
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  expressApp.use(express.json({ limit: '50mb' }));
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  expressApp.use(express.urlencoded({ limit: '50mb', extended: true }));
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  expressApp.use((err: any, req: any, res: any, next: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (err.type === 'entity.too.large') {
-      throw new BadRequestException('Payload too large. Maximum size is 50MB');
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    next(err);
-  });
-
-  // Enable CORS
+  // CORS
   app.enableCors({
     origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: [
       'Content-Type',
       'Authorization',
       'Accept',
       'X-Requested-With',
+      'ngrok-skip-browser-warning',
     ],
-    credentials: true,
-    maxAge: 86400, // 24 hours
+    credentials: false,
   });
 
-  // Global validation
-  // main.ts - Update the exceptionFactory section
+  const allowedOrigins = [
+    'https://dashboard.manongapp.com',
+    'https://api.manongapp.com',
+    'https://manongapp.com',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'http://localhost:8080',
+  ];
+
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like curl, mobile apps)
+      if (!origin) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        return callback(null, true);
+      }
+
+      // Allow ngrok origins
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      if (origin.includes('ngrok.io') || origin.includes('ngrok-free.app')) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        return callback(null, true);
+      }
+
+      // Check if origin is in allowed list
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      if (allowedOrigins.includes(origin)) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        return callback(null, true);
+      }
+
+      // Block if not allowed
+      console.warn(`CORS blocked: ${origin}`);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      callback(new Error('Not allowed by CORS'));
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'X-Requested-With',
+      'ngrok-skip-browser-warning',
+    ],
+    credentials: true,
+  });
+
+  // ========== Global validation ==========
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
       exceptionFactory: (errors) => {
-        // Safe handling of potentially undefined errors
         const errorMessages = (errors || [])
           .map((error) => {
             const constraints = error.constraints || {};
@@ -69,7 +96,7 @@ async function bootstrap() {
               ? `${error.property}: ${messages.join(', ')}`
               : `${error.property}: Validation failed`;
           })
-          .filter((msg) => msg); // Remove empty messages
+          .filter((msg) => msg);
 
         return new BadRequestException(
           errorMessages.length > 0
@@ -82,10 +109,10 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0');
+
   console.log(`🚀 API running on http://localhost:${port}`);
+  console.log(`🌐 CORS enabled for all origins (*)`);
   console.log(`📊 Prisma Studio: http://localhost:5555`);
-  console.log(`🗄️  PgAdmin: http://localhost:8080`);
-  console.log(`📡 Redis Commander: http://localhost:8082`);
 }
 
 bootstrap().catch((err) => {
