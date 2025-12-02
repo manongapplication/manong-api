@@ -1,10 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import express from 'express';
 import { Reflector } from '@nestjs/core';
 import { AppMaintenanceGuard } from './common/guards/app-maintenance.guard';
 import { AppMaintenanceService } from './app-maintenance/app-maintenance.service';
+import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,23 +16,67 @@ async function bootstrap() {
   );
 
   // Correctly set JSON & URL limits on Nest's underlying Express
-  app.use(
-    express.json({ limit: '50mb' }),
-    express.urlencoded({ limit: '50mb', extended: true }),
-  );
+  app.use(bodyParser.json({ limit: '50mb' }));
+  app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const expressApp = app.getHttpAdapter().getInstance();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  expressApp.use(express.json({ limit: '50mb' }));
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  expressApp.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  expressApp.use((err: any, req: any, res: any, next: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (err.type === 'entity.too.large') {
+      throw new BadRequestException('Payload too large. Maximum size is 50MB');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    next(err);
+  });
 
   // Enable CORS
   app.enableCors({
     origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'X-Requested-With',
+    ],
     credentials: true,
+    maxAge: 86400, // 24 hours
   });
 
   // Global validation
+  // main.ts - Update the exceptionFactory section
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+      exceptionFactory: (errors) => {
+        // Safe handling of potentially undefined errors
+        const errorMessages = (errors || [])
+          .map((error) => {
+            const constraints = error.constraints || {};
+            const messages = Object.values(constraints);
+            return messages.length > 0
+              ? `${error.property}: ${messages.join(', ')}`
+              : `${error.property}: Validation failed`;
+          })
+          .filter((msg) => msg); // Remove empty messages
+
+        return new BadRequestException(
+          errorMessages.length > 0
+            ? errorMessages.join('; ')
+            : 'Validation failed',
+        );
+      },
     }),
   );
 

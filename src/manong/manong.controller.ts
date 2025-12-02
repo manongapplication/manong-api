@@ -12,6 +12,8 @@ import {
   UploadedFiles,
   Put,
   Delete,
+  Logger,
+  BadRequestException,
 } from '@nestjs/common';
 import { ManongService } from './manong.service';
 import { FetchManongsQueryDto } from './dto/fetch-manongs-query.dto';
@@ -25,6 +27,7 @@ import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
 @Controller('api/manongs')
 export class ManongController {
   constructor(private readonly manongService: ManongService) {}
+  private readonly logger = new Logger(ManongController.name);
 
   @UseGuards(JwtAuthGuard, AppMaintenanceGuard)
   @Post()
@@ -79,8 +82,8 @@ export class ManongController {
       ],
       {
         limits: {
-          fileSize: 5 * 1024 * 1024,
-          fieldSize: 10 * 1024 * 1024,
+          fileSize: 10 * 1024 * 1024, // 10MB per file
+          fieldSize: 30 * 1024 * 1024, // 30MB total for all fields
         },
       },
     ),
@@ -94,18 +97,69 @@ export class ManongController {
     },
     @Body() dto: CreateManongDto,
   ) {
-    dto.skillImage = files.skillImage;
-    dto.nbiImage = files.nbiImage;
-    dto.govIdImage = files.govIdImage;
+    this.logger.log(`Registration attempt for: ${dto.email || dto.phone}`);
 
-    const result = await this.manongService.registerManong(dto);
+    // Enhanced file validation
+    const validateFile = (
+      file: Express.Multer.File | undefined,
+      fieldName: string,
+    ) => {
+      if (!file) {
+        throw new BadRequestException(`${fieldName} is required`);
+      }
 
-    return {
-      success: true,
-      data: result,
-      message:
-        "Registration successful! We'll notify you via the email you provided once your application has been reviewed.",
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        throw new BadRequestException(
+          `${fieldName} exceeds 10MB limit. Your file: ${(file.size / (1024 * 1024)).toFixed(2)}MB`,
+        );
+      }
+
+      // Validate file type
+      const allowedMimeTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/jpg',
+        'application/pdf',
+      ];
+      if (!allowedMimeTypes.includes(file.mimetype)) {
+        throw new BadRequestException(
+          `${fieldName} must be JPG, PNG, or PDF. Received: ${file.mimetype}`,
+        );
+      }
+
+      return file;
     };
+
+    try {
+      // Validate all files
+      const skillImage = validateFile(files.skillImage?.[0], 'Skill proof');
+      const nbiImage = validateFile(files.nbiImage?.[0], 'NBI clearance');
+      const govIdImage = validateFile(files.govIdImage?.[0], 'Government ID');
+
+      // Assign validated files to DTO
+      dto.skillImage = [skillImage];
+      dto.nbiImage = [nbiImage];
+      dto.govIdImage = [govIdImage];
+
+      // Log file sizes for debugging
+      this.logger.debug(
+        `File sizes - Skill: ${skillImage.size} bytes, NBI: ${nbiImage.size} bytes, GovID: ${govIdImage.size} bytes`,
+      );
+
+      const result = await this.manongService.registerManong(dto);
+
+      return {
+        success: true,
+        data: result,
+        message:
+          "Registration successful! We'll notify you via email/SMS once your application has been reviewed.",
+      };
+    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      this.logger.error(`Registration failed: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @AdminOnly()
