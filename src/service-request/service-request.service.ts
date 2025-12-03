@@ -985,7 +985,9 @@ export class ServiceRequestService {
       ) {
         // Extract date from error message
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, prettier/prettier, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        const dateMatch = error.message.match(/available for refund on (.+?) \(/);
+        const dateMatch = error.message.match(
+          /available for refund on (.+?) \(/,
+        );
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         const availableDate = dateMatch ? dateMatch[1] : 'in 3-7 days';
 

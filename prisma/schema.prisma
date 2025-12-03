@@ -86,6 +86,7 @@ model User {
   manongReports      ManongReport[]
   referralCodes      ReferralCode[]
   referralCodeUsages ReferralCodeUsage[]
+  otps               OTP[]
 }
 
 model PasswordResetToken {
@@ -612,4 +613,27 @@ model ReferralCodeUsage {
   user         User?        @relation(fields: [userId], references: [id])
 
   @@unique([deviceId, referralCodeId]) // One usage per device per code
+}
+
+model OTP {
+  id           Int       @id @default(autoincrement())
+  phone        String
+  code         String
+  attempts     Int       @default(0)
+  verified     Boolean   @default(false)
+  method       String    @default("SMS")
+  provider     String    @default("Twilio")
+  providerId   String? // Twilio SID for tracking
+  status       String    @default("PENDING") // PENDING, SENT, DELIVERED, FAILED, VERIFIED
+  errorMessage String?
+  userId       Int?
+  user         User?     @relation(fields: [userId], references: [id])
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime
+  verifiedAt   DateTime?
+
+  @@index([phone, createdAt])
+  @@index([status])
+  @@index([userId])
+  @@index([expiresAt])
 }

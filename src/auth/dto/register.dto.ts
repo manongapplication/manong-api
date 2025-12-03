@@ -27,4 +27,8 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   deviceId?: string;
+
+  @IsOptional()
+  @IsString()
+  sid?: string | undefined | null;
 }

@@ -14,6 +14,8 @@ import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { ReferralCodeService } from 'src/referral-code/referral-code.service';
 import { CreateReferralCodeUsageDto } from 'src/referral-code-usage/dto/create-referral-code-usage.dto';
+import { OtpQueueService } from 'src/queues/otp/otp-queue/otp-queue.service';
+import { OtpService } from 'src/otp/otp.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +24,8 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly twilioService: TwilioService,
     private readonly referralCodeService: ReferralCodeService,
+    private readonly otpQueueService: OtpQueueService,
+    private readonly otpService: OtpService,
   ) {}
 
   private revokedTokens = new Set<string>();
@@ -115,16 +119,17 @@ export class AuthService {
       throw new BadRequestException('You must put a number!');
     }
 
-    const result = await this.twilioService.sendVerificationRequest(dto);
-
-    if (result?.data.status != 'pending') {
-      throw new BadRequestException("Can't send the OTP request!");
-    }
+    // Use the queue instead of direct Twilio call
+    const { jobId } = await this.otpQueueService.sendOTP(dto.phone);
 
     return {
       success: true,
-      status: result.data.status,
-      message: 'Verification code sent successfully',
+      message: 'OTP is being sent. Please check your phone.',
+      jobId, // Return job ID for tracking
+      // In development, you might want to return a test OTP
+      ...(process.env.NODE_ENV === 'development' && {
+        testOTP: '123456', // For testing only
+      }),
     };
   }
 
@@ -133,8 +138,10 @@ export class AuthService {
       throw new BadRequestException('You must put the required data!');
     }
 
-    const result = await this.twilioService.sendVerificationCheckRequest(dto);
-    if (result?.data.status != 'approved') {
+    // Verify OTP against database (not Twilio)
+    const isValid = await this.otpService.verifyOTP(dto.phone, dto.code);
+
+    if (!isValid) {
       throw new BadRequestException(
         'Oops! The code you entered is incorrect. Please try again.',
       );

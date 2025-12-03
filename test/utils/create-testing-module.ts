@@ -27,6 +27,9 @@ import { ManongReportService } from 'src/manong-report/manong-report.service';
 import { RefundRequestService } from 'src/refund-request/refund-request.service';
 import { ReferralCodeService } from 'src/referral-code/referral-code.service';
 import { ReferralCodeUsageService } from 'src/referral-code-usage/referral-code-usage.service';
+import { OtpService } from 'src/otp/otp.service';
+import { OtpProcessorService } from 'src/queues/otp/otp-processor/otp-processor.service';
+import { OtpQueueService } from 'src/queues/otp/otp-queue/otp-queue.service';
 
 // 🧩 Add here any other frequently injected services
 // (so you won’t need to mock them manually later)
@@ -59,6 +62,9 @@ const defaultMocks = [
   { provide: ManongReportService, useValue: {} },
   { provide: ReferralCodeService, useValue: {} },
   { provide: ReferralCodeUsageService, useValue: {} },
+  { provide: OtpService, useValue: {} },
+  { provide: OtpProcessorService, useValue: {} },
+  { provide: OtpQueueService, useValue: {} },
 ];
 
 export async function createTestingModule(

@@ -615,34 +615,43 @@ function infoMessage(text) {
 
 function validateManongFiles() {
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-  
+  const ALLOWED_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/jpg',
+    'application/pdf',
+  ];
+
   const files = {
     skill: document.getElementById('skillInput')?.files[0],
     nbi: document.getElementById('nbiInput')?.files[0],
     govId: document.getElementById('govIdInput')?.files[0],
   };
-  
+
   const errors = [];
-  
+
   // Check if all files exist
   if (!files.skill) errors.push('Proof of Skill is required');
   if (!files.nbi) errors.push('NBI Clearance is required');
   if (!files.govId) errors.push('Government ID is required');
-  
+
   if (errors.length > 0) return errors;
-  
+
   // Validate each file
   Object.entries(files).forEach(([key, file]) => {
     if (file.size > MAX_FILE_SIZE) {
-      errors.push(`${key.charAt(0).toUpperCase() + key.slice(1)} is too large (max 10MB)`);
+      errors.push(
+        `${key.charAt(0).toUpperCase() + key.slice(1)} is too large (max 10MB)`,
+      );
     }
-    
+
     if (!ALLOWED_TYPES.includes(file.type)) {
-      errors.push(`${key.charAt(0).toUpperCase() + key.slice(1)} must be JPG, PNG, or PDF`);
+      errors.push(
+        `${key.charAt(0).toUpperCase() + key.slice(1)} must be JPG, PNG, or PDF`,
+      );
     }
   });
-  
+
   return errors;
 }
 

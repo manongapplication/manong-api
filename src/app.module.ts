@@ -78,6 +78,8 @@ import { ReferralCodeModule } from './referral-code/referral-code.module';
 import { ReferralCodeUsageService } from './referral-code-usage/referral-code-usage.service';
 import { ReferralCodeUsageController } from './referral-code-usage/referral-code-usage.controller';
 import { ReferralCodeUsageModule } from './referral-code-usage/referral-code-usage.module';
+import { RedisService } from './redis/redis.service';
+import { QueuesModule } from './queues/queues.module';
 
 @Module({
   imports: [
@@ -126,6 +128,7 @@ import { ReferralCodeUsageModule } from './referral-code-usage/referral-code-usa
     ManongReportModule,
     ReferralCodeModule,
     ReferralCodeUsageModule,
+    QueuesModule,
   ],
   controllers: [
     AppController,
@@ -176,6 +179,7 @@ import { ReferralCodeUsageModule } from './referral-code-usage/referral-code-usa
     ManongReportService,
     ReferralCodeService,
     ReferralCodeUsageService,
+    RedisService,
   ],
 })
 export class AppModule {

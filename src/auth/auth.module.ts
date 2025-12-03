@@ -7,6 +7,8 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TwilioModule } from 'src/twilio/twilio.module';
 import { ReferralCodeModule } from 'src/referral-code/referral-code.module';
+import { OtpService } from 'src/otp/otp.service';
+import { OtpModule } from 'src/queues/otp/otp.module';
 
 @Module({
   imports: [
@@ -18,8 +20,9 @@ import { ReferralCodeModule } from 'src/referral-code/referral-code.module';
     }),
     TwilioModule,
     forwardRef(() => ReferralCodeModule),
+    OtpModule,
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, OtpService],
   controllers: [AuthController],
   exports: [AuthService],
 })
