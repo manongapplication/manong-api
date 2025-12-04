@@ -173,7 +173,8 @@ export class UserService {
           hasSeenVerificationCongrats ?? user?.hasSeenVerificationCongrats,
         addressLine: dto.addressLine,
         status: dto.status,
-        password: password ?? user?.password,
+        password:
+          password != null ? await bcrypt.hash(password, 10) : user?.password,
       },
     });
 
