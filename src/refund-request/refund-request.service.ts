@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  BadRequestException,
   forwardRef,
   Inject,
   Injectable,
@@ -49,10 +50,34 @@ export class RefundRequestService {
       throw new NotFoundException('Service Request not found!');
     }
 
+    // Check if service request is already cancelled
+    if (
+      request.deletedAt ||
+      request.status === ServiceRequestStatus.cancelled
+    ) {
+      throw new BadRequestException(
+        'Service request is already cancelled. Check existing refund requests.',
+      );
+    }
+
+    // Check if refund already exists
+    const existingRefund = await this.prisma.refundRequest.findFirst({
+      where: { serviceRequestId: dto.serviceRequestId },
+    });
+
+    if (existingRefund) {
+      throw new BadRequestException(
+        'Refund request already exists for this service request.',
+      );
+    }
+
     const refundStatus =
-      request.paymentStatus == PaymentStatus.pending &&
-      (request.status == ServiceRequestStatus.awaitingAcceptance ||
-        request.status == ServiceRequestStatus.pending)
+      (request.paymentStatus == PaymentStatus.pending &&
+        (request.status == ServiceRequestStatus.awaitingAcceptance ||
+          request.status == ServiceRequestStatus.pending)) ||
+      (request.paymentStatus == PaymentStatus.paid &&
+        (request.status == ServiceRequestStatus.awaitingAcceptance ||
+          request.status == ServiceRequestStatus.pending))
         ? RefundStatus.approved
         : RefundStatus.pending;
 
