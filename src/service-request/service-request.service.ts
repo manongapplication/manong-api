@@ -845,6 +845,7 @@ export class ServiceRequestService {
         refunding = await this.paymongoService.requestRefund(
           userIdFinal,
           data.id,
+          isAdmin,
         );
 
         if (!refunding) {

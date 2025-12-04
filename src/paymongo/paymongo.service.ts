@@ -441,6 +441,7 @@ export class PaymongoService {
   async requestRefund(
     userId: number,
     serviceRequestId: number,
+    isAdmin?: boolean,
   ): Promise<{ data: PaymongoRefund; refundAmount: number } | null> {
     const user = await this.userService.findById(userId);
     if (!user) {
@@ -456,7 +457,7 @@ export class PaymongoService {
       throw new NotFoundException('Service Request not found!');
     }
 
-    if (serviceRequest.userId !== userId) {
+    if (!isAdmin && serviceRequest.userId !== userId) {
       throw new BadGatewayException('User is not permitted!');
     }
 
