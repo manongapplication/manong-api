@@ -30,6 +30,7 @@ import { ReferralCodeUsageService } from 'src/referral-code-usage/referral-code-
 import { OtpService } from 'src/otp/otp.service';
 import { OtpProcessorService } from 'src/queues/otp/otp-processor/otp-processor.service';
 import { OtpQueueService } from 'src/queues/otp/otp-queue/otp-queue.service';
+import { BookmarkItemService } from 'src/bookmark-item/bookmark-item.service';
 
 // 🧩 Add here any other frequently injected services
 // (so you won’t need to mock them manually later)
@@ -65,6 +66,7 @@ const defaultMocks = [
   { provide: OtpService, useValue: {} },
   { provide: OtpProcessorService, useValue: {} },
   { provide: OtpQueueService, useValue: {} },
+  { provide: BookmarkItemService, useValue: {} },
 ];
 
 export async function createTestingModule(
