@@ -170,6 +170,22 @@ export class RefundRequestService {
       throw new NotFoundException('Service Request not found!');
     }
 
+    const existingRefund = await this.prisma.refundRequest.findFirst({
+      where: {
+        serviceRequestId,
+        status: RefundStatus.pending,
+      },
+    });
+
+    if (
+      existingRefund?.availableAt &&
+      existingRefund.availableAt > new Date()
+    ) {
+      throw new BadGatewayException(
+        `Funds not available until ${existingRefund.availableAt.toDateString()}. Cannot process refund yet.`,
+      );
+    }
+
     return await this.serviceRequestService.cancelServiceRequest(
       userId,
       existRequest.id,
@@ -313,6 +329,16 @@ export class RefundRequestService {
         );
       }
     } else if (dto.status == RefundStatus.processed) {
+      // Check if funds are available
+      if (
+        existingRefund.availableAt &&
+        existingRefund.availableAt > new Date()
+      ) {
+        throw new BadGatewayException(
+          `Funds not available until ${existingRefund.availableAt.toDateString()}. Cannot process refund yet.`,
+        );
+      }
+
       // Check if admin
       const user = await this.userService.isAdmin(userId);
       const isAdmin = user?.role === UserRole.admin;
@@ -355,6 +381,17 @@ export class RefundRequestService {
 
     for (const refund of pendingRefunds) {
       try {
+        if (refund.availableAt && refund.availableAt > new Date()) {
+          // Skip this refund - funds not available yet
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          results.push({
+            skipped: true,
+            refundId: refund.id,
+            reason: `Funds not available until ${refund.availableAt.toDateString()}`,
+          });
+          continue; // Skip to next refund
+        }
+
         // Process the refund cancellation similar to updateRefundRequest
         await this.requestRefundCancelServiceRequest(
           userId,
