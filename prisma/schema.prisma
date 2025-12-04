@@ -87,6 +87,9 @@ model User {
   referralCodes      ReferralCode[]
   referralCodeUsages ReferralCodeUsage[]
   otps               OTP[]
+
+  bookmarkedByUsers BookmarkItem[] @relation("BookmarkedManong")
+  bookmarkItems     BookmarkItem[]
 }
 
 model PasswordResetToken {
@@ -123,6 +126,7 @@ model ServiceItem {
 
   subServiceItems SubServiceItem[]
   serviceRequest  ServiceRequest[]
+  bookmarkItems   BookmarkItem[]
 }
 
 model SubServiceItem {
@@ -143,6 +147,7 @@ model SubServiceItem {
   serviceItem        ServiceItem          @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
   serviceRequest     ServiceRequest[]
   manongSpecialities ManongSpecialities[]
+  bookmarkItems      BookmarkItem[]
 
   @@index([serviceItemId])
 }
@@ -636,4 +641,32 @@ model OTP {
   @@index([status])
   @@index([userId])
   @@index([expiresAt])
+}
+
+enum BookmarkType {
+  SERVICE_ITEM
+  SUB_SERVICE_ITEM
+  MANONG
+}
+
+model BookmarkItem {
+  id               Int          @id @default(autoincrement())
+  userId           Int
+  type             BookmarkType
+  serviceItemId    Int?
+  subServiceItemId Int?
+  manongId         Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceItem    ServiceItem?    @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
+  subServiceItem SubServiceItem? @relation(fields: [subServiceItemId], references: [id], onDelete: Cascade)
+  manong         User?           @relation("BookmarkedManong", fields: [manongId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, serviceItemId, subServiceItemId, manongId])
+  @@index([userId])
+  @@index([manongId])
+  @@index([createdAt])
 }

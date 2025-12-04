@@ -1,10 +1,13 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
   Post,
+  Put,
   Query,
   UploadedFiles,
   UseGuards,
@@ -18,9 +21,10 @@ import { CurrentUserId } from 'src/common/decorators/current-user-id.decorator';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { GoogleGeocodingService } from 'src/google-geocoding/google-geocoding.service';
 import { CompleteServiceRequestDto } from './dto/complete-service-request.dto';
-import { PaymentStatus } from '@prisma/client';
+import { PaymentStatus, ServiceRequestStatus, UserRole } from '@prisma/client';
 import { getFormattedAddressOSM } from 'src/common/utils/address.util';
 import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
+import { ApiQuery } from '@nestjs/swagger';
 
 @UseGuards(JwtAuthGuard, AppMaintenanceGuard)
 @Controller('api/service-requests')
@@ -266,6 +270,140 @@ export class ServiceRequestController {
       success: true,
       data: result,
       message: 'Service request mark as completed.',
+    };
+  }
+
+  @Get('admin/all')
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'status', required: false, enum: ServiceRequestStatus })
+  @ApiQuery({ name: 'paymentStatus', required: false, enum: PaymentStatus })
+  @ApiQuery({ name: 'dateFrom', required: false, type: Date })
+  @ApiQuery({ name: 'dateTo', required: false, type: Date })
+  @ApiQuery({ name: 'minAmount', required: false, type: Number })
+  @ApiQuery({ name: 'maxAmount', required: false, type: Number })
+  async getAllServiceRequests(
+    @CurrentUserId() userId: number,
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+    @Query('search') search?: string,
+    @Query('status') status?: ServiceRequestStatus,
+    @Query('paymentStatus') paymentStatus?: PaymentStatus,
+    @Query('dateFrom') dateFrom?: Date,
+    @Query('dateTo') dateTo?: Date,
+    @Query('minAmount') minAmount?: string,
+    @Query('maxAmount') maxAmount?: string,
+  ) {
+    const result = await this.serviceRequestService.fetchServiceRequests(
+      userId,
+      parseInt(page),
+      parseInt(limit),
+      search,
+      status,
+      dateFrom ? new Date(dateFrom) : undefined,
+      dateTo ? new Date(dateTo) : undefined,
+      minAmount ? parseFloat(minAmount) : undefined,
+      maxAmount ? parseFloat(maxAmount) : undefined,
+      paymentStatus,
+    );
+
+    return {
+      success: true,
+      data: result.data,
+      pagination: {
+        totalCount: result.totalCount,
+        totalPages: result.totalPages,
+        currentPage: result.currentPage,
+        limit: result.limit,
+      },
+    };
+  }
+
+  @Get('admin/stats')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getServiceRequestStats(@CurrentUserId() userId: number) {
+    const stats = await this.serviceRequestService.fetchServiceRequestStats();
+
+    return {
+      success: true,
+      data: stats,
+    };
+  }
+
+  @Delete(':id')
+  async deleteServiceRequest(
+    @CurrentUserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    const user =
+      await this.serviceRequestService['userService'].findById(userId);
+
+    // Only admins can delete
+    if (user?.role !== UserRole.admin && user?.role !== UserRole.superadmin) {
+      throw new BadRequestException('Only admins can delete service requests');
+    }
+
+    const result = await this.serviceRequestService.deleteServiceRequest(id);
+
+    return {
+      success: true,
+      data: result,
+      message: 'Service request deleted successfully',
+    };
+  }
+
+  @Post('bulk-delete')
+  async bulkDeleteServiceRequests(
+    @CurrentUserId() userId: number,
+    @Body() body: { ids: number[] },
+  ) {
+    const user =
+      await this.serviceRequestService['userService'].findById(userId);
+
+    // Only admins can delete
+    if (user?.role !== UserRole.admin && user?.role !== UserRole.superadmin) {
+      throw new BadRequestException('Only admins can delete service requests');
+    }
+
+    if (!body.ids || body.ids.length === 0) {
+      throw new BadRequestException('No service request IDs provided');
+    }
+
+    const result = await this.serviceRequestService.bulkDeleteServiceRequests(
+      body.ids,
+    );
+
+    return {
+      success: true,
+      data: result,
+      message: `${result.count} service request(s) deleted successfully`,
+    };
+  }
+
+  @Put('admin/:id')
+  async updateServiceRequestAdmin(
+    @CurrentUserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateServiceRequestDto,
+  ) {
+    const user =
+      await this.serviceRequestService['userService'].findById(userId);
+
+    // Only admins can update
+    if (user?.role !== UserRole.admin && user?.role !== UserRole.superadmin) {
+      throw new BadRequestException('Only admins can update service requests');
+    }
+
+    const result = await this.serviceRequestService.updateServiceRequestAdmin(
+      id,
+      dto,
+    );
+
+    return {
+      success: true,
+      data: result,
+      message: 'Service request updated successfully',
     };
   }
 }

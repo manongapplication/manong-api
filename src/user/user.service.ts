@@ -115,8 +115,14 @@ export class UserService {
   }
 
   async updateUser(userId: number, dto: UpdateUserDto) {
-    const { firstName, lastName, email, phone, hasSeenVerificationCongrats } =
-      dto;
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      hasSeenVerificationCongrats,
+      password,
+    } = dto;
 
     if (email) {
       const normalizedEmail = email.toLowerCase();
@@ -167,6 +173,7 @@ export class UserService {
           hasSeenVerificationCongrats ?? user?.hasSeenVerificationCongrats,
         addressLine: dto.addressLine,
         status: dto.status,
+        password: password ?? user?.password,
       },
     });
 

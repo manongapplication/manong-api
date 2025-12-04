@@ -7,6 +7,7 @@ import {
   IsInt,
   IsLatitude,
   IsLongitude,
+  IsNumber,
   IsOptional,
   IsString,
   MaxLength,
@@ -115,4 +116,12 @@ export class UpdateServiceRequestDto {
   @IsOptional()
   @IsString()
   refundIdOnGateway?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @IsOptional()
+  @IsNumber()
+  total?: number;
 }

@@ -138,7 +138,19 @@ export class AuthService {
       throw new BadRequestException('You must put the required data!');
     }
 
-    // Verify OTP against database (not Twilio)
+    // DEVELOPMENT MODE: Always accept any code
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🚀 DEVELOPMENT MODE: Accepting any OTP for ${dto.phone}`);
+
+      if (dto.code !== '123456') {
+        throw new BadRequestException('In development, use code: 123456');
+      }
+
+      // Just continue with registration
+      return await this.register(dto);
+    }
+
+    // PRODUCTION MODE: Verify OTP against database/Twilio
     const isValid = await this.otpService.verifyOTP(dto.phone, dto.code);
 
     if (!isValid) {

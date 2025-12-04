@@ -1162,4 +1162,399 @@ export class ServiceRequestService {
 
     return completed;
   }
+
+  async fetchServiceRequests(
+    userId: number,
+    page = 1,
+    limit = 10,
+    search?: string,
+    status?: ServiceRequestStatus,
+    dateFrom?: Date,
+    dateTo?: Date,
+    minAmount?: number,
+    maxAmount?: number,
+    paymentStatus?: PaymentStatus,
+  ) {
+    const user = await this.userService.findById(userId);
+
+    // Check if user is admin
+    if (user?.role !== UserRole.admin && user?.role !== UserRole.superadmin) {
+      throw new BadRequestException(
+        'Only admins can access all service requests',
+      );
+    }
+
+    const skip = (page - 1) * limit;
+
+    // Build the where clause
+    const where: Prisma.ServiceRequestWhereInput = {};
+
+    // Search filter
+    if (search) {
+      where.OR = [
+        { requestNumber: { contains: search, mode: 'insensitive' } },
+        { customerFullAddress: { contains: search, mode: 'insensitive' } },
+        { serviceDetails: { contains: search, mode: 'insensitive' } },
+        {
+          user: {
+            OR: [
+              { firstName: { contains: search, mode: 'insensitive' } },
+              { lastName: { contains: search, mode: 'insensitive' } },
+              { phone: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
+            ],
+          },
+        },
+        {
+          manong: {
+            OR: [
+              { firstName: { contains: search, mode: 'insensitive' } },
+              { lastName: { contains: search, mode: 'insensitive' } },
+              { phone: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
+            ],
+          },
+        },
+        { serviceItem: { title: { contains: search, mode: 'insensitive' } } },
+        {
+          subServiceItem: { title: { contains: search, mode: 'insensitive' } },
+        },
+      ];
+    }
+
+    // Status filter
+    if (status) {
+      where.status = status;
+    }
+
+    // Payment status filter
+    if (paymentStatus) {
+      where.paymentStatus = paymentStatus;
+    }
+
+    // Date range filter
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) {
+        where.createdAt.gte = dateFrom;
+      }
+      if (dateTo) {
+        where.createdAt.lte = dateTo;
+      }
+    }
+
+    // Amount range filter
+    if (minAmount !== undefined || maxAmount !== undefined) {
+      where.total = {};
+      if (minAmount !== undefined) {
+        where.total.gte = minAmount;
+      }
+      if (maxAmount !== undefined) {
+        where.total.lte = maxAmount;
+      }
+    }
+
+    // Get total count for pagination
+    const totalCount = await this.prisma.serviceRequest.count({ where });
+
+    // Fetch service requests with all related data
+    const requests = await this.prisma.serviceRequest.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            email: true,
+            status: true,
+            role: true,
+            profilePhoto: true,
+          },
+        },
+        manong: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            email: true,
+            status: true,
+            role: true,
+            profilePhoto: true,
+            manongProfile: true,
+          },
+        },
+        serviceItem: true,
+        subServiceItem: true,
+        urgencyLevel: true,
+        paymentMethod: true,
+        paymentTransactions: {
+          include: {
+            refundRequest: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        refundRequests: true,
+        feedback: true,
+        manongReport: true,
+        adjustments: true,
+      },
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Parse imagesPath if it's a JSON string
+    const formattedRequests = requests.map((request) => ({
+      ...request,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      imagesPath:
+        request.imagesPath && typeof request.imagesPath === 'string'
+          ? JSON.parse(request.imagesPath)
+          : request.imagesPath || [],
+    }));
+
+    return {
+      data: formattedRequests,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+      limit,
+    };
+  }
+
+  async fetchServiceRequestStats() {
+    // Get total counts
+    const [
+      total,
+      awaitingAcceptance,
+      pending,
+      accepted,
+      inProgress,
+      completed,
+      cancelled,
+      failed,
+      refunding,
+      expired,
+      rejected,
+    ] = await Promise.all([
+      this.prisma.serviceRequest.count(),
+      this.prisma.serviceRequest.count({
+        where: { status: ServiceRequestStatus.awaitingAcceptance },
+      }),
+      this.prisma.serviceRequest.count({
+        where: { status: ServiceRequestStatus.pending },
+      }),
+      this.prisma.serviceRequest.count({
+        where: { status: ServiceRequestStatus.accepted },
+      }),
+      this.prisma.serviceRequest.count({
+        where: { status: ServiceRequestStatus.inProgress },
+      }),
+      this.prisma.serviceRequest.count({
+        where: { status: ServiceRequestStatus.completed },
+      }),
+      this.prisma.serviceRequest.count({
+        where: { status: ServiceRequestStatus.cancelled },
+      }),
+      this.prisma.serviceRequest.count({
+        where: { status: ServiceRequestStatus.failed },
+      }),
+      this.prisma.serviceRequest.count({
+        where: { status: ServiceRequestStatus.refunding },
+      }),
+      this.prisma.serviceRequest.count({
+        where: { status: ServiceRequestStatus.expired },
+      }),
+      this.prisma.serviceRequest.count({
+        where: { status: ServiceRequestStatus.rejected },
+      }),
+    ]);
+
+    // Calculate total revenue from completed requests
+    const completedRequests = await this.prisma.serviceRequest.findMany({
+      where: {
+        status: ServiceRequestStatus.completed,
+        total: { not: null },
+      },
+      select: { total: true },
+    });
+
+    const totalRevenue = completedRequests.reduce((sum, req) => {
+      return sum + (req.total?.toNumber() || 0);
+    }, 0);
+
+    // Calculate average completion time
+    const completedWithTimes = await this.prisma.serviceRequest.findMany({
+      where: {
+        status: ServiceRequestStatus.completed,
+        createdAt: { not: undefined },
+        completedAt: { not: null },
+      },
+      select: { createdAt: true, completedAt: true },
+    });
+
+    let averageCompletionTime = 0;
+    if (completedWithTimes.length > 0) {
+      const totalTime = completedWithTimes.reduce((sum, req) => {
+        const start = new Date(req.createdAt).getTime();
+        const end = new Date(req.completedAt!).getTime();
+        return sum + (end - start);
+      }, 0);
+      averageCompletionTime = Math.round(
+        totalTime / completedWithTimes.length / 60000,
+      ); // Convert to minutes
+    }
+
+    return {
+      total,
+      awaitingAcceptance,
+      pending,
+      accepted,
+      inProgress,
+      completed,
+      cancelled,
+      failed,
+      refunding,
+      expired,
+      rejected,
+      totalRevenue,
+      averageCompletionTime,
+    };
+  }
+
+  async deleteServiceRequest(id: number) {
+    const request = await this.prisma.serviceRequest.findUnique({
+      where: { id },
+    });
+
+    if (!request) {
+      throw new NotFoundException(`Service request with id ${id} not found`);
+    }
+
+    // Check if there are any active payment transactions or refunds
+    const hasActiveTransactions =
+      await this.prisma.paymentTransaction.findFirst({
+        where: {
+          serviceRequestId: id,
+          status: { in: [PaymentStatus.pending, PaymentStatus.paid] },
+        },
+      });
+
+    const hasPendingRefunds = await this.prisma.refundRequest.findFirst({
+      where: {
+        serviceRequestId: id,
+        status: { in: ['pending', 'approved', 'processing'] },
+      },
+    });
+
+    if (hasActiveTransactions || hasPendingRefunds) {
+      throw new BadRequestException(
+        'Cannot delete service request with active payments or pending refunds',
+      );
+    }
+
+    return this.prisma.serviceRequest.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        status: ServiceRequestStatus.cancelled,
+      },
+    });
+  }
+
+  async bulkDeleteServiceRequests(ids: number[]) {
+    // Check all requests exist and can be deleted
+    const requests = await this.prisma.serviceRequest.findMany({
+      where: { id: { in: ids } },
+      include: {
+        paymentTransactions: {
+          where: {
+            status: { in: [PaymentStatus.pending, PaymentStatus.paid] },
+          },
+        },
+        refundRequests: {
+          where: {
+            status: { in: ['pending', 'approved', 'processing'] },
+          },
+        },
+      },
+    });
+
+    if (requests.length !== ids.length) {
+      throw new NotFoundException('Some service requests were not found');
+    }
+
+    const cannotDelete = requests.filter(
+      (req) =>
+        req.paymentTransactions.length > 0 || req.refundRequests.length > 0,
+    );
+
+    if (cannotDelete.length > 0) {
+      const requestNumbers = cannotDelete
+        .map((req) => req.requestNumber)
+        .join(', ');
+      throw new BadRequestException(
+        `Cannot delete service requests with active payments or pending refunds: ${requestNumbers}`,
+      );
+    }
+
+    // Soft delete all requests
+    return this.prisma.serviceRequest.updateMany({
+      where: { id: { in: ids } },
+      data: {
+        deletedAt: new Date(),
+        status: ServiceRequestStatus.cancelled,
+      },
+    });
+  }
+
+  async updateServiceRequestAdmin(id: number, dto: UpdateServiceRequestDto) {
+    const request = await this.findOrFail(id);
+
+    if (!request) {
+      throw new NotFoundException(`ServiceRequest with id ${id} not found`);
+    }
+
+    const updateData: any = {
+      status: dto.status,
+      paymentStatus: dto.paymentStatus,
+      notes: dto.notes,
+    };
+
+    // Only update manong if provided
+    if (dto.manongId) {
+      const manong = await this.userService.findById(dto.manongId);
+      if (!manong || manong.role !== UserRole.manong) {
+        throw new BadRequestException(
+          'Manong ID must belong to a valid manong user',
+        );
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      updateData.manongId = dto.manongId;
+    }
+
+    // Only update total if provided
+    if (dto.total !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      updateData.total = dto.total;
+    }
+
+    const updated = await this.prisma.serviceRequest.update({
+      where: { id },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      data: updateData,
+      include: {
+        user: true,
+        manong: true,
+        serviceItem: true,
+        subServiceItem: true,
+        paymentTransactions: true,
+      },
+    });
+
+    return updated;
+  }
 }

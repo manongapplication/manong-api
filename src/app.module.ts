@@ -80,6 +80,9 @@ import { ReferralCodeUsageController } from './referral-code-usage/referral-code
 import { ReferralCodeUsageModule } from './referral-code-usage/referral-code-usage.module';
 import { RedisService } from './redis/redis.service';
 import { QueuesModule } from './queues/queues.module';
+import { BookmarkItemService } from './bookmark-item/bookmark-item.service';
+import { BookmarkItemController } from './bookmark-item/bookmark-item.controller';
+import { BookmarkItemModule } from './bookmark-item/bookmark-item.module';
 
 @Module({
   imports: [
@@ -129,6 +132,7 @@ import { QueuesModule } from './queues/queues.module';
     ReferralCodeModule,
     ReferralCodeUsageModule,
     QueuesModule,
+    BookmarkItemModule,
   ],
   controllers: [
     AppController,
@@ -153,6 +157,7 @@ import { QueuesModule } from './queues/queues.module';
     ManongReportController,
     ReferralCodeController,
     ReferralCodeUsageController,
+    BookmarkItemController,
   ],
   providers: [
     UserService,
@@ -180,6 +185,7 @@ import { QueuesModule } from './queues/queues.module';
     ReferralCodeService,
     ReferralCodeUsageService,
     RedisService,
+    BookmarkItemService,
   ],
 })
 export class AppModule {

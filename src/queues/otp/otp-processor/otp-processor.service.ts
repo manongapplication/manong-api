@@ -33,13 +33,31 @@ export class OtpProcessorService {
         );
       }
 
-      // Send via Twilio - THEY generate the OTP
-      const result = await this.twilioService.sendVerificationRequest({
-        phone,
-      });
+      let result;
+      let providerSid;
 
-      if (result?.data.status !== 'pending') {
-        throw new Error('Failed to send OTP via Twilio');
+      if (process.env.NODE_ENV === 'development') {
+        // DEVELOPMENT MODE: Skip Twilio, always succeed
+        this.logger.log(`🚀 DEVELOPMENT MODE: Skipping Twilio for ${phone}`);
+
+        // Create a mock provider SID
+        providerSid = `dev_sid_${Date.now()}_${phone}`;
+
+        // Always return success in development
+        result = { success: true };
+      } else {
+        // PRODUCTION MODE: Send via Twilio
+        result = await this.twilioService.sendVerificationRequest({
+          phone,
+        });
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (result?.data.status !== 'pending') {
+          throw new Error('Failed to send OTP via Twilio');
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        providerSid = result.data.sid;
       }
 
       // Extract OTP from Twilio response or wait for webhook
@@ -55,19 +73,22 @@ export class OtpProcessorService {
           verified: false,
           method: 'SMS',
           provider: 'Twilio',
-          providerId: result.data.sid, // Store Twilio verification SID
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          providerId: providerSid, // Store Twilio verification SID
           status: 'SENT',
           userId: userId,
         },
       });
 
       this.logger.log(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         `OTP sent via Twilio to ${phone}, SID: ${result.data.sid}`,
       );
 
       return {
         success: true,
         phone,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         providerSid: result.data.sid,
         otpId: otpRecord.id,
       };
