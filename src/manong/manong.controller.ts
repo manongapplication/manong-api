@@ -213,19 +213,58 @@ export class ManongController {
     };
   }
 
-  @Get('with-stats')
+  @Post('with-stats')
   @UseGuards(JwtAuthGuard)
   async getAllManongsWithStats(
     @CurrentUserId() userId: number,
-    @Query('page', ParseIntPipe) page: number = 1,
-    @Query('limit', ParseIntPipe) limit: number = 10,
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
     @Query('search') search?: string,
   ) {
-    return this.manongService.getAllManongsWithStats(
+    const result = await this.manongService.getAllManongsWithStats(
       userId,
-      page,
-      limit,
+      parseInt(page),
+      parseInt(limit),
       search,
     );
+
+    return {
+      success: true,
+      data: result?.data, // Wrap the data
+      totalCount: result?.totalCount,
+      totalPages: result?.totalPages,
+      currentPage: result?.currentPage,
+      limit: result?.limit,
+    };
+  }
+
+  @Get('sub-service-items/available')
+  @UseGuards(JwtAuthGuard)
+  async getAvailableSubServiceItems() {
+    const subServiceItems =
+      await this.manongService.getAvailableSubServiceItems();
+    return {
+      success: true,
+      data: subServiceItems,
+    };
+  }
+
+  @Put(':id/specialities')
+  @AdminOnly()
+  @UseGuards(JwtAuthGuard, AppMaintenanceGuard)
+  async updateManongSpecialities(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: { subServiceItemIds: number[] },
+  ) {
+    const result = await this.manongService.updateManongSpecialities(
+      id,
+      dto.subServiceItemIds,
+    );
+
+    return {
+      success: true,
+      data: result,
+      message: 'Manong specialities updated successfully!',
+    };
   }
 }

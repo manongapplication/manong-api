@@ -416,6 +416,10 @@ export class ManongService {
       },
     });
 
+    if (dto.subServiceItemIds && Array.isArray(dto.subServiceItemIds)) {
+      await this.updateManongSpecialities(id, dto.subServiceItemIds);
+    }
+
     return updated;
   }
 
@@ -655,5 +659,66 @@ export class ManongService {
       currentPage: page,
       limit,
     };
+  }
+
+  // In manong.service.ts, add these methods:
+  async updateManongSpecialities(
+    manongId: number,
+    subServiceItemIds: number[],
+  ) {
+    // Find manong profile
+    const manong = await this.prisma.user.findUnique({
+      where: { id: manongId },
+      include: { manongProfile: true },
+    });
+
+    if (!manong || !manong.manongProfile) {
+      throw new NotFoundException(`Manong with ID ${manongId} not found`);
+    }
+
+    const manongProfileId = manong.manongProfile.id;
+
+    // Delete existing specialities
+    await this.prisma.manongSpecialities.deleteMany({
+      where: { manongProfileId },
+    });
+
+    // Create new specialities
+    if (subServiceItemIds.length > 0) {
+      await this.prisma.manongSpecialities.createMany({
+        data: subServiceItemIds.map((subServiceItemId) => ({
+          manongProfileId,
+          subServiceItemId,
+        })),
+      });
+    }
+
+    // Return updated manong with specialities
+    return this.findManongById(manongId);
+  }
+
+  async getAvailableSubServiceItems() {
+    return this.prisma.subServiceItem.findMany({
+      where: {
+        status: 'active',
+        deletedAt: null,
+      },
+      include: {
+        serviceItem: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+      orderBy: [
+        {
+          serviceItemId: 'asc',
+        },
+        {
+          title: 'asc',
+        },
+      ],
+    });
   }
 }

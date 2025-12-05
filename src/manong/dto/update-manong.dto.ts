@@ -103,4 +103,8 @@ export class UpdateManongDto {
   @IsString()
   @IsEnum(AccountStatus, { message: 'status is invalid.' })
   status?: AccountStatus;
+
+  @IsArray()
+  @IsNumber({}, { each: true })
+  subServiceItemIds: number[];
 }
