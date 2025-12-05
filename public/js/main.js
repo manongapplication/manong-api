@@ -1,4 +1,5 @@
 let API_URL = '';
+let filteredServiceItems = [];
 
 async function loadEnv() {
   const currentHost = window.location.hostname;
@@ -22,6 +23,16 @@ async function loadEnv() {
     API_URL = 'http://localhost:3000/api';
     console.warn('⚠️ Falling back to localhost API:', API_URL, e.message);
   }
+}
+
+function setupServiceSearch() {
+  const searchInput = document.getElementById('serviceSearch');
+  if (!searchInput) return;
+
+  searchInput.addEventListener('input', function() {
+    const query = this.value.toLowerCase().trim();
+    filterAndDisplayServices(query);
+  });
 }
 
 const MAX_ASSISTANTS = 5;
@@ -95,6 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initMap();
   initCurrentLocBtn();
   phoneInit();
+  setupServiceSearch();
 });
 
 const initCurrentLocBtn = () => {
@@ -198,42 +210,88 @@ const fetchServiceType = async () => {
     const jsonData = await response.json();
     const data = jsonData.data;
     serviceItems = data;
+    filteredServiceItems = [...data]; // Initialize filtered items
 
-    const serviceTypeArea = document.getElementById('serviceTypeArea');
-    serviceTypeArea.className = 'grid grid-cols-3 sm:grid-cols-4 gap-2';
-    serviceTypeArea.innerHTML = '';
-
-    data.forEach((item) => {
-      const iconColor = item.iconColor;
-      const label = document.createElement('label');
-      label.className = 'block cursor-pointer';
-      const div = document.createElement('div');
-      div.className = 'flex flex-col gap-1 sm:gap-2 items-center';
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.name = 'services';
-      checkbox.value = item.id;
-      checkbox.className = 'peer hidden';
-      const chip = document.createElement('div');
-      chip.className = `bg-[${iconColor}] border rounded-2xl p-3 sm:p-4 text-center transition-all peer-checked:border-[#034B57] peer-checked:bg-[#034B57] hover:border-[#034B57] w-12 h-12 sm:w-14 sm:h-14 text-white flex items-center justify-center text-sm sm:text-base`;
-      const title = document.createElement('p');
-      title.className = 'text-center text-xs sm:text-sm';
-      title.textContent = item.title;
-
-      label.appendChild(div);
-      div.appendChild(checkbox);
-      chip.innerHTML = getIconHtml(item.iconName);
-      chip.style = 'color: ' + item.iconTextColor + ';';
-      div.appendChild(chip);
-      div.appendChild(title);
-
-      serviceTypeArea.appendChild(label);
-      checkbox.addEventListener('change', handleServiceChange);
-    });
+    displayServices();
+    
   } catch (e) {
     console.error('Error fetching service items:', e);
   }
 };
+
+function filterAndDisplayServices(searchQuery = '') {
+  if (searchQuery) {
+    // Filter service items based on search
+    filteredServiceItems = serviceItems.filter(service => {
+      // Check if service title matches
+      if (service.title.toLowerCase().includes(searchQuery)) {
+        return true;
+      }
+      
+      // Check if any sub-service item matches
+      if (service.subServiceItems && service.subServiceItems.length > 0) {
+        return service.subServiceItems.some(sub => 
+          sub.title.toLowerCase().includes(searchQuery) ||
+          (sub.description && sub.description.toLowerCase().includes(searchQuery))
+        );
+      }
+      
+      return false;
+    });
+  } else {
+    // If no search query, show all services
+    filteredServiceItems = [...serviceItems];
+  }
+  
+  displayServices();
+}
+
+function displayServices() {
+  const serviceTypeArea = document.getElementById('serviceTypeArea');
+  
+  if (filteredServiceItems.length === 0) {
+    serviceTypeArea.innerHTML = `
+      <div class="text-center py-8">
+        <i class="fa-solid fa-search text-gray-400 text-3xl mb-2"></i>
+        <p class="text-gray-500 text-sm">No services found matching your search.</p>
+      </div>
+    `;
+    // Clear sub-service area
+    const subServiceArea = document.getElementById('subServiceItemsArea');
+    subServiceArea.innerHTML = '<p class="text-center text-gray-500 italic text-xs sm:text-sm">Please choose a Service Type above to see available Specialities.</p>';
+    return;
+  }
+
+  serviceTypeArea.className = 'grid grid-cols-3 sm:grid-cols-4 gap-2';
+  serviceTypeArea.innerHTML = '';
+
+  filteredServiceItems.forEach((item) => {
+    const label = document.createElement('label');
+    label.className = 'block cursor-pointer';
+    const div = document.createElement('div');
+    div.className = 'flex flex-col gap-1 sm:gap-2 items-center';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.name = 'services';
+    checkbox.value = item.id;
+    checkbox.className = 'peer hidden';
+    const chip = document.createElement('div');
+    chip.className = `bg-[${item.iconColor}] border rounded-2xl p-3 sm:p-4 text-center transition-all peer-checked:border-[#034B57] peer-checked:bg-[#034B57] hover:border-[#034B57] w-12 h-12 sm:w-14 sm:h-14 text-white flex items-center justify-center text-sm sm:text-base`;
+    const title = document.createElement('p');
+    title.className = 'text-center text-xs sm:text-sm';
+    title.textContent = item.title;
+
+    label.appendChild(div);
+    div.appendChild(checkbox);
+    chip.innerHTML = getIconHtml(item.iconName);
+    chip.style = 'color: ' + item.iconTextColor + ';';
+    div.appendChild(chip);
+    div.appendChild(title);
+
+    serviceTypeArea.appendChild(label);
+    checkbox.addEventListener('change', handleServiceChange);
+  });
+}
 
 const handleAddAssistant = () => {
   const assistantArea = document.getElementById('assistantArea');
@@ -313,6 +371,8 @@ function handleServiceChange() {
   const selectedIds = Array.from(
     document.querySelectorAll('input[name="services"]:checked'),
   ).map((cb) => parseInt(cb.value));
+  
+  // Get selected services from the original serviceItems array
   const selectedServices = serviceItems.filter((item) =>
     selectedIds.includes(item.id),
   );
@@ -329,10 +389,13 @@ function handleServiceChange() {
 
   const subServiceArea = document.getElementById('subServiceItemsArea');
   subServiceArea.innerHTML = '';
+  
   if (selectedIds.length == 0) {
     subServiceArea.innerHTML =
       '<p class="text-center text-gray-500 italic text-xs sm:text-sm">Please choose a Service Type above to see available Specialities.</p>';
+    return;
   }
+  
   output.forEach((service) => {
     const h3 = document.createElement('h3');
     h3.textContent = service.serviceTitle;
@@ -367,6 +430,86 @@ function handleServiceChange() {
       div.appendChild(label);
     });
     subServiceArea.appendChild(div);
+  });
+  
+  // Add search functionality for sub-services
+  addSubServiceSearch();
+}
+
+function addSubServiceSearch() {
+  const subServiceArea = document.getElementById('subServiceItemsArea');
+  const existingSearch = document.getElementById('subServiceSearch');
+  
+  // Remove existing search if it exists
+  if (existingSearch) {
+    existingSearch.remove();
+  }
+  
+  // Only add search if there are sub-services
+  const allSubServiceCheckboxes = document.querySelectorAll('input[name="subServices"]');
+  if (allSubServiceCheckboxes.length > 5) { // Only add search if there are many items
+    const searchContainer = document.createElement('div');
+    searchContainer.className = 'mb-4';
+    searchContainer.innerHTML = `
+      <div class="relative">
+        <input
+          type="text"
+          id="subServiceSearch"
+          placeholder="Search specialities..."
+          class="w-full p-2 sm:p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D] text-sm sm:text-base"
+        />
+        <i class="fa-solid fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+      </div>
+    `;
+    
+    // Insert at the beginning of subServiceArea
+    subServiceArea.insertBefore(searchContainer, subServiceArea.firstChild);
+    
+    // Add event listener for sub-service search
+    setTimeout(() => {
+      const subServiceSearch = document.getElementById('subServiceSearch');
+      if (subServiceSearch) {
+        subServiceSearch.addEventListener('input', function() {
+          const query = this.value.toLowerCase().trim();
+          filterSubServices(query);
+        });
+      }
+    }, 100);
+  }
+}
+
+function filterSubServices(searchQuery) {
+  const allLabels = document.querySelectorAll('#subServiceItemsArea label');
+  
+  allLabels.forEach(label => {
+    const checkbox = label.querySelector('input[name="subServices"]');
+    const textElement = label.querySelector('p');
+    
+    if (textElement) {
+      const text = textElement.textContent.toLowerCase();
+      const shouldShow = !searchQuery || text.includes(searchQuery);
+      
+      // Show/hide the label
+      label.style.display = shouldShow ? 'block' : 'none';
+      
+      // Also hide the parent h3 if all its sub-services are hidden
+      if (!shouldShow) {
+        const h3 = label.closest('h3');
+        if (h3) {
+          const allSubLabels = h3.nextElementSibling.querySelectorAll('label');
+          const allHidden = Array.from(allSubLabels).every(l => l.style.display === 'none');
+          h3.style.display = allHidden ? 'none' : 'block';
+          h3.nextElementSibling.style.display = allHidden ? 'none' : 'grid';
+        }
+      } else {
+        // Show the parent elements
+        const h3 = label.closest('h3');
+        if (h3) {
+          h3.style.display = 'block';
+          h3.nextElementSibling.style.display = 'grid';
+        }
+      }
+    }
   });
 }
 
