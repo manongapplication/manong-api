@@ -24,12 +24,8 @@ import { PaymentStatus, ServiceRequestStatus } from '@prisma/client';
 import { mapPaymongoRefundStatus } from 'src/common/utils/payment.util';
 import { AuthService } from 'src/auth/auth.service';
 import { FIVE_MINUTES } from 'src/common/utils/time.util';
-import {
-  calculateRefundAmount,
-  getRefundAmountTypeEnum,
-} from 'src/common/utils/refund.util';
+import { calculateRefundAmount } from 'src/common/utils/refund.util';
 import { UserService } from 'src/user/user.service';
-import { RefundAmountType } from 'src/refund-request/types/refund-amount.types';
 
 @Injectable()
 export class PaymongoService {
@@ -490,19 +486,18 @@ export class PaymongoService {
 
     // Calculate refund amount
     let refundAmount = 0;
-    refundAmount = calculateRefundAmount(
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const payment = await this.getPayment(paymentId);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const netAmountInCents = payment.attributes.net_amount; // e.g., 24375 (₱243.75)
+    const netAmountInPesos = netAmountInCents / 100; // e.g., 243.75
+
+    const refundAmountInPesos = calculateRefundAmount(
       serviceRequest.status!,
-      Number(serviceRequest.paymentTransactions[0].amount),
+      netAmountInPesos, // Pass in pesos
     );
 
-    const refundType = getRefundAmountTypeEnum(serviceRequest.status!);
-
-    if (refundType == RefundAmountType.FULL_REFUND) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const payment = await this.getPayment(paymentId);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      refundAmount = payment.attributes.net_amount;
-    }
+    refundAmount = Math.round(refundAmountInPesos * 100);
 
     // Check if this is a same-day payment
     const paymentCreatedAt = new Date(serviceRequest.createdAt);
@@ -510,8 +505,7 @@ export class PaymongoService {
     const isSameDay = paymentCreatedAt.toDateString() === now.toDateString();
 
     // Check if this is a partial refund
-    const originalAmount = Number(serviceRequest.paymentTransactions[0].amount);
-    const isPartialRefund = refundAmount < originalAmount;
+    const isPartialRefund = refundAmount < netAmountInCents;
 
     // Paymongo doesn't allow same-day partial refunds
     if (isSameDay && isPartialRefund) {
@@ -523,7 +517,7 @@ export class PaymongoService {
 
     const data = {
       attributes: {
-        amount: refundAmount * 100,
+        amount: refundAmount,
         payment_id: paymentId,
         reason: 'requested_by_customer',
       },
