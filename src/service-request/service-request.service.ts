@@ -913,7 +913,7 @@ export class ServiceRequestService {
             refunding?.refundAmount ??
             Number(updated.paymentTransactions[0].amount),
           currency: updated.paymentTransactions[0].currency ?? 'PHP',
-          status: paymentStatus,
+          status: PaymentStatus.refunded,
           type: TransactionType.refund,
           paymentIntentId: updated.paymentTransactions[0].paymentIntentId,
           paymentIdOnGateway: updated.paymentTransactions[0].paymentIdOnGateway,
