@@ -122,6 +122,7 @@ export class UpdateServiceRequestDto {
   notes?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   total?: number;
 }
