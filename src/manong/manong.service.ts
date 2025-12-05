@@ -9,7 +9,12 @@ import { CreateManongDto } from './dto/create-manong.dto';
 import { join } from 'path';
 import { promises as fs } from 'fs';
 import { ServiceRequestService } from 'src/service-request/service-request.service';
-import { AccountStatus, ManongStatus, UserRole } from '@prisma/client';
+import {
+  AccountStatus,
+  ManongStatus,
+  ServiceRequestStatus,
+  UserRole,
+} from '@prisma/client';
 import { UserService } from 'src/user/user.service';
 import { UpdateManongDto } from './dto/update-manong.dto';
 import * as bcrypt from 'bcrypt';
@@ -529,5 +534,126 @@ export class ManongService {
     }
 
     return { deletedCount: manongs.length, ids };
+  }
+
+  async getManongStats(manongId: number) {
+    // Get completed service requests count
+    const completedCount = await this.prisma.serviceRequest.count({
+      where: {
+        manongId: manongId,
+        status: ServiceRequestStatus.completed,
+      },
+    });
+
+    // Get average rating from feedback
+    const feedbackAggregate = await this.prisma.feedback.aggregate({
+      where: {
+        revieweeId: manongId,
+        rating: { not: undefined },
+      },
+      _avg: {
+        rating: true,
+      },
+      _count: {
+        rating: true,
+      },
+    });
+
+    const averageRating = feedbackAggregate._avg.rating || 0;
+    const ratingCount = feedbackAggregate._count.rating || 0;
+
+    return {
+      completedServices: completedCount,
+      averageRating: averageRating,
+      ratingCount: ratingCount,
+    };
+  }
+
+  async getAllManongsWithStats(
+    userId: number,
+    page = 1,
+    limit = 10,
+    search?: string,
+  ) {
+    const user = await this.userService.findById(userId);
+
+    if (!user) return;
+
+    let isAdmin = false;
+
+    if (user.role == UserRole.admin) {
+      isAdmin = true;
+    }
+
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const where: any = {
+      role: UserRole.manong,
+      deletedAt: null,
+    };
+
+    // Add search filter if provided
+    if (search) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      where.OR = [
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    // Fetch manongs (users with role 'manong')
+    const manongs = await this.prisma.user.findMany({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        manongProfile: {
+          include: {
+            manongSpecialities: {
+              include: {
+                subServiceItem: true,
+              },
+            },
+            manongAssistants: true,
+          },
+        },
+        providerVerifications: isAdmin,
+      },
+      skip,
+      take: limit,
+    });
+
+    // For each manong, fetch their stats
+    const manongsWithStats = await Promise.all(
+      manongs.map(async (manong) => {
+        const stats = await this.getManongStats(manong.id);
+
+        return {
+          ...manong,
+          stats: {
+            completedServices: stats.completedServices,
+            averageRating: stats.averageRating,
+            ratingCount: stats.ratingCount,
+          },
+        };
+      }),
+    );
+
+    // Get total count for pagination
+    const totalCount = await this.prisma.user.count({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      where,
+    });
+
+    return {
+      data: manongsWithStats,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+      limit,
+    };
   }
 }

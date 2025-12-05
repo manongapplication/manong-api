@@ -212,4 +212,20 @@ export class ManongController {
       message: 'Manongs with IDs successfully deleted.',
     };
   }
+
+  @Get('with-stats')
+  @UseGuards(JwtAuthGuard)
+  async getAllManongsWithStats(
+    @CurrentUserId() userId: number,
+    @Query('page', ParseIntPipe) page: number = 1,
+    @Query('limit', ParseIntPipe) limit: number = 10,
+    @Query('search') search?: string,
+  ) {
+    return this.manongService.getAllManongsWithStats(
+      userId,
+      page,
+      limit,
+      search,
+    );
+  }
 }
