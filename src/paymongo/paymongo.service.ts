@@ -20,7 +20,11 @@ import {
 } from './types/paymongo.types';
 import { ServiceRequestService } from 'src/service-request/service-request.service';
 import { UpdateServiceRequestDto } from 'src/service-request/dto/update-service-request.dto';
-import { PaymentStatus, ServiceRequestStatus } from '@prisma/client';
+import {
+  PaymentStatus,
+  ServiceRequestStatus,
+  TransactionType,
+} from '@prisma/client';
 import { mapPaymongoRefundStatus } from 'src/common/utils/payment.util';
 import { AuthService } from 'src/auth/auth.service';
 import { FIVE_MINUTES } from 'src/common/utils/time.util';
@@ -626,7 +630,7 @@ export class PaymongoService {
     try {
       // Find transaction with this refundId
       const transaction = await this.prisma.paymentTransaction.findFirst({
-        where: { refundIdOnGateway: refundId },
+        where: { refundIdOnGateway: refundId, type: TransactionType.refund },
       });
 
       if (!transaction) {
