@@ -24,8 +24,12 @@ import { PaymentStatus, ServiceRequestStatus } from '@prisma/client';
 import { mapPaymongoRefundStatus } from 'src/common/utils/payment.util';
 import { AuthService } from 'src/auth/auth.service';
 import { FIVE_MINUTES } from 'src/common/utils/time.util';
-import { calculateRefundAmount } from 'src/common/utils/refund.util';
+import {
+  calculateRefundAmount,
+  getRefundAmountTypeEnum,
+} from 'src/common/utils/refund.util';
 import { UserService } from 'src/user/user.service';
+import { RefundAmountType } from 'src/refund-request/types/refund-amount.types';
 
 @Injectable()
 export class PaymongoService {
@@ -485,10 +489,20 @@ export class PaymongoService {
     // ============ END OF NEW CHECK ============
 
     // Calculate refund amount
-    const refundAmount = calculateRefundAmount(
+    let refundAmount = 0;
+    refundAmount = calculateRefundAmount(
       serviceRequest.status!,
       Number(serviceRequest.paymentTransactions[0].amount),
     );
+
+    const refundType = getRefundAmountTypeEnum(serviceRequest.status!);
+
+    if (refundType == RefundAmountType.FULL_REFUND) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const payment = await this.getPayment(paymentId);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      refundAmount = payment.attributes.net_amount;
+    }
 
     // Check if this is a same-day payment
     const paymentCreatedAt = new Date(serviceRequest.createdAt);

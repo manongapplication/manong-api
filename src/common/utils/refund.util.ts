@@ -1,4 +1,5 @@
 import { RefundStatus, ServiceRequestStatus } from '@prisma/client';
+import { RefundAmountType } from 'src/refund-request/types/refund-amount.types';
 
 export interface RefundStatusMessage {
   title: string;
@@ -74,5 +75,28 @@ export function calculateRefundAmount(
 
     default:
       return totalAmount; // Full refund for other cases
+  }
+}
+
+export function getRefundAmountTypeEnum(
+  requestStatus: ServiceRequestStatus,
+): RefundAmountType {
+  switch (requestStatus) {
+    case ServiceRequestStatus.awaitingAcceptance:
+    case ServiceRequestStatus.pending:
+      return RefundAmountType.FULL_REFUND;
+
+    case ServiceRequestStatus.accepted:
+      return RefundAmountType.MINUS_300;
+
+    case ServiceRequestStatus.inProgress:
+      return RefundAmountType.FIFTY_PERCENT;
+
+    case ServiceRequestStatus.completed:
+    case ServiceRequestStatus.failed:
+      return RefundAmountType.NO_REFUND;
+
+    default:
+      return RefundAmountType.FULL_REFUND;
   }
 }

@@ -1,0 +1,6 @@
+export enum RefundAmountType {
+  FULL_REFUND = 'FULL_REFUND',
+  MINUS_300 = 'MINUS_300',
+  FIFTY_PERCENT = 'FIFTY_PERCENT',
+  NO_REFUND = 'NO_REFUND',
+}
