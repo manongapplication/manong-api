@@ -16,6 +16,7 @@ import {
   PaymentStatus,
   PaymentTransaction,
   Prisma,
+  RefundStatus,
   ServiceRequest,
   ServiceRequestStatus,
   TransactionType,
@@ -928,6 +929,19 @@ export class ServiceRequestService {
         await this.paymentTransactionService.sendPushNotificationForTransactionStatus(
           transaction.id,
         );
+
+        await this.prisma.refundRequest.updateMany({
+          where: {
+            serviceRequestId: id,
+            userId: userIdFinal,
+            status: RefundStatus.processed,
+          },
+          data: {
+            status: RefundStatus.approved,
+            reviewedAt: new Date(),
+            ...(isAdmin && { reviewedBy: userIdFinal }),
+          },
+        });
       }
 
       return {

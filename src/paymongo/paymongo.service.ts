@@ -548,7 +548,10 @@ export class PaymongoService {
         dto,
       );
 
-      return { data: response.data, refundAmount };
+      return {
+        data: response.data,
+        refundAmount: refundAmount / 100, // Convert cents to pesos
+      };
     } catch (e) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (axios.isAxiosError(e) && e.response?.data?.errors) {
