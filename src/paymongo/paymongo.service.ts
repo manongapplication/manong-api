@@ -26,6 +26,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { FIVE_MINUTES } from 'src/common/utils/time.util';
 import { calculateRefundAmount } from 'src/common/utils/refund.util';
 import { UserService } from 'src/user/user.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class PaymongoService {
@@ -37,6 +38,7 @@ export class PaymongoService {
     private readonly serviceRequestService: ServiceRequestService,
     private readonly authService: AuthService,
     private readonly userService: UserService,
+    private readonly prisma: PrismaService,
   ) {}
 
   private baseUrl = 'https://api.paymongo.com/v1';
@@ -618,5 +620,32 @@ export class PaymongoService {
     }
 
     return null;
+  }
+
+  async handleRefundUpdate(refundId: string, paymongoStatus: string) {
+    try {
+      // Find transaction with this refundId
+      const transaction = await this.prisma.paymentTransaction.findFirst({
+        where: { refundIdOnGateway: refundId },
+      });
+
+      if (!transaction) {
+        this.logger.warn(`No transaction found for refund ID: ${refundId}`);
+        return;
+      }
+
+      // Map PayMongo status to your PaymentStatus
+      const status = mapPaymongoRefundStatus(paymongoStatus);
+
+      // Update the transaction
+      await this.prisma.paymentTransaction.update({
+        where: { id: transaction.id },
+        data: { status },
+      });
+
+      this.logger.log(`Updated refund ${refundId} to status: ${status}`);
+    } catch (error) {
+      this.logger.error(`Error handling refund update: ${error}`);
+    }
   }
 }

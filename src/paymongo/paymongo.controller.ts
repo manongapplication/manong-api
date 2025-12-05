@@ -214,6 +214,17 @@ export class PaymongoController {
         break;
       }
 
+      case 'payment.refund.updated': {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const refundId = body.data.id;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const status = body.data.attributes.status;
+
+        // CALL SERVICE METHOD TO UPDATE REFUND STATUS
+        await this.paymongoService.handleRefundUpdate(refundId, status);
+        break;
+      }
+
       case 'payment_intent.failed': {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         const failedId = body.data.id;
