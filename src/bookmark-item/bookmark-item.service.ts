@@ -174,4 +174,55 @@ export class BookmarkItemService {
       },
     });
   }
+
+  async batchCheckBookmarks(userId: number, type: BookmarkType, ids: string) {
+    const idArray = ids
+      .split(',')
+      .map((id) => parseInt(id))
+      .filter((id) => !isNaN(id));
+
+    const whereCondition: any = {
+      userId,
+      type,
+      OR: [],
+    };
+
+    // Add conditions based on type
+    if (type === BookmarkType.SERVICE_ITEM) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      whereCondition.OR = idArray.map((id) => ({ serviceItemId: id }));
+    } else if (type === BookmarkType.SUB_SERVICE_ITEM) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      whereCondition.OR = idArray.map((id) => ({ subServiceItemId: id }));
+    } else if (type === BookmarkType.MANONG) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      whereCondition.OR = idArray.map((id) => ({ manongId: id }));
+    }
+
+    const bookmarks = await this.prisma.bookmarkItem.findMany({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      where: whereCondition,
+      select: {
+        serviceItemId: type === BookmarkType.SERVICE_ITEM,
+        subServiceItemId: type === BookmarkType.SUB_SERVICE_ITEM,
+        manongId: type === BookmarkType.MANONG,
+      },
+    });
+
+    // Return map of ID -> isBookmarked
+    const result = {};
+    if (type === BookmarkType.SERVICE_ITEM) {
+      idArray.forEach((id) => {
+        result[id] = bookmarks.some((b) => b.serviceItemId === id);
+      });
+    } else if (type === BookmarkType.SUB_SERVICE_ITEM) {
+      idArray.forEach((id) => {
+        result[id] = bookmarks.some((b) => b.subServiceItemId === id);
+      });
+    } else if (type === BookmarkType.MANONG) {
+      idArray.forEach((id) => {
+        result[id] = bookmarks.some((b) => b.manongId === id);
+      });
+    }
+  }
 }

@@ -12,6 +12,7 @@ import {
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 import { CurrentUserId } from 'src/common/decorators/current-user-id.decorator';
 import { CreateBookmarkItemDto } from './dto/create-bookmark-item.dto';
+import { BookmarkType } from '@prisma/client';
 
 @UseGuards(JwtAuthGuard, AppMaintenanceGuard)
 @Controller('api/bookmark-item')
@@ -86,6 +87,25 @@ export class BookmarkItemController {
       success: true,
       data: result,
       message: 'Bookmarks fetched successfully!',
+    };
+  }
+
+  @Get('batch-check')
+  async batchCheckBookmarks(
+    @CurrentUserId() userId: number,
+    @Query('type') type: BookmarkType,
+    @Query('ids') ids: string,
+  ) {
+    const result = await this.bookmarkItemService.batchCheckBookmarks(
+      userId,
+      type,
+      ids,
+    );
+
+    return {
+      success: true,
+      data: result,
+      message: 'Batch bookmark check completed',
     };
   }
 }

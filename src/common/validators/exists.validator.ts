@@ -11,7 +11,7 @@ let prismaService: PrismaService;
 
 export function setPrismaService(prisma: PrismaService) {
   prismaService = prisma;
-  console.log('PrismaService initialized for validation:', !!prisma);
+  // console.log('PrismaService initialized for validation:', !!prisma);
 }
 
 export function Exists(
@@ -32,7 +32,7 @@ export function Exists(
           value: any,
           args: ValidationArguments,
         ): Promise<boolean> {
-          console.log(`Validating ${args.property} with value:`, value);
+          // console.log(`Validating ${args.property} with value:`, value);
 
           if (value == null) return true;
 
@@ -45,9 +45,9 @@ export function Exists(
 
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const [model, column] = args.constraints;
-          console.log(
-            `Checking model '${model}' for column '${column}' with value '${value}'`,
-          );
+          // console.log(
+          //   `Checking model '${model}' for column '${column}' with value '${value}'`,
+          // );
 
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const prismaModel = (prismaService as any)[model];
@@ -66,7 +66,7 @@ export function Exists(
               where: { [column]: value },
             });
             console.log(
-              `Record found for ${model}.${column} = ${value}:`,
+              // `Record found for ${model}.${column} = ${value}:`,
               !!record,
             );
             return !!record;
