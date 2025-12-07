@@ -4,6 +4,7 @@ import {
   IsArray,
   IsEmail,
   IsEnum,
+  IsInt,
   IsLatitude,
   IsLongitude,
   IsNumber,
@@ -107,4 +108,8 @@ export class UpdateManongDto {
   @IsArray()
   @IsNumber({}, { each: true })
   subServiceItemIds: number[];
+
+  @IsOptional()
+  @IsInt()
+  dailyServiceLimit?: number;
 }

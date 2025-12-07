@@ -413,6 +413,7 @@ export class ManongService {
       data: {
         yearsExperience: dto.yearsExperience,
         experienceDescription: dto.experienceDescription,
+        dailyServiceLimit: dto.dailyServiceLimit,
       },
     });
 
