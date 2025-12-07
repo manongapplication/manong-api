@@ -109,7 +109,8 @@ export class UpdateManongDto {
   @IsNumber({}, { each: true })
   subServiceItemIds: number[];
 
+  @Type(() => Number)
+  @IsNumber()
   @IsOptional()
-  @IsInt()
   dailyServiceLimit?: number;
 }
