@@ -4,7 +4,6 @@ import {
   IsArray,
   IsEmail,
   IsEnum,
-  IsInt,
   IsLatitude,
   IsLongitude,
   IsNumber,
