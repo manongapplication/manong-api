@@ -62,11 +62,9 @@ export class ManongReportService {
     }
 
     if (!dto.images || dto.images.length < 1 || dto.images.length > 3) {
-      return {
-        created: null,
-        warning: 'You must upload between 1 and 3 images to continue.',
-        duplicate: false,
-      };
+      throw new BadGatewayException(
+        'You must upload between 1 and 3 images to continue.',
+      );
     }
 
     const request = await this.serviceRequestService.findById(
