@@ -2,6 +2,7 @@ import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsEmail,
   IsEnum,
   IsLatitude,
@@ -112,4 +113,14 @@ export class UpdateManongDto {
   @IsNumber()
   @IsOptional()
   dailyServiceLimit?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value === 'true';
+    }
+    return value;
+  })
+  isProfessionallyVerified?: boolean;
 }

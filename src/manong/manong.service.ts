@@ -414,6 +414,7 @@ export class ManongService {
         yearsExperience: dto.yearsExperience,
         experienceDescription: dto.experienceDescription,
         dailyServiceLimit: dto.dailyServiceLimit,
+        isProfessionallyVerified: dto.isProfessionallyVerified,
       },
     });
 
