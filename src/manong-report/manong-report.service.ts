@@ -76,9 +76,14 @@ export class ManongReportService {
     }
 
     const dtoIsPaid =
-      dto.servicePaid == true ? PaymentStatus.paid : PaymentStatus.pending;
+      dto.servicePaid === true
+        ? PaymentStatus.paid
+        : dto.servicePaid === false
+          ? PaymentStatus.pending
+          : undefined; // Keep undefined if not provided
 
-    if (request.paymentStatus != dtoIsPaid) {
+    // Only update if dtoIsPaid is explicitly set
+    if (dtoIsPaid !== undefined && request.paymentStatus !== dtoIsPaid) {
       await this.serviceRequestService.updateServiceRequestPaymentStatus(
         request.id,
         dtoIsPaid,
