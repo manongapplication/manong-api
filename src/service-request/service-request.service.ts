@@ -1124,7 +1124,7 @@ export class ServiceRequestService {
       where: { id },
       data: {
         status: ServiceRequestStatus.completed,
-        paymentStatus: PaymentStatus.paid,
+        // paymentStatus: PaymentStatus.paid,
       },
       include: {
         user: true,
@@ -1569,6 +1569,97 @@ export class ServiceRequestService {
         paymentTransactions: true,
       },
     });
+
+    return updated;
+  }
+
+  async markServiceAsPaid(userId: number, id: number) {
+    const request = await this.prisma.serviceRequest.findUnique({
+      where: { id },
+      include: {
+        manong: true,
+        paymentMethod: true,
+      },
+    });
+
+    if (!request) {
+      throw new NotFoundException('Service request not found!');
+    }
+
+    // Only the assigned Manong can mark as paid
+    if (request.manongId !== userId) {
+      throw new BadRequestException(
+        'Only the assigned Manong can mark this service as paid.',
+      );
+    }
+
+    // Only cash payments can be marked as paid later
+    if (request.paymentMethod?.code !== 'cash') {
+      throw new BadRequestException(
+        'Only cash payments can be marked as paid.',
+      );
+    }
+
+    // Check if already paid
+    if (request.paymentStatus === PaymentStatus.paid) {
+      throw new BadRequestException('Service is already marked as paid.');
+    }
+
+    // Update payment status
+    const updated = await this.prisma.serviceRequest.update({
+      where: { id },
+      data: {
+        paymentStatus: PaymentStatus.paid,
+      },
+      include: {
+        user: true,
+        paymentMethod: true,
+        serviceItem: true,
+        subServiceItem: true,
+      },
+    });
+
+    // Create payment transaction record
+    const metadata = {
+      requestNumber: updated.requestNumber,
+      userId: updated.userId,
+      serviceType: updated.serviceItem.title,
+      subServiceType: updated.subServiceItem?.title,
+      markedAsPaidAt: new Date().toISOString(),
+    };
+
+    const paymentTransactions: CreatePaymentTransactionDto = {
+      userId: updated.userId,
+      serviceRequestId: updated.id,
+      provider: updated.paymentMethod!.code,
+      amount: Number(updated.total),
+      currency: 'PHP',
+      status: PaymentStatus.paid,
+      type: TransactionType.payment,
+      handledManually: true,
+      metadata: JSON.stringify(metadata),
+    };
+
+    await this.paymentTransactionService.createPaymentTransactionService(
+      paymentTransactions,
+    );
+
+    // Send notification to customer
+    const notificationDto: CreateNotificationDto = {
+      token: updated.user?.fcmToken ?? '',
+      title: 'Payment Received',
+      body: `Your ${updated.serviceItem.title} service has been marked as paid. Thank you for your payment!`,
+      userId: updated.userId,
+      serviceRequestId: updated.id.toString(),
+      paymentStatus: PaymentStatus.paid,
+      status: updated.status!,
+    };
+
+    try {
+      await this.fcmService.sendPushNotification(notificationDto);
+    } catch (error) {
+      this.logger.error(`Error sending payment notification: ${error}`);
+    }
 
     return updated;
   }

@@ -75,19 +75,20 @@ export class ManongReportService {
       throw new NotFoundException('Service request not found!');
     }
 
-    const dtoIsPaid =
-      dto.servicePaid === true
+    if (dto.servicePaid !== undefined) {
+      const newStatus = dto.servicePaid
         ? PaymentStatus.paid
-        : dto.servicePaid === false
-          ? PaymentStatus.pending
-          : undefined; // Keep undefined if not provided
+        : PaymentStatus.pending;
 
-    // Only update if dtoIsPaid is explicitly set
-    if (dtoIsPaid !== undefined && request.paymentStatus !== dtoIsPaid) {
-      await this.serviceRequestService.updateServiceRequestPaymentStatus(
-        request.id,
-        dtoIsPaid,
-      );
+      console.log(`newStatus ${newStatus}`);
+
+      // Check if different from current status
+      if (request.paymentStatus !== newStatus) {
+        await this.serviceRequestService.updateServiceRequestPaymentStatus(
+          request.id,
+          newStatus,
+        );
+      }
     }
 
     // Save uploaded images

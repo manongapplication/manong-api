@@ -273,6 +273,24 @@ export class ServiceRequestController {
     };
   }
 
+  @Post(':id/mark-paid')
+  @UseGuards(JwtAuthGuard)
+  async markServiceAsPaid(
+    @CurrentUserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    const result = await this.serviceRequestService.markServiceAsPaid(
+      userId,
+      id,
+    );
+
+    return {
+      success: true,
+      data: result,
+      message: 'Service marked as paid successfully',
+    };
+  }
+
   @Get('admin/all')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
