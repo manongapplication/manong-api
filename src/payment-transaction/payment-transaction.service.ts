@@ -5,12 +5,14 @@ import { UpdatePaymentTransactionDto } from './dto/update-payment-transaction.dt
 import { getTransactionTypeMessage } from 'src/common/utils/payment-transaction.util';
 import { FcmService } from 'src/fcm/fcm.service';
 import { CreateNotificationDto } from 'src/fcm/dto/create-notification.dto';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class PaymentTransactionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly fcmService: FcmService,
+    private readonly userService: UserService,
   ) {}
 
   private readonly logger = new Logger(PaymentTransactionService.name);
@@ -91,12 +93,29 @@ export class PaymentTransactionService {
   async fetchPaymentTransactions(userId: number, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
 
+    const isManong = await this.userService.isManong(userId);
+
+    let whereClause: any = {};
+
+    if (isManong) {
+      // For manong: get transactions for service requests assigned to them
+      whereClause = {
+        OR: [{ serviceRequest: { manongId: isManong.id } }, { userId }],
+      };
+    } else {
+      // For regular user: get their own transactions
+      whereClause = { userId };
+    }
+
     return await this.prisma.paymentTransaction.findMany({
-      where: { userId },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      where: whereClause,
       skip,
       take: limit,
       orderBy: { createdAt: 'desc' },
-      include: { refundRequest: true },
+      include: {
+        refundRequest: true,
+      },
     });
   }
 

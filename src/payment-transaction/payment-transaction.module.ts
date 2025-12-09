@@ -14,6 +14,7 @@ import { FcmModule } from 'src/fcm/fcm.module';
     PaymentTransactionService,
     AppMaintenanceGuard,
     AppMaintenanceService,
+    UserModule,
   ],
   exports: [PaymentTransactionService],
 })

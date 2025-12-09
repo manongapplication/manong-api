@@ -13,6 +13,7 @@ import { promises as fs } from 'fs';
 import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import {
   AccountStatus,
+  ManongStatus,
   PaymentStatus,
   PaymentTransaction,
   Prisma,
@@ -694,6 +695,18 @@ export class ServiceRequestService {
       },
     });
 
+    // Update manong status to busy
+    await this.prisma.user.update({
+      where: { id: user.id, role: UserRole.manong },
+      data: {
+        manongProfile: {
+          update: {
+            status: ManongStatus.busy,
+          },
+        },
+      },
+    });
+
     return result;
   }
 
@@ -1131,6 +1144,18 @@ export class ServiceRequestService {
         paymentMethod: true,
         serviceItem: true,
         subServiceItem: true,
+      },
+    });
+
+    // Update manong status to busy
+    await this.prisma.user.update({
+      where: { id: userId, role: UserRole.manong },
+      data: {
+        manongProfile: {
+          update: {
+            status: ManongStatus.available,
+          },
+        },
       },
     });
 
