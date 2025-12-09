@@ -23,6 +23,7 @@ import { CurrentUserId } from 'src/common/decorators/current-user-id.decorator';
 import { UpdateManongDto } from './dto/update-manong.dto';
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
+import { ManongStatus } from '@prisma/client';
 
 @Controller('api/manongs')
 export class ManongController {
@@ -265,6 +266,21 @@ export class ManongController {
       success: true,
       data: result,
       message: 'Manong specialities updated successfully!',
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('status-update')
+  async updateManongStatus(
+    @CurrentUserId() userId: number,
+    @Body('status') status: ManongStatus,
+  ) {
+    const result = await this.manongService.updateManongStatus(userId, status);
+
+    return {
+      success: true,
+      data: result,
+      message: 'Status updated!',
     };
   }
 }

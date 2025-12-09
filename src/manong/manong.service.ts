@@ -723,4 +723,26 @@ export class ManongService {
       ],
     });
   }
+
+  async updateManongStatus(userId: number, status: ManongStatus) {
+    const user = await this.userService.isManong(userId);
+
+    if (!user) {
+      throw new BadGatewayException('User is not manong!');
+    }
+
+    return await this.prisma.user.update({
+      where: {
+        id: userId,
+        role: UserRole.manong,
+      },
+      data: {
+        manongProfile: {
+          update: {
+            status: status,
+          },
+        },
+      },
+    });
+  }
 }
