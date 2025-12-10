@@ -1,7 +1,10 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { DirectionsService } from './directions.service';
+import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
+import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
 
-@Controller('directions')
+@UseGuards(JwtAuthGuard, AppMaintenanceGuard)
+@Controller('api/directions')
 export class DirectionsController {
   constructor(private readonly directionsService: DirectionsService) {}
 
