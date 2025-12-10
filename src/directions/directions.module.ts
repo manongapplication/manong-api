@@ -5,9 +5,10 @@ import { AppMaintenanceService } from 'src/app-maintenance/app-maintenance.servi
 import { DirectionsService } from './directions.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { UserModule } from 'src/user/user.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, UserModule],
+  imports: [PrismaModule, UserModule, AuthModule],
   controllers: [DirectionsController],
   providers: [DirectionsService, AppMaintenanceGuard, AppMaintenanceService],
   exports: [DirectionsService],
