@@ -32,6 +32,7 @@ import { OtpProcessorService } from 'src/queues/otp/otp-processor/otp-processor.
 import { OtpQueueService } from 'src/queues/otp/otp-queue/otp-queue.service';
 import { BookmarkItemService } from 'src/bookmark-item/bookmark-item.service';
 import { DirectionsService } from 'src/directions/directions.service';
+import { AppVersionService } from 'src/app-version/app-version.service';
 
 // 🧩 Add here any other frequently injected services
 // (so you won’t need to mock them manually later)
@@ -69,6 +70,7 @@ const defaultMocks = [
   { provide: OtpQueueService, useValue: {} },
   { provide: BookmarkItemService, useValue: {} },
   { provide: DirectionsService, useValue: {} },
+  { provide: AppVersionService, useValue: {} },
 ];
 
 export async function createTestingModule(

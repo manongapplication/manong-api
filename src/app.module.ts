@@ -85,6 +85,9 @@ import { BookmarkItemController } from './bookmark-item/bookmark-item.controller
 import { BookmarkItemModule } from './bookmark-item/bookmark-item.module';
 import { DirectionsService } from './directions/directions.service';
 import { DirectionsModule } from './directions/directions.module';
+import { AppVersionService } from './app-version/app-version.service';
+import { AppVersionController } from './app-version/app-version.controller';
+import { AppVersionModule } from './app-version/app-version.module';
 
 @Module({
   imports: [
@@ -136,6 +139,7 @@ import { DirectionsModule } from './directions/directions.module';
     QueuesModule,
     BookmarkItemModule,
     DirectionsModule,
+    AppVersionModule,
   ],
   controllers: [
     AppController,
@@ -161,6 +165,7 @@ import { DirectionsModule } from './directions/directions.module';
     ReferralCodeController,
     ReferralCodeUsageController,
     BookmarkItemController,
+    AppVersionController,
   ],
   providers: [
     UserService,
@@ -190,6 +195,7 @@ import { DirectionsModule } from './directions/directions.module';
     RedisService,
     BookmarkItemService,
     DirectionsService,
+    AppVersionService,
   ],
 })
 export class AppModule {
