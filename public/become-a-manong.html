@@ -84,24 +84,31 @@
         }
       }
 
-      #serviceSearch, #subServiceSearch {
+      #serviceSearch,
+      #subServiceSearch {
         transition: all 0.3s ease;
       }
 
-      #serviceSearch:focus, #subServiceSearch:focus {
-        border-color: #04697D;
+      #serviceSearch:focus,
+      #subServiceSearch:focus {
+        border-color: #04697d;
         box-shadow: 0 0 0 3px rgba(4, 105, 125, 0.1);
       }
 
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-5px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+          opacity: 0;
+          transform: translateY(-5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
       #serviceTypeArea > label {
         animation: fadeIn 0.3s ease-out;
       }
-
     </style>
   </head>
 
@@ -181,7 +188,9 @@
               placeholder="Search services..."
               class="w-full p-2 sm:p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#04697D] text-sm sm:text-base"
             />
-            <i class="fa-solid fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <i
+              class="fa-solid fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            ></i>
           </div>
           <div id="serviceTypeArea">
             <div class="flex justify-center items-center h-32">

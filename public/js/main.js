@@ -29,7 +29,7 @@ function setupServiceSearch() {
   const searchInput = document.getElementById('serviceSearch');
   if (!searchInput) return;
 
-  searchInput.addEventListener('input', function() {
+  searchInput.addEventListener('input', function () {
     const query = this.value.toLowerCase().trim();
     filterAndDisplayServices(query);
   });
@@ -213,7 +213,6 @@ const fetchServiceType = async () => {
     filteredServiceItems = [...data]; // Initialize filtered items
 
     displayServices();
-    
   } catch (e) {
     console.error('Error fetching service items:', e);
   }
@@ -222,33 +221,35 @@ const fetchServiceType = async () => {
 function filterAndDisplayServices(searchQuery = '') {
   if (searchQuery) {
     // Filter service items based on search
-    filteredServiceItems = serviceItems.filter(service => {
+    filteredServiceItems = serviceItems.filter((service) => {
       // Check if service title matches
       if (service.title.toLowerCase().includes(searchQuery)) {
         return true;
       }
-      
+
       // Check if any sub-service item matches
       if (service.subServiceItems && service.subServiceItems.length > 0) {
-        return service.subServiceItems.some(sub => 
-          sub.title.toLowerCase().includes(searchQuery) ||
-          (sub.description && sub.description.toLowerCase().includes(searchQuery))
+        return service.subServiceItems.some(
+          (sub) =>
+            sub.title.toLowerCase().includes(searchQuery) ||
+            (sub.description &&
+              sub.description.toLowerCase().includes(searchQuery)),
         );
       }
-      
+
       return false;
     });
   } else {
     // If no search query, show all services
     filteredServiceItems = [...serviceItems];
   }
-  
+
   displayServices();
 }
 
 function displayServices() {
   const serviceTypeArea = document.getElementById('serviceTypeArea');
-  
+
   if (filteredServiceItems.length === 0) {
     serviceTypeArea.innerHTML = `
       <div class="text-center py-8">
@@ -258,7 +259,8 @@ function displayServices() {
     `;
     // Clear sub-service area
     const subServiceArea = document.getElementById('subServiceItemsArea');
-    subServiceArea.innerHTML = '<p class="text-center text-gray-500 italic text-xs sm:text-sm">Please choose a Service Type above to see available Specialities.</p>';
+    subServiceArea.innerHTML =
+      '<p class="text-center text-gray-500 italic text-xs sm:text-sm">Please choose a Service Type above to see available Specialities.</p>';
     return;
   }
 
@@ -371,7 +373,7 @@ function handleServiceChange() {
   const selectedIds = Array.from(
     document.querySelectorAll('input[name="services"]:checked'),
   ).map((cb) => parseInt(cb.value));
-  
+
   // Get selected services from the original serviceItems array
   const selectedServices = serviceItems.filter((item) =>
     selectedIds.includes(item.id),
@@ -389,13 +391,13 @@ function handleServiceChange() {
 
   const subServiceArea = document.getElementById('subServiceItemsArea');
   subServiceArea.innerHTML = '';
-  
+
   if (selectedIds.length == 0) {
     subServiceArea.innerHTML =
       '<p class="text-center text-gray-500 italic text-xs sm:text-sm">Please choose a Service Type above to see available Specialities.</p>';
     return;
   }
-  
+
   output.forEach((service) => {
     const h3 = document.createElement('h3');
     h3.textContent = service.serviceTitle;
@@ -431,7 +433,7 @@ function handleServiceChange() {
     });
     subServiceArea.appendChild(div);
   });
-  
+
   // Add search functionality for sub-services
   addSubServiceSearch();
 }
@@ -439,15 +441,18 @@ function handleServiceChange() {
 function addSubServiceSearch() {
   const subServiceArea = document.getElementById('subServiceItemsArea');
   const existingSearch = document.getElementById('subServiceSearch');
-  
+
   // Remove existing search if it exists
   if (existingSearch) {
     existingSearch.remove();
   }
-  
+
   // Only add search if there are sub-services
-  const allSubServiceCheckboxes = document.querySelectorAll('input[name="subServices"]');
-  if (allSubServiceCheckboxes.length > 5) { // Only add search if there are many items
+  const allSubServiceCheckboxes = document.querySelectorAll(
+    'input[name="subServices"]',
+  );
+  if (allSubServiceCheckboxes.length > 5) {
+    // Only add search if there are many items
     const searchContainer = document.createElement('div');
     searchContainer.className = 'mb-4';
     searchContainer.innerHTML = `
@@ -461,15 +466,15 @@ function addSubServiceSearch() {
         <i class="fa-solid fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
       </div>
     `;
-    
+
     // Insert at the beginning of subServiceArea
     subServiceArea.insertBefore(searchContainer, subServiceArea.firstChild);
-    
+
     // Add event listener for sub-service search
     setTimeout(() => {
       const subServiceSearch = document.getElementById('subServiceSearch');
       if (subServiceSearch) {
-        subServiceSearch.addEventListener('input', function() {
+        subServiceSearch.addEventListener('input', function () {
           const query = this.value.toLowerCase().trim();
           filterSubServices(query);
         });
@@ -480,24 +485,26 @@ function addSubServiceSearch() {
 
 function filterSubServices(searchQuery) {
   const allLabels = document.querySelectorAll('#subServiceItemsArea label');
-  
-  allLabels.forEach(label => {
+
+  allLabels.forEach((label) => {
     const checkbox = label.querySelector('input[name="subServices"]');
     const textElement = label.querySelector('p');
-    
+
     if (textElement) {
       const text = textElement.textContent.toLowerCase();
       const shouldShow = !searchQuery || text.includes(searchQuery);
-      
+
       // Show/hide the label
       label.style.display = shouldShow ? 'block' : 'none';
-      
+
       // Also hide the parent h3 if all its sub-services are hidden
       if (!shouldShow) {
         const h3 = label.closest('h3');
         if (h3) {
           const allSubLabels = h3.nextElementSibling.querySelectorAll('label');
-          const allHidden = Array.from(allSubLabels).every(l => l.style.display === 'none');
+          const allHidden = Array.from(allSubLabels).every(
+            (l) => l.style.display === 'none',
+          );
           h3.style.display = allHidden ? 'none' : 'block';
           h3.nextElementSibling.style.display = allHidden ? 'none' : 'grid';
         }
