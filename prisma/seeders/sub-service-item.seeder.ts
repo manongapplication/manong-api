@@ -26,6 +26,10 @@ export class SubServiceItemSeeder {
     const homeMaintenance = await prisma.serviceItem.findFirst({
       where: { title: 'Home Maintenance' },
     });
+    // Cleaning service item
+    const cleaning = await prisma.serviceItem.findFirst({
+      where: { title: 'Cleaning' },
+    });
 
     await prisma.subServiceItem.createMany({
       data: [
@@ -383,6 +387,24 @@ export class SubServiceItemSeeder {
           iconName: 'mdi:home-automation',
           cost: 80,
           fee: 120,
+        },
+
+        // Cleaning Services
+        {
+          serviceItemId: cleaning!.id,
+          title: 'AC Cleaning',
+          description: 'Professional air conditioning unit cleaning service',
+          iconName: 'picon:airconditioner',
+          cost: 600,
+          fee: 0,
+        },
+        {
+          serviceItemId: cleaning!.id,
+          title: 'House Cleaning (Basic)',
+          description: 'Basic house cleaning service for regular maintenance',
+          iconName: 'material-symbols:house',
+          cost: 1500,
+          fee: 0,
         },
       ],
     });

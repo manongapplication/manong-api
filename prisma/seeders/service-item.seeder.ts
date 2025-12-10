@@ -77,6 +77,16 @@ export class ServiceItemSeeder {
           iconColor: '#04697D',
           iconTextColor: '#80d8d6',
         },
+        {
+          title: 'Cleaning',
+          description: 'Professional cleaning services for homes and offices',
+          priceMin: 0,
+          priceMax: 0,
+          ratePerKm: 0,
+          iconName: 'mdi:broom',
+          iconColor: '#04697D',
+          iconTextColor: '#80d8d6',
+        },
       ],
     });
 
