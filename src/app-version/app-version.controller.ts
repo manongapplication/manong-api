@@ -26,7 +26,7 @@ import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 import { CurrentUserId } from 'src/common/decorators/current-user-id.decorator';
 
 @ApiTags('App Version')
-@Controller('app-version')
+@Controller('api/app-version')
 export class AppVersionController {
   constructor(private readonly appVersionService: AppVersionService) {}
 
