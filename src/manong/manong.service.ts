@@ -38,6 +38,7 @@ export class ManongService {
             manongSpecialities: {
               some: { subServiceItem: { serviceItemId } },
             },
+            status: ManongStatus.available,
           },
         }),
         status: AccountStatus.verified,
@@ -100,7 +101,6 @@ export class ManongService {
             manongSpecialities: {
               some: { subServiceItem: { serviceItemId } },
             },
-            status: ManongStatus.available,
           },
         }),
       },
