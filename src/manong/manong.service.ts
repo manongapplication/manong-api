@@ -100,6 +100,7 @@ export class ManongService {
             manongSpecialities: {
               some: { subServiceItem: { serviceItemId } },
             },
+            status: ManongStatus.available,
           },
         }),
       },
