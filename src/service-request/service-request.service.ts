@@ -162,6 +162,29 @@ export class ServiceRequestService {
       };
     }
 
+    const manong = await this.prisma.user.findFirst({
+      where: {
+        role: UserRole.manong,
+      },
+      include: {
+        manongProfile: true,
+      },
+    });
+
+    if (!manong) {
+      return {
+        warning: 'Manong not found!',
+        duplicate: false,
+      };
+    }
+
+    if (manong.manongProfile?.status != ManongStatus.available) {
+      return {
+        warning: 'Manong not available!',
+        duplicate: false,
+      };
+    }
+
     // Validate images count
     if (!dto.images || dto.images.length < 1 || dto.images.length > 3) {
       return {
