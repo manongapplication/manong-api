@@ -162,29 +162,6 @@ export class ServiceRequestService {
       };
     }
 
-    const manong = await this.prisma.user.findFirst({
-      where: {
-        role: UserRole.manong,
-      },
-      include: {
-        manongProfile: true,
-      },
-    });
-
-    if (!manong) {
-      return {
-        warning: 'Manong not found!',
-        duplicate: false,
-      };
-    }
-
-    if (manong.manongProfile?.status != ManongStatus.available) {
-      return {
-        warning: 'Manong not available!',
-        duplicate: false,
-      };
-    }
-
     // Validate images count
     if (!dto.images || dto.images.length < 1 || dto.images.length > 3) {
       return {
@@ -546,6 +523,24 @@ export class ServiceRequestService {
     updateData.manongId = dto.manongId;
 
     updateData.total = CalculationUtil.calculateTotal(exists);
+
+    const manong = await this.prisma.user.findFirst({
+      where: {
+        role: UserRole.manong,
+        id: updateData.manongId!,
+      },
+      include: {
+        manongProfile: true,
+      },
+    });
+
+    if (!manong) {
+      throw new NotFoundException('Manong not found!');
+    }
+
+    if (manong.manongProfile?.status != ManongStatus.available) {
+      throw new BadGatewayException('Manong not available!');
+    }
 
     switch (paymentMethod?.code) {
       case 'cash':
