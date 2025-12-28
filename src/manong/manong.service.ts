@@ -38,7 +38,9 @@ export class ManongService {
             manongSpecialities: {
               some: { subServiceItem: { serviceItemId } },
             },
-            status: ManongStatus.available,
+            status: {
+              in: [ManongStatus.available, ManongStatus.busy],
+            },
           },
         }),
         status: AccountStatus.verified,
