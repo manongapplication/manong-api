@@ -285,10 +285,10 @@ export class ManongController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('daily-limit/check/:manongId')
+  @Get('daily-limit/check')
   async checkDailyLimit(
     @CurrentUserId() userId: number,
-    @Param('manongId', ParseIntPipe) manongId?: number,
+    @Body('manongId') manongId?: number,
   ) {
     const idToCheck = manongId ? manongId : userId;
 
@@ -308,10 +308,10 @@ export class ManongController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('daily-limit/status/:manongId')
+  @Get('daily-limit/status')
   async checkDailyLimitStatus(
     @CurrentUserId() userId: number,
-    @Param('manongId', ParseIntPipe) manongId?: number,
+    @Body('manongId') manongId?: number,
   ) {
     const idToCheck = manongId ? manongId : userId;
     const result = await this.manongService.checkManongDailyLimit(idToCheck);
