@@ -283,4 +283,48 @@ export class ManongController {
       message: 'Status updated!',
     };
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('daily-limit/check/:manongId?')
+  async checkDailyLimit(
+    @CurrentUserId() userId: number,
+    @Param('manongId') manongId?: string,
+  ) {
+    const idToCheck = manongId ? parseInt(manongId) : userId;
+
+    const result = await this.manongService.checkManongDailyLimit(idToCheck);
+
+    return {
+      success: true,
+      data: {
+        ...result,
+        canAcceptMore: !result.isReached,
+        remainingSlots: Math.max(0, result.limit - result.count),
+        message: result.isReached
+          ? `Daily limit reached. Resets in ${result.timeLeft.hours}h ${result.timeLeft.minutes}m`
+          : `You can accept ${result.limit - result.count} more service(s) today`,
+      },
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('daily-limit/status/:manongId?')
+  async checkDailyLimitStatus(
+    @CurrentUserId() userId: number,
+    @Param('manongId') manongId?: string,
+  ) {
+    const idToCheck = manongId ? parseInt(manongId) : userId;
+    const result = await this.manongService.checkManongDailyLimit(idToCheck);
+
+    return {
+      success: true,
+      data: {
+        isReached: result.isReached,
+        canAcceptMore: !result.isReached,
+        remainingSlots: Math.max(0, result.limit - result.count),
+        timeUntilReset: `${result.timeLeft.hours}h ${result.timeLeft.minutes}m ${result.timeLeft.seconds}s`,
+        nextReset: result.nextReset,
+      },
+    };
+  }
 }

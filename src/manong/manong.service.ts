@@ -27,6 +27,204 @@ export class ManongService {
     private readonly userService: UserService,
   ) {}
 
+  async checkManongDailyLimit(manongId: number): Promise<{
+    isReached: boolean;
+    timeLeft: {
+      hours: number;
+      minutes: number;
+      seconds: number;
+    };
+    count: number;
+    limit: number;
+    nextReset: Date;
+  }> {
+    // Get manong's daily limit
+    const manong = await this.prisma.user.findUnique({
+      where: {
+        id: manongId,
+        role: UserRole.manong,
+      },
+      select: {
+        manongProfile: {
+          select: {
+            dailyServiceLimit: true,
+          },
+        },
+      },
+    });
+
+    if (!manong) {
+      throw new NotFoundException(`Manong with ID ${manongId} not found`);
+    }
+
+    const dailyLimit = manong.manongProfile?.dailyServiceLimit ?? 5;
+
+    // Get today's service count
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const todayCount = await this.prisma.serviceRequest.count({
+      where: {
+        manongId: manongId,
+        createdAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+    });
+
+    // Calculate time until reset (midnight)
+    const now = new Date();
+    const nextReset = new Date(now);
+    nextReset.setDate(nextReset.getDate() + 1);
+    nextReset.setHours(0, 0, 0, 0);
+
+    const timeDiff = nextReset.getTime() - now.getTime();
+    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+    return {
+      isReached: todayCount >= dailyLimit,
+      timeLeft: {
+        hours,
+        minutes,
+        seconds,
+      },
+      count: todayCount,
+      limit: dailyLimit,
+      nextReset,
+    };
+  }
+
+  async checkMultipleManongsDailyLimits(manongIds: number[]): Promise<{
+    [manongId: number]: {
+      isReached: boolean;
+      timeLeft: {
+        hours: number;
+        minutes: number;
+        seconds: number;
+      };
+      count: number;
+      limit: number;
+      nextReset: Date;
+    };
+  }> {
+    if (manongIds.length === 0) {
+      return {};
+    }
+
+    // Get manongs' daily limits
+    const manongs = await this.prisma.user.findMany({
+      where: {
+        id: { in: manongIds },
+        role: UserRole.manong,
+      },
+      select: {
+        id: true,
+        manongProfile: {
+          select: {
+            dailyServiceLimit: true,
+          },
+        },
+      },
+    });
+
+    // Create a map of manongId -> dailyLimit
+    const limitMap = new Map(
+      manongs.map((m) => [m.id, m.manongProfile?.dailyServiceLimit ?? 5]),
+    );
+
+    // Get today's service counts for all manongs
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const dailyCounts = await this.prisma.serviceRequest.groupBy({
+      by: ['manongId'],
+      where: {
+        manongId: { in: manongIds },
+        createdAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    // Create count map
+    const countMap = new Map(
+      dailyCounts.map((item) => [item.manongId, item._count.id]),
+    );
+
+    // Calculate time until reset (midnight)
+    const now = new Date();
+    const nextReset = new Date(now);
+    nextReset.setDate(nextReset.getDate() + 1);
+    nextReset.setHours(0, 0, 0, 0);
+
+    const timeDiff = nextReset.getTime() - now.getTime();
+    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+    // Build result object
+    const result: {
+      [manongId: number]: {
+        isReached: boolean;
+        timeLeft: { hours: number; minutes: number; seconds: number };
+        count: number;
+        limit: number;
+        nextReset: Date;
+      };
+    } = {};
+
+    for (const manongId of manongIds) {
+      const limit = limitMap.get(manongId) ?? 5;
+      const count = countMap.get(manongId) ?? 0;
+
+      result[manongId] = {
+        isReached: count >= limit,
+        timeLeft: { hours, minutes, seconds },
+        count,
+        limit,
+        nextReset: new Date(nextReset),
+      };
+    }
+
+    return result;
+  }
+
+  async fetchVerifiedManongsWithLimitInfo(
+    serviceItemId?: number,
+    page = 1,
+    limit = 10,
+  ) {
+    const manongs = await this.fetchVerifiedManongs(serviceItemId, page, limit);
+
+    if (manongs.length === 0) {
+      return {
+        manongs: [],
+        limitInfo: {},
+      };
+    }
+
+    const manongIds = manongs.map((m) => m.id);
+    const limitInfo = await this.checkMultipleManongsDailyLimits(manongIds);
+
+    return {
+      manongs,
+      limitInfo,
+    };
+  }
+
   async fetchVerifiedManongs(serviceItemId?: number, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
 
