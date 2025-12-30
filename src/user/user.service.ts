@@ -227,19 +227,30 @@ export class UserService {
 
     await fs.writeFile(filePath, dto.validId.buffer);
 
+    const currentUser = await this.findById(userId);
+
+    const updateData: any = {
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      nickname: dto.nickname,
+      email: dto.email,
+      addressCategory: dto.addressCategory,
+      addressLine: dto.addressLine,
+      status: AccountStatus.onHold,
+    };
+
+    if (
+      dto.password &&
+      (!currentUser?.password || currentUser.password === '')
+    ) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      updateData.password = await bcrypt.hash(dto.password, 10);
+    }
+
     const updated = await this.prisma.user.update({
       where: { id: userId },
-      data: {
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        nickname: dto.nickname,
-        email: dto.email,
-        addressCategory: dto.addressCategory,
-        addressLine: dto.addressLine,
-        status: AccountStatus.onHold,
-        password:
-          dto.password != null ? await bcrypt.hash(dto.password, 10) : null,
-      },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      data: updateData,
     });
 
     const providerVerification: CreateProviderVerificationDto = {
