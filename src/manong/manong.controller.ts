@@ -301,8 +301,8 @@ export class ManongController {
         canAcceptMore: !result.isReached,
         remainingSlots: Math.max(0, result.limit - result.count),
         message: result.isReached
-          ? `Daily request limit reached. You can still accept jobs until reset in ${result.timeLeft.hours}h ${result.timeLeft.minutes}m.`
-          : `Users can still send ${result.limit - result.count} more request(s) today.`,
+          ? `User request limit reached. You can still accept jobs. Resets in ${result.timeLeft.hours}h ${result.timeLeft.minutes}m.`
+          : `Users can send ${result.limit - result.count} more request(s) today.`,
       },
     };
   }
