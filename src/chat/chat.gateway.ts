@@ -27,13 +27,13 @@ export class ChatGateway {
   @WebSocketServer()
   server: Server;
 
-  handleConnection(client: Socket) {
-    this.logger.log(`Client connected to ${client.id}`);
-  }
+  // handleConnection(client: Socket) {
+  //   this.logger.log(`Client connected to ${client.id}`);
+  // }
 
-  handleDisconnect(client: Socket) {
-    this.logger.log(`Client disconnected to ${client.id}`);
-  }
+  // handleDisconnect(client: Socket) {
+  //   this.logger.log(`Client disconnected to ${client.id}`);
+  // }
 
   @SubscribeMessage('joinChatRoom')
   async joinRoom(
@@ -49,7 +49,7 @@ export class ChatGateway {
   ) {
     const room = `chat:${data.userId}-${data.manongId}-${data.serviceRequestId}`;
     await client.join(room);
-    this.logger.log(`Client ${client.id} joined the chat room ${room}`);
+    // this.logger.log(`Client ${client.id} joined the chat room ${room}`);
 
     // Get messages from database
     const messages = await this.prisma.message.findMany({
@@ -92,7 +92,7 @@ export class ChatGateway {
       createdAt: message.createdAt.toISOString(),
     }));
 
-    this.logger.log(`Sending ${transformedMessages.length} messages to client`);
+    // this.logger.log(`Sending ${transformedMessages.length} messages to client`);
     client.emit('chat:history', transformedMessages);
   }
 
@@ -186,13 +186,14 @@ export class ChatGateway {
         type: 'chat',
         messageId: message.id,
         roomId: room,
+        serviceRequestIdForChat: data.serviceRequestId,
       });
     } catch (e) {
       this.logger.error(`Can't message notification ${e}`);
     }
 
     this.server.to(room).emit('chat:update', payload);
-    this.logger.log(`Chat update for ${room}: ${JSON.stringify(payload)}`);
+    // this.logger.log(`Chat update for ${room}: ${JSON.stringify(payload)}`);
 
     return payload;
   }
