@@ -11,6 +11,8 @@ import {
   UseInterceptors,
   Delete,
   Put,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -20,11 +22,20 @@ import { CurrentUserId } from 'src/common/decorators/current-user-id.decorator';
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
+import type { Request } from 'express';
+import { AuthService } from 'src/auth/auth.service';
+
+interface RequestWithUser extends Request {
+  user: { id: number };
+}
 
 @UseGuards(JwtAuthGuard, AppMaintenanceGuard)
 @Controller('api/user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly authService: AuthService,
+  ) {}
 
   @Put(':id')
   async update(
@@ -109,8 +120,17 @@ export class UserController {
   async deleteUserData(
     @CurrentUserId() userId: number,
     @Body('password') password: string,
+    @Req() req: RequestWithUser,
   ) {
     const result = await this.userService.deleteUserData(userId, password);
+
+    if (result) {
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.split(' ')[1];
+
+      if (!token) throw new UnauthorizedException();
+      this.authService.revokeToken(token);
+    }
 
     return {
       success: true,
