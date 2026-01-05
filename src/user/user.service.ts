@@ -413,8 +413,15 @@ export class UserService {
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
+    const isPasswordSame = await bcrypt.compare(dto.newPassword, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (isPasswordSame) {
+      throw new UnauthorizedException(
+        'New password cannot be the same as the current password.',
+      );
     }
 
     const updated = await this.prisma.user.update({
@@ -422,7 +429,7 @@ export class UserService {
         id: user.id,
       },
       data: {
-        password: dto.newPassword,
+        password: await bcrypt.hash(dto.newPassword, 10),
       },
     });
 
