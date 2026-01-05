@@ -104,4 +104,33 @@ export class UserController {
       message: 'Users with IDs successfully deleted.',
     };
   }
+
+  @Post('delete-data')
+  async deleteUserData(
+    @CurrentUserId() userId: number,
+    @Body('password') password: string,
+  ) {
+    const result = await this.userService.deleteUserData(userId, password);
+
+    return {
+      success: true,
+      data: result,
+      message:
+        'Your account and personal data have been securely deleted. Thank you for using our app.',
+    };
+  }
+
+  @Post('change-password')
+  async changePassword(
+    @CurrentUserId() userId: number,
+    @Body('password') password: string,
+  ) {
+    const result = await this.userService.changePassword(userId, password);
+
+    return {
+      success: true,
+      data: result,
+      message: 'Password successfully changed!',
+    };
+  }
 }

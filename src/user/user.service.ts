@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UpdateUserDto } from 'src/user/dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -363,6 +364,69 @@ export class UserService {
     });
 
     return { id };
+  }
+
+  async deleteUserData(userId: number, password: string) {
+    const user = await this.findById(userId);
+
+    if (!user || !user.password) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        status: AccountStatus.deleted,
+        firstName: null,
+        lastName: null,
+        password: null,
+        fcmToken: null,
+        phone: `deleted-${user.id}-${Date.now()}`,
+        addressLine: null,
+        latitude: null,
+        longitude: null,
+        lastKnownLat: null,
+        lastKnownLng: null,
+        profilePhoto: null,
+        email: null,
+        nickname: null,
+        hasSeenVerificationCongrats: false,
+        deletedAt: new Date(),
+      },
+    });
+
+    return updated;
+  }
+
+  async changePassword(userId: number, password: string) {
+    const user = await this.findById(userId);
+
+    if (!user || !user.password) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        password,
+      },
+    });
+
+    return updated;
   }
 
   async bulkDeleteUsers(userId: number, ids: number[]) {
