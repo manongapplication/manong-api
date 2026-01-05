@@ -123,9 +123,9 @@ export class UserController {
   @Post('change-password')
   async changePassword(
     @CurrentUserId() userId: number,
-    @Body('password') password: string,
+    @Body() dto: UpdateUserDto,
   ) {
-    const result = await this.userService.changePassword(userId, password);
+    const result = await this.userService.changePassword(userId, dto);
 
     return {
       success: true,

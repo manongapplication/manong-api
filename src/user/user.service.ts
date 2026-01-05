@@ -405,14 +405,14 @@ export class UserService {
     return updated;
   }
 
-  async changePassword(userId: number, password: string) {
+  async changePassword(userId: number, dto: UpdateUserDto) {
     const user = await this.findById(userId);
 
-    if (!user || !user.password) {
+    if (!user || !user.password || !dto.password || !dto.newPassword) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(dto.password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -422,7 +422,7 @@ export class UserService {
         id: user.id,
       },
       data: {
-        password,
+        password: dto.newPassword,
       },
     });
 
