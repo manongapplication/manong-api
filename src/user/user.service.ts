@@ -402,6 +402,12 @@ export class UserService {
       },
     });
 
+    await this.prisma.message.deleteMany({
+      where: {
+        OR: [{ senderId: user.id }, { receiverId: user.id }],
+      },
+    });
+
     return updated;
   }
 
