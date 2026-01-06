@@ -108,19 +108,19 @@ export class ServiceRequestController {
     @Query('limit') limit = '10',
     @Query('status') status?: string,
   ) {
-    let statusEnum: ServiceRequestStatus | undefined;
-
+    let statusArray: ServiceRequestStatus[] | undefined;
+      
     if (status) {
-      // Check if the string is a valid enum value
-      if (
-        Object.values(ServiceRequestStatus).includes(
-          status as ServiceRequestStatus,
-        )
-      ) {
-        statusEnum = status as ServiceRequestStatus;
-      } else {
-        throw new BadRequestException(`Invalid status: ${status}`);
-      }
+      const statusStrings = status.split(',');
+      statusArray = statusStrings
+        .map(s => {
+          // Check if it's a valid ServiceRequestStatus
+          if (Object.values(ServiceRequestStatus).includes(s as ServiceRequestStatus)) {
+            return s as ServiceRequestStatus;
+          }
+          return null;
+        })
+        .filter((s): s is ServiceRequestStatus => s !== null);
     }
 
     const requests =
@@ -128,7 +128,7 @@ export class ServiceRequestController {
         userId,
         parseInt(page),
         parseInt(limit),
-        statusEnum,
+        statusArray,
       );
 
     return { success: true, data: requests.data, isManong: requests.isManong };

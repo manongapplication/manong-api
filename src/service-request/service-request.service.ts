@@ -213,7 +213,7 @@ export class ServiceRequestService {
     userId: number,
     page = 1,
     limit = 10,
-    status?: ServiceRequestStatus,
+    statusArray?: ServiceRequestStatus[],
   ) {
     const skip = (page - 1) * limit;
 
@@ -229,9 +229,9 @@ export class ServiceRequestService {
       where = { userId };
     }
 
-    if (status !== undefined) {
+    if (statusArray && statusArray.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      where.status = status;
+      where.status = { in: statusArray }; // Prisma "in" operator
     }
 
     const isManong = role == UserRole.manong;
