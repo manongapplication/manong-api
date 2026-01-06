@@ -1,4 +1,5 @@
 import { AccountStatus } from '@prisma/client';
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
@@ -15,11 +16,15 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   @MaxLength(255)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  @Transform(({ value }) => value?.replace(/\s+/g, ' ').trim())
   firstName?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(255)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  @Transform(({ value }) => value?.replace(/\s+/g, ' ').trim())
   lastName?: string;
 
   @IsOptional()
