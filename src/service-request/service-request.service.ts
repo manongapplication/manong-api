@@ -209,12 +209,17 @@ export class ServiceRequestService {
     return { created, warning: null, duplicate: false };
   }
 
-  async fetchServiceRequestsByUserId(userId: number, page = 1, limit = 10) {
+  async fetchServiceRequestsByUserId(
+    userId: number,
+    page = 1,
+    limit = 10,
+    status?: ServiceRequestStatus,
+  ) {
     const skip = (page - 1) * limit;
 
     const user = await this.userService.findById(userId);
 
-    let where = {};
+    let where: any = {};
 
     const role = user?.role;
 
@@ -224,9 +229,15 @@ export class ServiceRequestService {
       where = { userId };
     }
 
+    if (status !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      where.status = status;
+    }
+
     const isManong = role == UserRole.manong;
 
     const requests = await this.prisma.serviceRequest.findMany({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       where: where,
       include: {
         user: true,
