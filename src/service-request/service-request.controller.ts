@@ -106,12 +106,29 @@ export class ServiceRequestController {
     @CurrentUserId() userId: number,
     @Query('page') page = '1',
     @Query('limit') limit = '10',
+    @Query('status') status?: string,
   ) {
+    let statusEnum: ServiceRequestStatus | undefined;
+
+    if (status) {
+      // Check if the string is a valid enum value
+      if (
+        Object.values(ServiceRequestStatus).includes(
+          status as ServiceRequestStatus,
+        )
+      ) {
+        statusEnum = status as ServiceRequestStatus;
+      } else {
+        throw new BadRequestException(`Invalid status: ${status}`);
+      }
+    }
+
     const requests =
       await this.serviceRequestService.fetchServiceRequestsByUserId(
         userId,
         parseInt(page),
         parseInt(limit),
+        statusEnum,
       );
 
     return { success: true, data: requests.data, isManong: requests.isManong };
