@@ -109,13 +109,17 @@ export class ServiceRequestController {
     @Query('status') status?: string,
   ) {
     let statusArray: ServiceRequestStatus[] | undefined;
-      
+
     if (status) {
       const statusStrings = status.split(',');
       statusArray = statusStrings
-        .map(s => {
+        .map((s) => {
           // Check if it's a valid ServiceRequestStatus
-          if (Object.values(ServiceRequestStatus).includes(s as ServiceRequestStatus)) {
+          if (
+            Object.values(ServiceRequestStatus).includes(
+              s as ServiceRequestStatus,
+            )
+          ) {
             return s as ServiceRequestStatus;
           }
           return null;

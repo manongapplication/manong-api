@@ -230,8 +230,30 @@ export class ServiceRequestService {
     }
 
     if (statusArray && statusArray.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      where.status = { in: statusArray }; // Prisma "in" operator
+      // Need to separate PaymentStatus and ServiceRequestStatus
+      const serviceRequestStatuses = statusArray.filter((s) =>
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        Object.values(ServiceRequestStatus).includes(s as ServiceRequestStatus),
+      );
+
+      const paymentStatuses = statusArray.filter((s) =>
+        Object.values(PaymentStatus).includes(s as PaymentStatus),
+      );
+
+      // Create OR condition for mixed statuses
+      if (serviceRequestStatuses.length > 0 && paymentStatuses.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        where.OR = [
+          { status: { in: serviceRequestStatuses } },
+          { paymentStatus: { in: paymentStatuses } },
+        ];
+      } else if (serviceRequestStatuses.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        where.status = { in: serviceRequestStatuses };
+      } else if (paymentStatuses.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        where.paymentStatus = { in: paymentStatuses };
+      }
     }
 
     const isManong = role == UserRole.manong;
