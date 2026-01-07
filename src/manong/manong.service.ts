@@ -340,6 +340,9 @@ export class ManongService {
     if (user.role == UserRole.admin) {
       isAdmin = true;
     }
+
+    if (!isAdmin) return;
+
     const skip = (page - 1) * limit;
 
     const allManongs = await this.prisma.user.findMany({
