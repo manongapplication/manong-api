@@ -61,7 +61,7 @@ export class ReferralCodeService {
   }
 
   async fetchCodes(userId: number) {
-    const isAdmin = await this.userService.isAdmin(userId);
+    const isAdmin = await this.userService.isAdminAndModerator(userId);
 
     if (!isAdmin) {
       throw new BadGatewayException('User is not admin!');
@@ -76,7 +76,7 @@ export class ReferralCodeService {
   }
 
   async createCode(userId: number, dto: CreateReferralCodeDto) {
-    const isAdmin = await this.userService.isAdmin(userId);
+    const isAdmin = await this.userService.isAdminAndModerator(userId);
 
     if (!isAdmin) {
       throw new BadGatewayException('User is not admin!');
@@ -91,7 +91,7 @@ export class ReferralCodeService {
   }
 
   async updateCode(userId: number, id: number, dto: UpdateReferralCodeDto) {
-    const isAdmin = await this.userService.isAdmin(userId);
+    const isAdmin = await this.userService.isAdminAndModerator(userId);
 
     if (!isAdmin) {
       throw new BadGatewayException('User is not admin!');
@@ -107,7 +107,7 @@ export class ReferralCodeService {
   }
 
   async deleteCode(userId: number, id: number) {
-    const isAdmin = await this.userService.isAdmin(userId);
+    const isAdmin = await this.userService.isAdminAndModerator(userId);
 
     if (!isAdmin) {
       throw new BadGatewayException('User is not admin!');
