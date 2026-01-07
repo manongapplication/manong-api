@@ -25,7 +25,7 @@ export class ManongReportService {
   private readonly logger = new Logger(ManongReportService.name);
 
   async fetchManongReports(userId: number) {
-    const user = await this.userService.isAdmin(userId);
+    const user = await this.userService.isAdminAndModerator(userId);
 
     if (!user) {
       throw new BadGatewayException('User is not admin!');

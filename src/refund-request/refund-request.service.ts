@@ -225,7 +225,7 @@ export class RefundRequestService {
   }
 
   async fetchRefunds(userId: number) {
-    const user = await this.userService.isAdmin(userId);
+    const user = await this.userService.isAdminAndModerator(userId);
 
     if (!user) {
       throw new BadGatewayException('User is not admin!');
@@ -340,8 +340,9 @@ export class RefundRequestService {
       }
 
       // Check if admin
-      const user = await this.userService.isAdmin(userId);
-      const isAdmin = user?.role === UserRole.admin;
+      const user = await this.userService.isAdminAndModerator(userId);
+      const isAdmin =
+        user?.role === UserRole.admin || user?.role === UserRole.moderator;
 
       await this.requestRefundCancelServiceRequest(
         userId,

@@ -43,6 +43,12 @@ export class UserService {
     });
   }
 
+  async isAdminAndModerator(id: number) {
+    return await this.prisma.user.findUnique({
+      where: { id, role: { in: [UserRole.admin, UserRole.moderator] } },
+    });
+  }
+
   async isManong(id: number) {
     return await this.prisma.user.findUnique({
       where: { id, role: UserRole.manong },
