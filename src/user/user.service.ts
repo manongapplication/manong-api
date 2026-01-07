@@ -288,8 +288,11 @@ export class UserService {
 
     if (!user) return;
 
-    if (user.role != UserRole.admin) {
-      throw new BadGatewayException('Is not admin!');
+    const isAdmin =
+      user.role === UserRole.admin || user.role === UserRole.moderator;
+
+    if (!isAdmin) {
+      throw new BadGatewayException('Only admins can access all users!');
     }
 
     const skip = (page - 1) * limit;

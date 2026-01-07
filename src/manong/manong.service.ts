@@ -336,11 +336,8 @@ export class ManongService {
 
     if (!user) return;
 
-    let isAdmin = false;
-
-    if (user.role == UserRole.admin) {
-      isAdmin = true;
-    }
+    const isAdmin =
+      user.role === UserRole.admin || user.role === UserRole.moderator;
 
     if (!isAdmin) {
       throw new UnauthorizedException('Only admins can access all manongs');
@@ -841,11 +838,8 @@ export class ManongService {
 
     if (!user) return;
 
-    let isAdmin = false;
-
-    if (user.role == UserRole.admin) {
-      isAdmin = true;
-    }
+    const isAdmin =
+      user.role === UserRole.admin || user.role === UserRole.moderator;
 
     if (!isAdmin) {
       throw new UnauthorizedException('Only admins can access all manongs');
