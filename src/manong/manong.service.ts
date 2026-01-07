@@ -3,6 +3,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateManongDto } from './dto/create-manong.dto';
@@ -341,7 +342,9 @@ export class ManongService {
       isAdmin = true;
     }
 
-    if (!isAdmin) return;
+    if (!isAdmin) {
+      throw new UnauthorizedException('Only admins can access all manongs');
+    }
 
     const skip = (page - 1) * limit;
 
@@ -842,6 +845,10 @@ export class ManongService {
 
     if (user.role == UserRole.admin) {
       isAdmin = true;
+    }
+
+    if (!isAdmin) {
+      throw new UnauthorizedException('Only admins can access all manongs');
     }
 
     const skip = (page - 1) * limit;
