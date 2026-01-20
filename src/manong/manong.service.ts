@@ -42,6 +42,7 @@ export class ManongService {
     limit: number;
     nextReset: Date;
     statusUpdated?: boolean;
+    newStatus?: ManongStatus;
   }> {
     // Get manong's daily limit
     const manong = await this.prisma.user.findUnique({
@@ -81,6 +82,7 @@ export class ManongService {
     const isReached = todayCount >= dailyLimit;
     let statusUpdated = false;
     let isNewDay = false;
+    let newStatus = currentStatus;
 
     // Check if it's a new day (for Manongs who were busy due to limit)
     if (currentStatus === ManongStatus.busy) {
@@ -103,6 +105,7 @@ export class ManongService {
 
       // If no services today but still busy, it's a new day - reset to available
       if (!lastServiceToday && autoUpdateStatus) {
+        newStatus = ManongStatus.available;
         await this.prisma.user.update({
           where: { id: manongId },
           data: {
@@ -122,6 +125,7 @@ export class ManongService {
     if (autoUpdateStatus && !isNewDay) {
       if (isReached && currentStatus === ManongStatus.available) {
         // Set to busy when limit reached
+        newStatus = ManongStatus.busy;
         await this.prisma.user.update({
           where: { id: manongId },
           data: {
@@ -149,6 +153,7 @@ export class ManongService {
         });
 
         if (activeRequests === 0) {
+          newStatus = ManongStatus.available;
           await this.prisma.user.update({
             where: { id: manongId },
             data: {
@@ -186,6 +191,7 @@ export class ManongService {
       limit: dailyLimit,
       nextReset,
       statusUpdated,
+      newStatus,
     };
   }
 
@@ -348,10 +354,15 @@ export class ManongService {
       take: limit * 2,
     });
 
-    // Just update status if needed
+    // Update status for each manong
     for (const manong of manongs) {
       if (manong.manongProfile) {
-        await this.checkManongDailyLimit(manong.id, true);
+        const result = await this.checkManongDailyLimit(manong.id, true);
+
+        // Update the manong object with the new status from result
+        if (result.newStatus && manong.manongProfile) {
+          manong.manongProfile.status = result.newStatus;
+        }
       }
     }
 
