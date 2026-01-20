@@ -305,9 +305,7 @@ export class ManongService {
       };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const manongIds = manongs.map((m) => m.id);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const limitInfo = await this.checkMultipleManongsDailyLimits(manongIds);
 
     return {
@@ -316,14 +314,9 @@ export class ManongService {
     };
   }
 
-  async fetchVerifiedManongs(
-    serviceItemId?: number,
-    page = 1,
-    limit = 10,
-  ): Promise<any[]> {
+  async fetchVerifiedManongs(serviceItemId?: number, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
 
-    // Fetch manongs (both available and busy initially)
     const manongs = await this.prisma.user.findMany({
       where: {
         role: UserRole.manong,
@@ -331,9 +324,6 @@ export class ManongService {
           manongProfile: {
             manongSpecialities: {
               some: { subServiceItem: { serviceItemId } },
-            },
-            status: {
-              in: [ManongStatus.available, ManongStatus.busy],
             },
           },
         }),
@@ -352,36 +342,17 @@ export class ManongService {
         },
       },
       skip,
-      take: limit * 2,
+      take: limit,
     });
 
-    if (manongs.length === 0) {
-      return [];
-    }
-
-    // Just use your existing checkManongDailyLimit for each manong
-    const availableManongs: any = [];
-
+    // Just update status if needed
     for (const manong of manongs) {
-      if (!manong.manongProfile) continue;
-
-      // This will auto-update status if needed
-      const limitInfo = await this.checkManongDailyLimit(manong.id, true);
-
-      // If not at limit, include the manong
-      if (!limitInfo.isReached) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        availableManongs.push(manong);
-
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        if (availableManongs.length >= limit) {
-          break;
-        }
+      if (manong.manongProfile) {
+        await this.checkManongDailyLimit(manong.id, true);
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    return availableManongs.slice(0, limit);
+    return manongs;
   }
 
   async fetchManongs(
