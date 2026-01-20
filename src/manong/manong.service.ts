@@ -28,7 +28,10 @@ export class ManongService {
     private readonly userService: UserService,
   ) {}
 
-  async checkManongDailyLimit(manongId: number): Promise<{
+  async checkManongDailyLimit(
+    manongId: number,
+    autoUpdateStatus: boolean = true,
+  ): Promise<{
     isReached: boolean;
     timeLeft: {
       hours: number;
@@ -38,6 +41,7 @@ export class ManongService {
     count: number;
     limit: number;
     nextReset: Date;
+    statusUpdated?: boolean;
   }> {
     // Get manong's daily limit
     const manong = await this.prisma.user.findUnique({
@@ -46,11 +50,7 @@ export class ManongService {
         role: UserRole.manong,
       },
       select: {
-        manongProfile: {
-          select: {
-            dailyServiceLimit: true,
-          },
-        },
+        manongProfile: true,
       },
     });
 
@@ -59,6 +59,7 @@ export class ManongService {
     }
 
     const dailyLimit = manong.manongProfile?.dailyServiceLimit ?? 5;
+    const currentStatus = manong.manongProfile?.status;
 
     // Get today's service count
     const startOfDay = new Date();
@@ -76,6 +77,92 @@ export class ManongService {
         },
       },
     });
+
+    const isReached = todayCount >= dailyLimit;
+    let statusUpdated = false;
+    let isNewDay = false;
+
+    // Check if it's a new day (for Manongs who were busy due to limit)
+    if (currentStatus === ManongStatus.busy) {
+      // Check when the last service was completed
+      const lastServiceToday = await this.prisma.serviceRequest.findFirst({
+        where: {
+          manongId: manongId,
+          createdAt: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        select: {
+          createdAt: true,
+        },
+      });
+
+      // If no services today but still busy, it's a new day - reset to available
+      if (!lastServiceToday && autoUpdateStatus) {
+        await this.prisma.user.update({
+          where: { id: manongId },
+          data: {
+            manongProfile: {
+              update: {
+                status: ManongStatus.available,
+              },
+            },
+          },
+        });
+        statusUpdated = true;
+        isNewDay = true;
+      }
+    }
+
+    // Auto-update status based on limit (existing logic)
+    if (autoUpdateStatus && !isNewDay) {
+      if (isReached && currentStatus === ManongStatus.available) {
+        // Set to busy when limit reached
+        await this.prisma.user.update({
+          where: { id: manongId },
+          data: {
+            manongProfile: {
+              update: {
+                status: ManongStatus.busy,
+              },
+            },
+          },
+        });
+        statusUpdated = true;
+      } else if (!isReached && currentStatus === ManongStatus.busy) {
+        // Check if busy due to limit (no active requests)
+        const activeRequests = await this.prisma.serviceRequest.count({
+          where: {
+            manongId: manongId,
+            status: {
+              in: [
+                ServiceRequestStatus.pending,
+                ServiceRequestStatus.accepted,
+                ServiceRequestStatus.inProgress,
+              ],
+            },
+          },
+        });
+
+        if (activeRequests === 0) {
+          await this.prisma.user.update({
+            where: { id: manongId },
+            data: {
+              manongProfile: {
+                update: {
+                  status: ManongStatus.available,
+                },
+              },
+            },
+          });
+          statusUpdated = true;
+        }
+      }
+    }
 
     // Calculate time until reset (midnight)
     const now = new Date();
@@ -98,6 +185,7 @@ export class ManongService {
       count: todayCount,
       limit: dailyLimit,
       nextReset,
+      statusUpdated,
     };
   }
 
@@ -374,21 +462,7 @@ export class ManongService {
       take: limit * 2,
     });
 
-    const filteredManongs = (
-      await Promise.all(
-        allManongs.map(async (manong) => {
-          const count = await this.serviceRequestService.findByManongIdAndCount(
-            manong.id,
-          );
-
-          return count < (manong.manongProfile?.dailyServiceLimit ?? 5)
-            ? manong
-            : null;
-        }),
-      )
-    ).filter(Boolean);
-
-    return filteredManongs;
+    return allManongs;
   }
 
   async fetchManongsRaw(serviceItemId?: number, page = 1, limit = 10) {
@@ -574,6 +648,7 @@ export class ManongService {
         userId: manong.id,
         yearsExperience,
         experienceDescription,
+        dailyServiceLimit: 10,
       },
     });
 
@@ -983,6 +1058,18 @@ export class ManongService {
 
     if (!user) {
       throw new BadGatewayException('User is not manong!');
+    }
+
+    // Check if trying to set as available but daily limit is reached
+    if (status === ManongStatus.available) {
+      const limitInfo = await this.checkManongDailyLimit(userId, false);
+
+      if (limitInfo.isReached) {
+        throw new BadRequestException(
+          `Cannot set status to available. Daily limit (${limitInfo.limit}) reached. ` +
+            `Reset in ${limitInfo.timeLeft.hours}h ${limitInfo.timeLeft.minutes}m`,
+        );
+      }
     }
 
     return await this.prisma.user.update({
