@@ -317,8 +317,7 @@ export class ManongService {
   async fetchVerifiedManongs(serviceItemId?: number, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
 
-    // Step 1: Fetch manongs with their daily limits
-    const manongsWithLimits = await this.prisma.user.findMany({
+    const manongs = await this.prisma.user.findMany({
       where: {
         role: UserRole.manong,
         ...(serviceItemId && {
@@ -334,69 +333,6 @@ export class ManongService {
         status: AccountStatus.verified,
         deletedAt: null,
       },
-      select: {
-        id: true,
-        manongProfile: {
-          select: {
-            dailyServiceLimit: true,
-          },
-        },
-      },
-      skip,
-      take: limit * 2, // Fetch extra to account for filtering
-    });
-
-    if (manongsWithLimits.length === 0) {
-      return [];
-    }
-
-    // Step 2: Batch check daily service counts for all manongs
-    const manongIds = manongsWithLimits.map((manong) => manong.id);
-
-    // Create a batch query to get today's service counts for all manongs
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const dailyCounts = await this.prisma.serviceRequest.groupBy({
-      by: ['manongId'],
-      where: {
-        manongId: { in: manongIds },
-        createdAt: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-      },
-      _count: {
-        id: true,
-      },
-    });
-
-    // Convert to a map for easy lookup
-    const countMap = new Map(
-      dailyCounts.map((item) => [item.manongId, item._count.id]),
-    );
-
-    // Step 3: Filter manongs who haven't reached their daily limit
-    const filteredManongIds = manongsWithLimits
-      .filter((manong) => {
-        const dailyCount = countMap.get(manong.id) || 0;
-        const dailyLimit = manong.manongProfile?.dailyServiceLimit ?? 5;
-        return dailyCount < dailyLimit;
-      })
-      .map((manong) => manong.id);
-
-    if (filteredManongIds.length === 0) {
-      return [];
-    }
-
-    // Step 4: Fetch full details for filtered manongs
-    const filteredManongs = await this.prisma.user.findMany({
-      where: {
-        id: { in: filteredManongIds },
-      },
       include: {
         manongProfile: {
           include: {
@@ -408,10 +344,11 @@ export class ManongService {
           },
         },
       },
-      orderBy: { id: 'asc' },
+      skip,
+      take: limit * 2,
     });
 
-    return filteredManongs;
+    return manongs;
   }
 
   async fetchManongs(
