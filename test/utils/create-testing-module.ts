@@ -33,6 +33,8 @@ import { OtpQueueService } from 'src/queues/otp/otp-queue/otp-queue.service';
 import { BookmarkItemService } from 'src/bookmark-item/bookmark-item.service';
 import { DirectionsService } from 'src/directions/directions.service';
 import { AppVersionService } from 'src/app-version/app-version.service';
+import { ManongWalletService } from 'src/manong-wallet/manong-wallet.service';
+import { ManongWalletTransactionService } from 'src/manong-wallet-transaction/manong-wallet-transaction.service';
 
 // 🧩 Add here any other frequently injected services
 // (so you won’t need to mock them manually later)
@@ -71,6 +73,8 @@ const defaultMocks = [
   { provide: BookmarkItemService, useValue: {} },
   { provide: DirectionsService, useValue: {} },
   { provide: AppVersionService, useValue: {} },
+  { provide: ManongWalletService, useValue: {} },
+  { provide: ManongWalletTransactionService, useValue: {} },
 ];
 
 export async function createTestingModule(
