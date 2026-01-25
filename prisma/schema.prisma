@@ -91,6 +91,7 @@ model User {
   bookmarkedByUsers BookmarkItem[]   @relation("BookmarkedManong")
   bookmarkItems     BookmarkItem[]
   userAppVersions   UserAppVersion[]
+  manongWallet      ManongWallet?
 }
 
 model PasswordResetToken {
@@ -726,4 +727,56 @@ model UserAppVersion {
   @@unique([userId, platform])
   @@index([platform, version])
   @@index([lastSeen])
+}
+
+model ManongWallet {
+  id       Int     @id @default(autoincrement())
+  manongId Int     @unique
+  balance  Decimal @default(0.00) @db.Decimal(10, 2)
+  pending  Decimal @default(0.00) @db.Decimal(10, 2)
+  locked   Decimal @default(0.00) @db.Decimal(10, 2)
+  currency String  @default("PHP")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  manong User @relation(fields: [manongId], references: [id], onDelete: Cascade)
+
+  transactions ManongWalletTransaction[]
+
+  @@index([manongId])
+}
+
+enum WalletTransactionType {
+  topup // Manong loaded wallet
+  job_fee // Platform fee deduction
+  payout // Cashout to Manong
+  adjustment // Manual adjustment / correction
+  refund // Refund from a service
+}
+
+enum WalletTransactionStatus {
+  pending
+  completed
+  failed
+}
+
+model ManongWalletTransaction {
+  id          Int                     @id @default(autoincrement())
+  walletId    Int
+  type        WalletTransactionType
+  status      WalletTransactionStatus @default(pending)
+  amount      Decimal                 @db.Decimal(10, 2)
+  currency    String                  @default("PHP")
+  description String?
+  metadata    String? // JSON for jobId, payment gateway, etc.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  wallet ManongWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([type])
+  @@index([status])
 }

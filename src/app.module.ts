@@ -88,6 +88,12 @@ import { DirectionsModule } from './directions/directions.module';
 import { AppVersionService } from './app-version/app-version.service';
 import { AppVersionController } from './app-version/app-version.controller';
 import { AppVersionModule } from './app-version/app-version.module';
+import { ManongWalletService } from './manong-wallet/manong-wallet.service';
+import { ManongWalletController } from './manong-wallet/manong-wallet.controller';
+import { ManongWalletModule } from './manong-wallet/manong-wallet.module';
+import { ManongWalletTransactionService } from './manong-wallet-transaction/manong-wallet-transaction.service';
+import { ManongWalletTransactionController } from './manong-wallet-transaction/manong-wallet-transaction.controller';
+import { ManongWalletTransactionModule } from './manong-wallet-transaction/manong-wallet-transaction.module';
 
 @Module({
   imports: [
@@ -140,6 +146,8 @@ import { AppVersionModule } from './app-version/app-version.module';
     BookmarkItemModule,
     DirectionsModule,
     AppVersionModule,
+    ManongWalletModule,
+    ManongWalletTransactionModule,
   ],
   controllers: [
     AppController,
@@ -166,6 +174,8 @@ import { AppVersionModule } from './app-version/app-version.module';
     ReferralCodeUsageController,
     BookmarkItemController,
     AppVersionController,
+    ManongWalletController,
+    ManongWalletTransactionController,
   ],
   providers: [
     UserService,
@@ -196,6 +206,8 @@ import { AppVersionModule } from './app-version/app-version.module';
     BookmarkItemService,
     DirectionsService,
     AppVersionService,
+    ManongWalletService,
+    ManongWalletTransactionService,
   ],
 })
 export class AppModule {
