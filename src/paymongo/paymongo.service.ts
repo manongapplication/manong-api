@@ -244,6 +244,54 @@ export class PaymongoService {
     }
   }
 
+  async createPaymentManually(userId: number, dto: CreatePaymentIntentDto) {
+    try {
+      const attachDto: CreateAttachIntentDto = {
+        payment_method: '',
+      };
+
+      const intentDto: CreatePaymentIntentDto = {
+        amount: dto.amount * 100,
+        currency: dto.currency ?? 'PHP',
+        description: dto.description ?? '',
+        capture_type: 'automatic',
+      };
+
+      const intent = await this.createPaymentIntent(userId, intentDto);
+
+      const userPaymentMethod = dto.provider;
+      let userPaymentMethodIdOnGateway: any = null;
+
+      if (userPaymentMethod == 'gcash' || userPaymentMethod == 'paymaya') {
+        const cardDto: CreateCardDto = {
+          type: userPaymentMethod,
+        };
+
+        userPaymentMethodIdOnGateway = await this.createPaymentMethod(
+          userId,
+          cardDto,
+        );
+        this.logger.debug(`Payment created for ${userPaymentMethod}`);
+
+        attachDto.return_url = `${process.env.BASE_URL}/api/paymongo/payment-complete'`;
+      }
+
+      if (userPaymentMethodIdOnGateway == null) {
+        throw new BadGatewayException('Payment method on gateway is not set!');
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      attachDto.payment_method = userPaymentMethodIdOnGateway;
+
+      const result = await this.createAttach(userId, intent.id, attachDto);
+
+      return { data: result };
+    } catch (error) {
+      this.logger.error(`Error processing payment. ${error}`);
+      throw error;
+    }
+  }
+
   // async retrieveCustomer(email: string) {
   //   try {
   //     const result = await axios.get<PaymongoCustomer>(

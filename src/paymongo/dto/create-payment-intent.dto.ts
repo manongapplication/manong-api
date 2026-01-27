@@ -13,4 +13,8 @@ export class CreatePaymentIntentDto {
 
   @IsString()
   capture_type: string;
+
+  @IsOptional()
+  @IsString()
+  provider?: string;
 }

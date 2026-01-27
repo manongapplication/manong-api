@@ -7,6 +7,7 @@ import { ManongWalletTransactionModule } from 'src/manong-wallet-transaction/man
 import { AppMaintenanceService } from 'src/app-maintenance/app-maintenance.service';
 import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
 import { UserModule } from 'src/user/user.module';
+import { PaymongoModule } from 'src/paymongo/paymongo.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { UserModule } from 'src/user/user.module';
     UserModule,
     AuthModule,
     ManongWalletTransactionModule,
+    PaymongoModule,
   ],
   providers: [ManongWalletService, AppMaintenanceGuard, AppMaintenanceService],
   controllers: [ManongWalletController],

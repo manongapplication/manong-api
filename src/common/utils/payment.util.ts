@@ -1,4 +1,4 @@
-import { PaymentStatus } from '@prisma/client';
+import { PaymentStatus, WalletTransactionStatus } from '@prisma/client';
 
 export function mapPaymongoStatus(status: string): PaymentStatus {
   switch (status) {
@@ -14,6 +14,23 @@ export function mapPaymongoStatus(status: string): PaymentStatus {
       return PaymentStatus.refunded;
     default:
       return PaymentStatus.unpaid; // fallback
+  }
+}
+
+export function mapPaymongoStatusForWallet(
+  status: string,
+): WalletTransactionStatus {
+  switch (status) {
+    case 'paid':
+      return WalletTransactionStatus.completed;
+    case 'failed':
+    case 'cancelled':
+      return WalletTransactionStatus.failed;
+    case 'pending':
+    case 'awaiting_next_action':
+      return WalletTransactionStatus.pending;
+    default:
+      return WalletTransactionStatus.pending; // fallback
   }
 }
 
