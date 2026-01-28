@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
 import { ManongWalletService } from './manong-wallet.service';
@@ -43,7 +43,7 @@ export class ManongWalletController {
   @Post('/cash-in')
   async cashIn(
     @CurrentUserId() manongId: number,
-    dto: CreateCashInManongWallet,
+    @Body() dto: CreateCashInManongWallet,
   ) {
     const result = await this.manongWalletService.cashInWallet(manongId, dto);
 

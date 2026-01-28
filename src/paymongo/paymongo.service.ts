@@ -244,7 +244,11 @@ export class PaymongoService {
     }
   }
 
-  async createPaymentManually(userId: number, dto: CreatePaymentIntentDto) {
+  async createPaymentManually(
+    userId: number,
+    dto: CreatePaymentIntentDto,
+    transactionId: number,
+  ) {
     try {
       const attachDto: CreateAttachIntentDto = {
         payment_method: '',
@@ -273,7 +277,7 @@ export class PaymongoService {
         );
         this.logger.debug(`Payment created for ${userPaymentMethod}`);
 
-        attachDto.return_url = `${process.env.BASE_URL}/api/paymongo/payment-complete'`;
+        attachDto.return_url = `${process.env.BASE_URL}/api/paymongo/payment-complete?id=${transactionId}`;
       }
 
       if (userPaymentMethodIdOnGateway == null) {

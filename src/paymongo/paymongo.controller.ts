@@ -130,7 +130,7 @@ export class PaymongoController {
   //   };
   // }
 
-  @Get('payment-complete')
+  @Get('wallet-payment-complete')
   async paymentcompleteOutside(
     @Query('id') id: number,
     @Query('payment_intent_id') payment_intent_id: string,

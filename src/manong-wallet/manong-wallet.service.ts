@@ -12,7 +12,7 @@ import { CreateCashInManongWallet } from './dto/create-cash-in-manong-wallet.dto
 import { PaymongoService } from 'src/paymongo/paymongo.service';
 import { ManongWalletTransactionService } from 'src/manong-wallet-transaction/manong-wallet-transaction.service';
 import { CreateManongWalletTransactionDto } from 'src/manong-wallet-transaction/dto/create-manong-wallet-transaction.dto';
-import { WalletTransactionType } from '@prisma/client';
+import { WalletTransactionStatus, WalletTransactionType } from '@prisma/client';
 import { mapPaymongoStatusForWallet } from 'src/common/utils/payment.util';
 
 @Injectable()
@@ -75,9 +75,34 @@ export class ManongWalletService {
       provider,
     };
 
+    const wallet = await this.fetchManongWallet(manongId);
+
+    if (!wallet) {
+      throw new NotFoundException('Manong wallet not found!');
+    }
+
+    const metadata = {
+      provider,
+    };
+
+    const transactionDto: CreateManongWalletTransactionDto = {
+      walletId: wallet.id,
+      type: WalletTransactionType.topup,
+      status: WalletTransactionStatus.pending,
+      amount,
+      currency: currency ?? 'PHP',
+      metadata: JSON.stringify(metadata),
+    };
+
+    const transaction =
+      await this.manongWalletTransactionService.createManongWalletTransaction(
+        transactionDto,
+      );
+
     const result = await this.paymongoService.createPaymentManually(
       manongId,
       intentDto,
+      transaction.id,
     );
 
     let paymentStatus: string;
@@ -88,33 +113,16 @@ export class ManongWalletService {
       paymentStatus = result.data.attributes.status;
     }
 
-    const wallet = await this.fetchManongWallet(manongId);
+    await this.manongWalletTransactionService.updateWalletTransactionById(
+      transaction.id,
+      {
+        status: mapPaymongoStatusForWallet(paymentStatus),
+      },
+    );
 
-    if (!wallet) {
-      throw new NotFoundException('Manong wallet not found!');
-    }
-
-    this.logger.debug(`paymentStatus ${paymentStatus}`);
-
-    const metadata = {
-      paymentIntentId: result.data.id,
-      paymentRedirectUrl:
-        result.data.attributes.next_action?.redirect?.url ?? null,
-    };
-
-    const transactionDto: CreateManongWalletTransactionDto = {
-      walletId: wallet.id,
-      type: WalletTransactionType.topup,
-      status: mapPaymongoStatusForWallet(paymentStatus),
-      amount,
-      currency: currency ?? 'PHP',
-      metadata: JSON.stringify(metadata),
-    };
-
-    const transaction =
-      await this.manongWalletTransactionService.createManongWalletTransaction(
-        transactionDto,
-      );
+    await this.updateManongWallet(manongId, {
+      balance: amount,
+    });
 
     return transaction;
   }
