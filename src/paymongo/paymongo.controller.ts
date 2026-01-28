@@ -130,8 +130,36 @@ export class PaymongoController {
   //   };
   // }
 
-  @Get('wallet-payment-complete')
+  @Get('payment-complete')
   async paymentcompleteOutside(
+    @Query('id') id: number,
+    @Query('payment_intent_id') payment_intent_id: string,
+    @Res() res: Response,
+  ) {
+    const result = await this.paymongoService.paymentCompleteOutside(
+      id,
+      payment_intent_id,
+    );
+
+    if (!result) {
+      return res.status(400).send('Payment verification failed.');
+    }
+
+    // Generate a short-lived JWT token for the frontend
+    const token = result.token;
+
+    // Read static HTML
+    const filePath = join(process.cwd(), 'public', 'payment-successful.html');
+    let html = readFileSync(filePath, 'utf-8');
+
+    // Inject token into HTML
+    html = html.replace('%%JWT_TOKEN%%', token);
+
+    res.send(html);
+  }
+
+  @Get('wallet-payment-complete')
+  async walletPaymentcompleteOutside(
     @Query('id') id: number,
     @Query('payment_intent_id') payment_intent_id: string,
     @Res() res: Response,
