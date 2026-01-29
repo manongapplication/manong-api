@@ -24,6 +24,7 @@ import {
   PaymentStatus,
   ServiceRequestStatus,
   TransactionType,
+  WalletTransactionStatus,
 } from '@prisma/client';
 import { mapPaymongoRefundStatus } from 'src/common/utils/payment.util';
 import { AuthService } from 'src/auth/auth.service';
@@ -31,6 +32,8 @@ import { FIVE_MINUTES } from 'src/common/utils/time.util';
 import { calculateRefundAmount } from 'src/common/utils/refund.util';
 import { UserService } from 'src/user/user.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ManongWalletTransactionService } from 'src/manong-wallet-transaction/manong-wallet-transaction.service';
+import { UpdateManongWalletTransactionDto } from 'src/manong-wallet-transaction/dto/update-manong-wallet-transaction.dto';
 
 @Injectable()
 export class PaymongoService {
@@ -43,6 +46,7 @@ export class PaymongoService {
     private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly prisma: PrismaService,
+    private readonly manongWalletTransactionService: ManongWalletTransactionService,
   ) {}
 
   private baseUrl = 'https://api.paymongo.com/v1';
@@ -264,28 +268,28 @@ export class PaymongoService {
       const intent = await this.createPaymentIntent(userId, intentDto);
 
       const userPaymentMethod = dto.provider;
-      let userPaymentMethodIdOnGateway: any = null;
+      let paymentMethodId: string | null = null;
 
       if (userPaymentMethod == 'gcash' || userPaymentMethod == 'paymaya') {
         const cardDto: CreateCardDto = {
           type: userPaymentMethod,
         };
 
-        userPaymentMethodIdOnGateway = await this.createPaymentMethod(
+        const paymentMethodResult = await this.createPaymentMethod(
           userId,
           cardDto,
         );
+        paymentMethodId = paymentMethodResult.id;
         this.logger.debug(`Payment created for ${userPaymentMethod}`);
 
-        attachDto.return_url = `${process.env.BASE_URL}/api/paymongo/payment-complete?id=${transactionId}`;
+        attachDto.return_url = `${process.env.BASE_URL}/api/paymongo/wallet-payment-complete?id=${transactionId}`;
       }
 
-      if (userPaymentMethodIdOnGateway == null) {
+      if (paymentMethodId == null) {
         throw new BadGatewayException('Payment method on gateway is not set!');
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      attachDto.payment_method = userPaymentMethodIdOnGateway;
+      attachDto.payment_method = paymentMethodId;
 
       const result = await this.createAttach(userId, intent.id, attachDto);
 
@@ -413,6 +417,85 @@ export class PaymongoService {
 
     return {
       redirectUrl: `manong_application://payment-complete?payment_intent_id=${payment_intent_id}`,
+      token,
+    };
+  }
+
+  async walletPaymentCompleteOutside(
+    id: number,
+    payment_intent_id: string,
+  ): Promise<{ redirectUrl: string; token: string } | null> {
+    if (payment_intent_id == null) {
+      throw new BadGatewayException('Payment intent id is required.');
+    }
+
+    const transaction =
+      await this.manongWalletTransactionService.findByIdIncludesWallet(id);
+
+    if (!transaction) {
+      throw new NotFoundException('Transaction not found!');
+    }
+
+    let token: string = '';
+
+    const createdAt: any = new Date(transaction.createdAt);
+    const now: any = new Date();
+    const diff = now - createdAt;
+
+    if (
+      transaction.status === WalletTransactionStatus.completed &&
+      diff > FIVE_MINUTES
+    ) {
+      token = '';
+    } else {
+      token = this.authService.giveTemporaryToken(transaction.wallet.manongId);
+    }
+
+    const dto: UpdateManongWalletTransactionDto = {
+      status: WalletTransactionStatus.completed,
+    };
+
+    const paymentIntent = await this.fetchPaymentIntent(payment_intent_id);
+
+    if (!paymentIntent) {
+      this.logger.error('Failed to fetch payment intent');
+      return null;
+    }
+
+    let metadata: any = {};
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      metadata = transaction?.metadata ? JSON.parse(transaction.metadata) : {};
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+      metadata = {};
+    }
+
+    const paymentIdOnGateway = paymentIntent.data.attributes.payments[0]?.id;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const updatedMetaData = {
+      ...metadata,
+      paymentIdOnGateway: paymentIdOnGateway,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    dto.metadata = updatedMetaData;
+
+    dto.metadata = JSON.stringify(updatedMetaData);
+
+    dto.amount = transaction.amount.toNumber();
+
+    const result = await this.manongWalletTransactionService.addToWallet(
+      id,
+      dto,
+    );
+
+    this.logger.debug(`paymentcompleteOutside: ${JSON.stringify(result)}`);
+
+    return {
+      redirectUrl: `manong_application://wallet-payment-complete?payment_intent_id=${payment_intent_id}`,
       token,
     };
   }

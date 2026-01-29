@@ -164,7 +164,7 @@ export class PaymongoController {
     @Query('payment_intent_id') payment_intent_id: string,
     @Res() res: Response,
   ) {
-    const result = await this.paymongoService.paymentCompleteOutside(
+    const result = await this.paymongoService.walletPaymentCompleteOutside(
       id,
       payment_intent_id,
     );
@@ -177,7 +177,11 @@ export class PaymongoController {
     const token = result.token;
 
     // Read static HTML
-    const filePath = join(process.cwd(), 'public', 'payment-successful.html');
+    const filePath = join(
+      process.cwd(),
+      'public',
+      'wallet-payment-successful.html',
+    );
     let html = readFileSync(filePath, 'utf-8');
 
     // Inject token into HTML

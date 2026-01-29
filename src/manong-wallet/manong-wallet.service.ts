@@ -1,5 +1,7 @@
 import {
   BadGatewayException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -14,12 +16,15 @@ import { ManongWalletTransactionService } from 'src/manong-wallet-transaction/ma
 import { CreateManongWalletTransactionDto } from 'src/manong-wallet-transaction/dto/create-manong-wallet-transaction.dto';
 import { WalletTransactionStatus, WalletTransactionType } from '@prisma/client';
 import { mapPaymongoStatusForWallet } from 'src/common/utils/payment.util';
+import { UpdateManongWalletTransactionDto } from 'src/manong-wallet-transaction/dto/update-manong-wallet-transaction.dto';
 
 @Injectable()
 export class ManongWalletService {
   constructor(
     private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => PaymongoService))
     private readonly paymongoService: PaymongoService,
+    @Inject(forwardRef(() => ManongWalletTransactionService))
     private readonly manongWalletTransactionService: ManongWalletTransactionService,
   ) {}
 
@@ -65,6 +70,90 @@ export class ManongWalletService {
     return wallet;
   }
 
+  // Add to specific field
+  async addToBalance(manongId: number, amount: number) {
+    if (amount === 0) {
+      return this.prisma.manongWallet.findUnique({ where: { manongId } });
+    }
+
+    return this.prisma.manongWallet.update({
+      where: { manongId },
+      data: {
+        balance: {
+          increment: amount,
+        },
+      },
+    });
+  }
+
+  async addToPending(manongId: number, amount: number) {
+    if (amount === 0) {
+      return this.prisma.manongWallet.findUnique({ where: { manongId } });
+    }
+
+    return this.prisma.manongWallet.update({
+      where: { manongId },
+      data: {
+        pending: {
+          increment: amount,
+        },
+      },
+    });
+  }
+
+  async addToLocked(manongId: number, amount: number) {
+    if (amount === 0) {
+      return this.prisma.manongWallet.findUnique({ where: { manongId } });
+    }
+
+    return this.prisma.manongWallet.update({
+      where: { manongId },
+      data: {
+        locked: {
+          increment: amount,
+        },
+      },
+    });
+  }
+
+  // Combined method
+  async addAmounts(
+    manongId: number,
+    amounts: {
+      balance?: number;
+      pending?: number;
+      locked?: number;
+    },
+  ) {
+    const updateData: any = {};
+
+    if (amounts.balance !== undefined && amounts.balance !== 0) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      updateData.balance = { increment: amounts.balance };
+    }
+
+    if (amounts.pending !== undefined && amounts.pending !== 0) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      updateData.pending = { increment: amounts.pending };
+    }
+
+    if (amounts.locked !== undefined && amounts.locked !== 0) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      updateData.locked = { increment: amounts.locked };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    if (Object.keys(updateData).length === 0) {
+      return this.prisma.manongWallet.findUnique({ where: { manongId } });
+    }
+
+    return this.prisma.manongWallet.update({
+      where: { manongId },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      data: updateData,
+    });
+  }
+
   async cashInWallet(manongId: number, dto: CreateCashInManongWallet) {
     const { amount, provider, currency } = dto;
     const intentDto: CreatePaymentIntentDto = {
@@ -81,7 +170,7 @@ export class ManongWalletService {
       throw new NotFoundException('Manong wallet not found!');
     }
 
-    const metadata = {
+    const initialMetadata = {
       provider,
     };
 
@@ -91,7 +180,7 @@ export class ManongWalletService {
       status: WalletTransactionStatus.pending,
       amount,
       currency: currency ?? 'PHP',
-      metadata: JSON.stringify(metadata),
+      metadata: JSON.stringify(initialMetadata),
     };
 
     const transaction =
@@ -113,17 +202,24 @@ export class ManongWalletService {
       paymentStatus = result.data.attributes.status;
     }
 
-    await this.manongWalletTransactionService.updateWalletTransactionById(
-      transaction.id,
-      {
-        status: mapPaymongoStatusForWallet(paymentStatus),
-      },
-    );
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const metadata: any = JSON.parse(transaction.metadata!);
 
-    await this.updateManongWallet(manongId, {
-      balance: amount,
-    });
+    const updatedTransactionDto: UpdateManongWalletTransactionDto = {
+      status: mapPaymongoStatusForWallet(paymentStatus),
+      metadata: JSON.stringify({
+        ...metadata,
+        paymentRedirectUrl:
+          result.data.attributes.next_action?.redirect?.url ?? null,
+      }),
+    };
 
-    return transaction;
+    const updatedTransaction =
+      await this.manongWalletTransactionService.updateWalletTransactionById(
+        transaction.id,
+        updatedTransactionDto,
+      );
+
+    return updatedTransaction;
   }
 }

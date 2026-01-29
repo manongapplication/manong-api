@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AuthModule } from 'src/auth/auth.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { ManongWalletController } from './manong-wallet.controller';
@@ -14,8 +14,8 @@ import { PaymongoModule } from 'src/paymongo/paymongo.module';
     PrismaModule,
     UserModule,
     AuthModule,
-    ManongWalletTransactionModule,
-    PaymongoModule,
+    forwardRef(() => ManongWalletTransactionModule),
+    forwardRef(() => PaymongoModule),
   ],
   providers: [ManongWalletService, AppMaintenanceGuard, AppMaintenanceService],
   controllers: [ManongWalletController],

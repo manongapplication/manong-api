@@ -6,6 +6,7 @@ import { UserPaymentMethodModule } from 'src/user-payment-method/user-payment-me
 import { ServiceRequestModule } from 'src/service-request/service-request.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { UserModule } from 'src/user/user.module';
+import { ManongWalletTransactionModule } from 'src/manong-wallet-transaction/manong-wallet-transaction.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { UserModule } from 'src/user/user.module';
     AuthModule,
     forwardRef(() => ServiceRequestModule),
     UserModule,
+    ManongWalletTransactionModule,
   ],
   providers: [PaymongoService],
   controllers: [PaymongoController],
