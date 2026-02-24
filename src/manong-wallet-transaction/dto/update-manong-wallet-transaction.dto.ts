@@ -24,6 +24,7 @@ export class UpdateManongWalletTransactionDto {
 
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   amount?: number;
 
   @IsOptional()

@@ -153,4 +153,15 @@ export class UserController {
       message: 'Password successfully changed!',
     };
   }
+
+  @Get('stats')
+  async getManongStats(@CurrentUserId() userId: number) {
+    const stats = await this.userService.getStats(userId);
+
+    return {
+      success: true,
+      data: stats,
+      message: 'Successfully fetched stats',
+    };
+  }
 }

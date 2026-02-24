@@ -48,7 +48,7 @@ async function loadWalletPayment() {
         headers: {
           Authorization: `Bearer ${TOKEN}`,
         },
-      }
+      },
     );
     const data = res.data?.data;
 
@@ -59,7 +59,7 @@ async function loadWalletPayment() {
     const status = data?.status ?? 'pending';
     const transactionType = data?.type ?? 'topup';
     const transactionId = data?.id ?? '-';
-    
+
     // Parse metadata if available
     let metadata = {};
     if (data?.metadata) {
@@ -69,7 +69,7 @@ async function loadWalletPayment() {
         console.warn('Failed to parse metadata:', e);
       }
     }
-    
+
     const paymentIdOnGateway = metadata?.paymentIdOnGateway ?? '-';
 
     // Update UI
@@ -78,7 +78,7 @@ async function loadWalletPayment() {
 
     document.getElementById('amount').textContent = `₱${amount}`;
     document.getElementById('transactionId').textContent = transactionId;
-    document.getElementById('type').textContent = 
+    document.getElementById('type').textContent =
       transactionType.charAt(0).toUpperCase() + transactionType.slice(1);
     document.getElementById('status').textContent =
       status.charAt(0).toUpperCase() + status.slice(1);
@@ -110,7 +110,8 @@ async function loadWalletPayment() {
       e.preventDefault();
 
       // Use the same payment intent ID logic as service request
-      const paymentIntentId = params.get('payment_intent_id') || metadata?.paymentIntentId;
+      const paymentIntentId =
+        params.get('payment_intent_id') || metadata?.paymentIntentId;
       if (paymentIntentId) {
         const deepLink = `manong_application://wallet-payment-complete?payment_intent_id=${encodeURIComponent(paymentIntentId)}`;
 
@@ -122,20 +123,19 @@ async function loadWalletPayment() {
 
         // Optional fallback alert after 1.5 seconds
         setTimeout(() => {
-          alert('If the app didn\'t open, please open it manually.');
+          alert("If the app didn't open, please open it manually.");
         }, 1500);
       } else {
         // Fallback: just show an alert
         alert('Top-up completed. Please check your wallet in the app.');
       }
     });
-
   } catch (err) {
     console.error('Error loading wallet payment:', err);
     document.getElementById('status-text').textContent =
       'Error loading transaction';
     document.getElementById('status-description').textContent =
-      'We couldn\'t retrieve your transaction details. Please try again.';
+      "We couldn't retrieve your transaction details. Please try again.";
   }
 }
 

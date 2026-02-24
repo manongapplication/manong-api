@@ -13,7 +13,12 @@ import { join } from 'path';
 import { promises as fs } from 'fs';
 import { ProviderVerificationService } from 'src/provider-verification/provider-verification.service';
 import { CreateProviderVerificationDto } from 'src/provider-verification/dto/create-provider-verification.dto';
-import { AccountStatus, Prisma, UserRole } from '@prisma/client';
+import {
+  AccountStatus,
+  Prisma,
+  ServiceRequestStatus,
+  UserRole,
+} from '@prisma/client';
 import { CreateNotificationDto } from 'src/fcm/dto/create-notification.dto';
 import { FcmService } from 'src/fcm/fcm.service';
 import { getAccountStatusMessage } from 'src/common/utils/account.util';
@@ -60,6 +65,84 @@ export class UserService {
       where: { id },
       include,
     });
+  }
+
+  async getStats(userId: number) {
+    // First get the user to check their role
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    const isManong = user?.role === 'manong';
+
+    if (isManong) {
+      // MANONG STATS - jobs they've serviced
+      const completedRequests = await this.prisma.serviceRequest.findMany({
+        where: {
+          manongId: userId,
+          status: ServiceRequestStatus.completed,
+        },
+      });
+
+      // Get all feedback received as reviewee (manong)
+      const allFeedback = await this.prisma.feedback.findMany({
+        where: {
+          revieweeId: userId,
+        },
+        select: {
+          rating: true,
+        },
+      });
+
+      // Calculate average rating received
+      let averageRating = 0;
+      if (allFeedback.length > 0) {
+        const sum = allFeedback.reduce((acc, fb) => acc + fb.rating, 0);
+        averageRating = sum / allFeedback.length;
+      }
+
+      return {
+        isManong: true,
+        totalBookings: completedRequests.length,
+        completedCount: completedRequests.length,
+        averageRating: parseFloat(averageRating.toFixed(1)), // Average rating RECEIVED
+        feedbackCount: allFeedback.length,
+      };
+    } else {
+      // CUSTOMER STATS - jobs they've requested
+      const completedRequests = await this.prisma.serviceRequest.findMany({
+        where: {
+          userId: userId,
+          status: ServiceRequestStatus.completed,
+        },
+      });
+
+      // Get all feedback given as reviewer (customer)
+      const feedbackGiven = await this.prisma.feedback.findMany({
+        where: {
+          reviewerId: userId,
+        },
+        select: {
+          rating: true,
+        },
+      });
+
+      // Calculate average rating GIVEN by this customer
+      let averageRatingGiven = 0;
+      if (feedbackGiven.length > 0) {
+        const sum = feedbackGiven.reduce((acc, fb) => acc + fb.rating, 0);
+        averageRatingGiven = sum / feedbackGiven.length;
+      }
+
+      return {
+        isManong: false,
+        totalBookings: completedRequests.length,
+        completedCount: completedRequests.length,
+        averageRating: parseFloat(averageRatingGiven.toFixed(1)), // Average rating GIVEN
+        feedbackCount: feedbackGiven.length,
+      };
+    }
   }
 
   async findLatestById(id: number, include?: Prisma.UserInclude) {

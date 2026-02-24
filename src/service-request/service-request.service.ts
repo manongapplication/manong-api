@@ -22,6 +22,8 @@ import {
   ServiceRequestStatus,
   TransactionType,
   UserRole,
+  WalletTransactionStatus,
+  WalletTransactionType,
 } from '@prisma/client';
 import { CalculationUtil } from 'src/common/utils/calculation.util';
 import { UserPaymentMethodService } from 'src/user-payment-method/user-payment-method.service';
@@ -31,7 +33,10 @@ import axios from 'axios';
 import { PaymongoError } from 'src/paymongo/types/paymongo-error.types';
 import { CreatePaymentIntentDto } from 'src/paymongo/dto/create-payment-intent.dto';
 import { CompleteServiceRequestDto } from './dto/complete-service-request.dto';
-import { CompleteServiceRequest } from './types/service-request.types';
+import {
+  CompleteServiceRequest,
+  paymentTypes,
+} from './types/service-request.types';
 import {
   mapPaymongoRefundStatus,
   mapPaymongoStatus,
@@ -45,6 +50,8 @@ import { CreatePaymentTransactionDto } from 'src/payment-transaction/dto/create-
 import { RefundRequestService } from 'src/refund-request/refund-request.service';
 import { PaymongoRefund } from 'src/paymongo/types/paymongo.types';
 import { calculateRefundAmount } from 'src/common/utils/refund.util';
+import { ManongWalletService } from 'src/manong-wallet/manong-wallet.service';
+import { ServiceSettingsService } from 'src/service-settings/service-settings.service';
 
 @Injectable()
 export class ServiceRequestService {
@@ -57,6 +64,8 @@ export class ServiceRequestService {
     private readonly fcmService: FcmService,
     private readonly paymentTransactionService: PaymentTransactionService,
     private readonly refundRequestService: RefundRequestService,
+    private readonly manongWalletService: ManongWalletService,
+    private readonly serviceSettingsService: ServiceSettingsService,
   ) {}
 
   async findById(id: number) {
@@ -426,7 +435,7 @@ export class ServiceRequestService {
     };
   }
 
-  async showServiceRequest(id: number) {
+  async showServiceRequest(userId: number, id: number) {
     const request = await this.prisma.serviceRequest.findFirst({
       where: { id },
       include: {
@@ -453,6 +462,13 @@ export class ServiceRequestService {
         paymentTransactions: true,
         refundRequests: true,
         manongReport: true,
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          where: {
+            receiverId: userId,
+          },
+        },
       },
     });
 
@@ -564,6 +580,7 @@ export class ServiceRequestService {
       },
       include: {
         manongProfile: true,
+        manongWallet: true,
       },
     });
 
@@ -575,52 +592,45 @@ export class ServiceRequestService {
       throw new BadGatewayException('Manong not available!');
     }
 
-    switch (paymentMethod?.code) {
-      case 'cash':
+    const paymentCode = paymentMethod.code as keyof typeof paymentTypes;
+
+    // Validate known payment
+    if (!(paymentCode in paymentTypes)) {
+      updateData.paymentStatus = PaymentStatus.failed;
+      updateData.status = 'failed';
+    } else {
+      const isOnline = paymentTypes[paymentCode] === 'online';
+
+      if (paymentCode === 'cash') {
         updateData.paymentStatus = PaymentStatus.pending;
         updateData.status = 'awaitingAcceptance';
-        break;
-      case 'card':
-        {
-          await this.updateServiceRequestData(
-            userId,
-            updateData,
-            dto,
-            exists.id,
-            exists.subServiceItem?.title,
-          );
-        }
 
-        break;
-      case 'gcash':
-        {
-          await this.updateServiceRequestData(
-            userId,
-            updateData,
-            dto,
-            exists.id,
-            exists.subServiceItem?.title,
-          );
-          this.logger.debug('Gcash payment!');
-        }
-        break;
-      case 'paymaya':
-        {
-          await this.updateServiceRequestData(
-            userId,
-            updateData,
-            dto,
-            exists.id,
-            exists.subServiceItem?.title,
-          );
-          this.logger.debug('Maya payment!');
-        }
-        break;
+        const wallet = manong.manongWallet;
 
-      default:
-        updateData.paymentStatus = PaymentStatus.failed;
-        updateData.status = 'failed';
-        break;
+        if (wallet != null) {
+          const { serviceFee } = await this.getServiceFee(updateData.total);
+          const balance = Number(wallet.balance);
+
+          if (balance < serviceFee) {
+            throw new BadGatewayException(
+              'This service provider is temporarily unavailable for cash payments.',
+            );
+          }
+        }
+      }
+
+      if (isOnline) {
+        await this.updateServiceRequestData(
+          userId,
+          updateData,
+          dto,
+          exists.id,
+          exists.subServiceItem?.title,
+        );
+
+        if (paymentCode === 'gcash') this.logger.debug('Gcash payment!');
+        if (paymentCode === 'paymaya') this.logger.debug('Maya payment!');
+      }
     }
 
     if (updateData.manongId) {
@@ -713,6 +723,41 @@ export class ServiceRequestService {
       data: {
         status: ServiceRequestStatus.accepted,
       },
+      include: {
+        paymentMethod: true,
+      },
+    });
+
+    const isOnline = this.isOnlinePayment(result.paymentMethod?.code);
+
+    const serviceFeeSettings = await this.getServiceFee(Number(result.total));
+
+    const amount = isOnline
+      ? serviceFeeSettings.manongNet
+      : serviceFeeSettings.serviceFee;
+
+    if (result.manongId) {
+      // Fetch the manong wallet separately without including in return
+      const manongWallet = await this.manongWalletService.findByManongId(
+        result.manongId,
+      );
+
+      if (manongWallet != null) {
+        const { serviceFee } = await this.getServiceFee(Number(result.total));
+        const balance = Number(manongWallet.balance);
+
+        if (balance < serviceFee) {
+          throw new BadGatewayException(
+            'This service provider is temporarily unavailable for cash payments.',
+          );
+        }
+      }
+    }
+
+    // Update wallet separately without affecting the return
+    await this.updateManongWalletIfExists(result.manongId!, {
+      locked: amount,
+      balance: isOnline ? 0 : -amount,
     });
 
     return result;
@@ -1123,6 +1168,9 @@ export class ServiceRequestService {
       where: {
         id,
       },
+      include: {
+        paymentMethod: true,
+      },
     });
 
     if (!exists) {
@@ -1152,9 +1200,28 @@ export class ServiceRequestService {
       data,
     });
 
+    if (exists.manongId) {
+      const isOnline = this.isOnlinePayment(exists.paymentMethod?.code);
+
+      const serviceFeeSettings = await this.getServiceFee(Number(exists.total));
+
+      const amount = isOnline
+        ? serviceFeeSettings.manongNet
+        : serviceFeeSettings.serviceFee;
+
+      await this.updateManongWalletIfExists(exists.manongId, {
+        locked: -amount,
+        balance: isOnline ? 0 : amount,
+      });
+    }
+
     this.logger.debug(`Service now expired ${JSON.stringify(updated)}`);
 
     return updated;
+  }
+
+  isOnlinePayment(code: string | null | undefined) {
+    return paymentTypes[code ?? 'cash'] === 'online';
   }
 
   async markServiceRequestCompleted(id: number, userId: number) {
@@ -1197,6 +1264,37 @@ export class ServiceRequestService {
         subServiceItem: true,
       },
     });
+
+    if (completed.manongId) {
+      const isOnline = this.isOnlinePayment(completed.paymentMethod?.code);
+
+      const serviceFeeSettings = await this.getServiceFee(
+        Number(completed.total),
+      );
+
+      const amount = isOnline
+        ? serviceFeeSettings.manongNet
+        : serviceFeeSettings.serviceFee;
+
+      const transactionType: WalletTransactionType = isOnline
+        ? WalletTransactionType.earning
+        : WalletTransactionType.job_fee;
+
+      await this.updateManongWalletIfExists(
+        completed.manongId,
+        {
+          locked: -amount,
+          balance: isOnline ? amount : 0,
+        },
+        {
+          status: isOnline
+            ? WalletTransactionStatus.completed
+            : WalletTransactionStatus.pending,
+          type: transactionType,
+          amount: isOnline ? amount : -amount,
+        },
+      );
+    }
 
     // Update manong status to busy
     await this.prisma.user.update({
@@ -1738,5 +1836,44 @@ export class ServiceRequestService {
     }
 
     return updated;
+  }
+
+  async getServiceFee(total: number) {
+    const serviceSettings =
+      await this.serviceSettingsService.fetchServiceSettings();
+
+    const serviceTax = serviceSettings?.serviceTax ?? 0.15;
+
+    const serviceFee = total * serviceTax;
+    const manongNet = total - serviceFee;
+
+    return {
+      serviceTax,
+      serviceFee,
+      manongNet,
+    };
+  }
+
+  private async updateManongWalletIfExists(
+    manongId: number,
+    changes: { locked?: number; balance?: number; pending?: number },
+    transaction?: {
+      type: WalletTransactionType;
+      status: WalletTransactionStatus;
+      amount: number;
+    },
+  ) {
+    const wallet = await this.manongWalletService.findByManongId(manongId);
+    if (!wallet) return;
+
+    await this.manongWalletService.updateAmounts(
+      manongId,
+      {
+        locked: changes.locked ?? 0,
+        balance: changes.balance ?? 0,
+        pending: changes.pending ?? 0,
+      },
+      transaction,
+    );
   }
 }

@@ -1,10 +1,10 @@
 import {
   BadGatewayException,
+  BadRequestException,
   forwardRef,
   Inject,
   Injectable,
   Logger,
-  NotFoundException,
 } from '@nestjs/common';
 import { CreateManongWalletDto } from './dto/create-manong-wallet.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -17,6 +17,8 @@ import { CreateManongWalletTransactionDto } from 'src/manong-wallet-transaction/
 import { WalletTransactionStatus, WalletTransactionType } from '@prisma/client';
 import { mapPaymongoStatusForWallet } from 'src/common/utils/payment.util';
 import { UpdateManongWalletTransactionDto } from 'src/manong-wallet-transaction/dto/update-manong-wallet-transaction.dto';
+import { CreateCashOutManongWallet } from './dto/create-cash-out-manong-wallet.dto';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class ManongWalletService {
@@ -26,9 +28,30 @@ export class ManongWalletService {
     private readonly paymongoService: PaymongoService,
     @Inject(forwardRef(() => ManongWalletTransactionService))
     private readonly manongWalletTransactionService: ManongWalletTransactionService,
+    private readonly userService: UserService,
   ) {}
 
   private readonly logger = new Logger(ManongWalletService.name);
+
+  async findByManongId(manongId: number) {
+    return await this.prisma.manongWallet.findUnique({
+      where: { manongId },
+    });
+  }
+
+  async fetchByWalletId(walletId: number) {
+    const wallet = await this.prisma.manongWallet.findUnique({
+      where: {
+        id: walletId,
+      },
+    });
+
+    if (!wallet) {
+      throw new BadGatewayException('Wallet not found!');
+    }
+
+    return wallet;
+  }
 
   async fetchManongWallet(manongId: number) {
     const wallet = await this.prisma.manongWallet.findUnique({
@@ -45,6 +68,11 @@ export class ManongWalletService {
   }
 
   async createManongWallet(manongId: number, dto: CreateManongWalletDto) {
+    const manong = await this.userService.isManong(manongId);
+
+    if (!manong) {
+      throw new BadGatewayException('User is not manong!');
+    }
     const wallet = await this.prisma.manongWallet.create({
       data: {
         manongId,
@@ -70,88 +98,72 @@ export class ManongWalletService {
     return wallet;
   }
 
-  // Add to specific field
-  async addToBalance(manongId: number, amount: number) {
-    if (amount === 0) {
-      return this.prisma.manongWallet.findUnique({ where: { manongId } });
-    }
-
-    return this.prisma.manongWallet.update({
-      where: { manongId },
-      data: {
-        balance: {
-          increment: amount,
-        },
-      },
-    });
-  }
-
-  async addToPending(manongId: number, amount: number) {
-    if (amount === 0) {
-      return this.prisma.manongWallet.findUnique({ where: { manongId } });
-    }
-
-    return this.prisma.manongWallet.update({
-      where: { manongId },
-      data: {
-        pending: {
-          increment: amount,
-        },
-      },
-    });
-  }
-
-  async addToLocked(manongId: number, amount: number) {
-    if (amount === 0) {
-      return this.prisma.manongWallet.findUnique({ where: { manongId } });
-    }
-
-    return this.prisma.manongWallet.update({
-      where: { manongId },
-      data: {
-        locked: {
-          increment: amount,
-        },
-      },
-    });
-  }
-
-  // Combined method
-  async addAmounts(
+  async updateAmounts(
     manongId: number,
     amounts: {
       balance?: number;
       pending?: number;
       locked?: number;
     },
+    transaction?: {
+      type: WalletTransactionType;
+      status: WalletTransactionStatus;
+      amount: number;
+    },
   ) {
-    const updateData: any = {};
+    const updateData: Record<string, any> = {};
 
-    if (amounts.balance !== undefined && amounts.balance !== 0) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      updateData.balance = { increment: amounts.balance };
+    // Check for negative balance updates
+    for (const key of ['balance', 'pending', 'locked'] as const) {
+      const value = amounts[key];
+      if (value && value !== 0) {
+        if (value < 0) {
+          // For negative amounts, we need to check current balance
+          const currentWallet = await this.prisma.manongWallet.findUnique({
+            where: { manongId },
+          });
+
+          if (!currentWallet) {
+            throw new Error(`Wallet not found for manongId: ${manongId}`);
+          }
+
+          const currentValue = Number(currentWallet[key]);
+
+          const newValue: number = Number(currentValue) + value; // value is negative, so this subtracts
+
+          if (newValue < 0) {
+            throw new BadGatewayException(
+              `Insufficient ${key}. Current: ${currentValue}, Attempted to deduct: ${-value}, Result would be: ${newValue}`,
+            );
+          }
+        }
+
+        updateData[key] =
+          value > 0 ? { increment: value } : { decrement: -value };
+      }
     }
 
-    if (amounts.pending !== undefined && amounts.pending !== 0) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      updateData.pending = { increment: amounts.pending };
-    }
-
-    if (amounts.locked !== undefined && amounts.locked !== 0) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      updateData.locked = { increment: amounts.locked };
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     if (Object.keys(updateData).length === 0) {
       return this.prisma.manongWallet.findUnique({ where: { manongId } });
     }
 
-    return this.prisma.manongWallet.update({
+    const wallet = await this.prisma.manongWallet.update({
       where: { manongId },
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: updateData,
     });
+
+    if (transaction != null) {
+      await this.prisma.manongWalletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          amount: transaction.amount,
+          type: transaction.type,
+          status: transaction.status,
+        },
+      });
+    }
+
+    return wallet;
   }
 
   async cashInWallet(manongId: number, dto: CreateCashInManongWallet) {
@@ -164,11 +176,14 @@ export class ManongWalletService {
       provider,
     };
 
-    const wallet = await this.fetchManongWallet(manongId);
-
-    if (!wallet) {
-      throw new NotFoundException('Manong wallet not found!');
+    const MINIMUM_CASH_IN_AMOUNT = 100;
+    if (amount < MINIMUM_CASH_IN_AMOUNT) {
+      throw new BadRequestException(
+        `Minimum cash in amount is ₱${MINIMUM_CASH_IN_AMOUNT.toFixed(2)}`,
+      );
     }
+
+    const wallet = await this.fetchManongWallet(manongId);
 
     const initialMetadata = {
       provider,
@@ -221,5 +236,104 @@ export class ManongWalletService {
       );
 
     return updatedTransaction;
+  }
+
+  async cashOutWallet(manongId: number, dto: CreateCashOutManongWallet) {
+    const {
+      amount,
+      bankCode,
+      bankName,
+      currency,
+      accountName,
+      accountNumber,
+      notes,
+    } = dto;
+
+    const MINIMUM_AMOUNT = 100;
+    if (amount < MINIMUM_AMOUNT) {
+      throw new BadRequestException(
+        `Minimum cash out amount is ₱${MINIMUM_AMOUNT.toFixed(2)}`,
+      );
+    }
+
+    const wallet = await this.fetchManongWallet(manongId);
+
+    await this.updateAmounts(manongId, {
+      balance: -amount,
+      pending: amount,
+    });
+
+    const initialMetadata = {
+      bankCode,
+      bankName,
+      accountName,
+      accountNumber,
+      notes,
+    };
+
+    const transactionDto: CreateManongWalletTransactionDto = {
+      walletId: wallet.id,
+      type: WalletTransactionType.payout,
+      status: WalletTransactionStatus.pending,
+      amount,
+      currency: currency ?? 'PHP',
+      metadata: JSON.stringify(initialMetadata),
+    };
+
+    const transaction =
+      await this.manongWalletTransactionService.createManongWalletTransaction(
+        transactionDto,
+      );
+
+    return transaction;
+  }
+
+  calculateCashBookingReadiness(
+    walletBalance: number,
+    minRequiredForCashJob: number,
+  ) {
+    const shortfall = Math.max(minRequiredForCashJob - walletBalance, 0);
+    const progressPercent = Math.min(
+      Math.floor((walletBalance / minRequiredForCashJob) * 100),
+      100,
+    );
+
+    const status =
+      walletBalance === 0
+        ? 'empty'
+        : walletBalance < minRequiredForCashJob
+          ? 'low'
+          : 'ready';
+
+    const message =
+      status === 'empty'
+        ? 'Your wallet has no balance. Add funds to start accepting cash bookings.'
+        : status === 'low'
+          ? `Add ₱${shortfall.toFixed(0)} more to accept most cash bookings.`
+          : 'You’re ready to accept cash bookings.';
+
+    return {
+      balance: walletBalance,
+      minimumRequired: minRequiredForCashJob,
+      progressPercent,
+      shortfall,
+      status,
+      message,
+    };
+  }
+
+  async fetchCashBookingReadiness(manongId: number) {
+    const wallet = await this.fetchManongWallet(manongId);
+
+    const TYPICAL_CASH_JOB_AMOUNT = 666.67;
+    const SERVICE_FEE_RATE = 0.15;
+
+    const MIN_REQUIRED_FOR_CASH_JOB =
+      TYPICAL_CASH_JOB_AMOUNT * SERVICE_FEE_RATE; // ₱45
+
+    return this.calculateCashBookingReadiness(
+      Number(wallet.balance),
+      MIN_REQUIRED_FOR_CASH_JOB,
+    );
   }
 }

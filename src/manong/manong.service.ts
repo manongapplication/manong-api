@@ -297,29 +297,6 @@ export class ManongService {
     return result;
   }
 
-  async fetchVerifiedManongsWithLimitInfo(
-    serviceItemId?: number,
-    page = 1,
-    limit = 10,
-  ) {
-    const manongs = await this.fetchVerifiedManongs(serviceItemId, page, limit);
-
-    if (manongs.length === 0) {
-      return {
-        manongs: [],
-        limitInfo: {},
-      };
-    }
-
-    const manongIds = manongs.map((m) => m.id);
-    const limitInfo = await this.checkMultipleManongsDailyLimits(manongIds);
-
-    return {
-      manongs,
-      limitInfo,
-    };
-  }
-
   async fetchVerifiedManongs(serviceItemId?: number, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
 
@@ -349,24 +326,36 @@ export class ManongService {
             },
           },
         },
+        receivedFeedbacks: true,
       },
       skip,
       take: limit * 2,
     });
 
-    // Update status for each manong
-    for (const manong of manongs) {
-      if (manong.manongProfile) {
-        const result = await this.checkManongDailyLimit(manong.id, true);
+    return manongs.map((manong) => {
+      const feedbacks = manong.receivedFeedbacks || [];
 
-        // Update the manong object with the new status from result
-        if (result.newStatus && manong.manongProfile) {
-          manong.manongProfile.status = result.newStatus;
-        }
-      }
-    }
+      const ratings = feedbacks
+        .map((f) => f.rating)
+        .filter((rating): rating is number => rating != null && !isNaN(rating));
 
-    return manongs;
+      const ratingCount = ratings.length;
+
+      const averageRating =
+        ratingCount > 0
+          ? ratings.reduce((sum, rating) => sum + rating, 0) / ratingCount
+          : 0;
+
+      const { ...manongWithoutFeedbacks } = manong;
+
+      return {
+        ...manongWithoutFeedbacks,
+        stats: {
+          ratingCount,
+          averageRating: Number(averageRating.toFixed(1)),
+        },
+      };
+    });
   }
 
   async fetchManongs(
@@ -418,53 +407,6 @@ export class ManongService {
     });
 
     return allManongs;
-  }
-
-  async fetchManongsRaw(serviceItemId?: number, page = 1, limit = 10) {
-    const skip = (page - 1) * limit;
-
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date(startOfToday);
-    endOfToday.setDate(endOfToday.getDate() + 1);
-
-    // Pass ISO strings (still fine)
-    const startISO = startOfToday.toISOString();
-    const endISO = endOfToday.toISOString();
-
-    const query = `
-      SELECT u.*
-      FROM "User" u
-      LEFT JOIN "ServiceRequest" sr
-        ON sr."manongId" = u.id
-        AND sr."createdAt" >= $1::timestamp
-        AND sr."createdAt" < $2::timestamp
-      ${
-        serviceItemId
-          ? `
-      INNER JOIN "ManongProfile" mp ON mp."userId" = u.id
-      INNER JOIN "ManongSpecialities" ms ON ms."manongProfileId" = mp.id
-      INNER JOIN "SubServiceItem" ssi ON ssi.id = ms."subServiceItemId"
-      `
-          : ''
-      }
-      WHERE u."role" = 'manong'
-      ${serviceItemId ? 'AND ssi."serviceItemId" = $5' : ''}
-      GROUP BY u.id
-      HAVING COUNT(sr.id) < 5
-      ORDER BY u.id ASC
-      LIMIT $3 OFFSET $4
-    `;
-
-    const params = serviceItemId
-      ? [startISO, endISO, limit, skip, serviceItemId]
-      : [startISO, endISO, limit, skip];
-
-    const manongs = await this.prisma.$queryRawUnsafe(query, ...params);
-
-    console.log(JSON.stringify(manongs));
-
-    return manongs;
   }
 
   async findManongById(id: number) {

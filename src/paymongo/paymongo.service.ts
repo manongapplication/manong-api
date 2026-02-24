@@ -300,6 +300,63 @@ export class PaymongoService {
     }
   }
 
+  async createPaymentManuallyForJobFees(
+    userId: number,
+    dto: CreatePaymentIntentDto,
+    ids: string, // This comes as comma-separated string: "7,8,12,14"
+  ) {
+    try {
+      const attachDto: CreateAttachIntentDto = {
+        payment_method: '',
+      };
+
+      const intentDto: CreatePaymentIntentDto = {
+        amount: dto.amount * 100,
+        currency: dto.currency ?? 'PHP',
+        description: dto.description ?? '',
+        capture_type: 'automatic',
+      };
+
+      const intent = await this.createPaymentIntent(userId, intentDto);
+
+      const userPaymentMethod = dto.provider;
+      let paymentMethodId: string | null = null;
+
+      if (userPaymentMethod == 'gcash' || userPaymentMethod == 'paymaya') {
+        const cardDto: CreateCardDto = {
+          type: userPaymentMethod,
+        };
+
+        const paymentMethodResult = await this.createPaymentMethod(
+          userId,
+          cardDto,
+        );
+        paymentMethodId = paymentMethodResult.id;
+        this.logger.debug(`Payment created for ${userPaymentMethod}`);
+
+        // Convert commas to dashes in the IDs
+        const idsWithDash = ids.replace(/,/g, '-');
+
+        attachDto.return_url = `${process.env.BASE_URL}/api/paymongo/job-fees-payment-complete?ids=${idsWithDash}`;
+
+        this.logger.debug(`Return URL: ${attachDto.return_url}`);
+      }
+
+      if (paymentMethodId == null) {
+        throw new BadGatewayException('Payment method on gateway is not set!');
+      }
+
+      attachDto.payment_method = paymentMethodId;
+
+      const result = await this.createAttach(userId, intent.id, attachDto);
+
+      return { data: result };
+    } catch (error) {
+      this.logger.error(`Error processing payment. ${error}`);
+      throw error;
+    }
+  }
+
   // async retrieveCustomer(email: string) {
   //   try {
   //     const result = await axios.get<PaymongoCustomer>(
@@ -500,6 +557,70 @@ export class PaymongoService {
     };
   }
 
+  async jobFeesPaymentCompleteOutside(
+    ids: string,
+    payment_intent_id: string,
+  ): Promise<{ ids: number[]; redirectUrl: string; token: string } | null> {
+    if (ids == null) {
+      throw new BadGatewayException('Ids are required.');
+    }
+
+    this.logger.debug(
+      `jobFeesPaymentCompleteOutside called with ids: ${ids}, payment_intent_id: ${payment_intent_id}`,
+    );
+
+    // Split by comma (since we converted dashes back to commas in the controller)
+    const idsDecoded = ids
+      .split(',')
+      .map((id) => Number(id.trim()))
+      .filter((id) => !isNaN(id));
+
+    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+    this.logger.debug(`Decoded IDs: ${idsDecoded}`);
+
+    const transactions =
+      await this.manongWalletTransactionService.completePendingJobFees(
+        idsDecoded,
+      );
+
+    // Handle case where payment_intent_id might have a comma
+    let cleanPaymentIntentId = payment_intent_id;
+    if (payment_intent_id && payment_intent_id.includes(',')) {
+      cleanPaymentIntentId = payment_intent_id.split(',')[0];
+    }
+
+    const paymentIntent = await this.fetchPaymentIntent(cleanPaymentIntentId);
+
+    if (!paymentIntent) {
+      this.logger.error('Failed to fetch payment intent');
+      return null;
+    }
+
+    this.logger.debug(
+      `jobfeesCompleteOutside: ${JSON.stringify(transactions)}`,
+    );
+
+    const transactionOne =
+      await this.prisma.manongWalletTransaction.findUniqueOrThrow({
+        where: {
+          id: idsDecoded[0],
+        },
+        include: {
+          wallet: true,
+        },
+      });
+
+    const token = this.authService.giveTemporaryToken(
+      transactionOne.wallet.manongId,
+    );
+
+    return {
+      ids: idsDecoded,
+      redirectUrl: `manong_application://job-fees-payment-complete?ids=${ids}&payment_intent_id=${cleanPaymentIntentId}`,
+      token,
+    };
+  }
+
   async getPayment(paymentId: string) {
     try {
       const response = await axios.get(
@@ -531,7 +652,6 @@ export class PaymongoService {
         };
       }
 
-      // Check available_at field - THIS IS THE KEY!
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const availableAt = payment.attributes.available_at;
       const now = Math.floor(Date.now() / 1000); // Current Unix timestamp

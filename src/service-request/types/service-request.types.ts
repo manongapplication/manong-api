@@ -29,3 +29,10 @@ export interface CompleteServiceRequest {
   arrivedAt?: Date | null;
   deletedAt?: Date | null;
 }
+
+export const paymentTypes = {
+  cash: 'offline',
+  card: 'online',
+  gcash: 'online',
+  paymaya: 'online',
+} as const;

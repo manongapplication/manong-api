@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Wallet Top-up Status</title>
+    <title>Job Fees Payment Status</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
@@ -66,7 +66,7 @@
         id="status-description"
         class="text-sm sm:text-base text-gray-600 mb-6"
       >
-        Please wait while we verify your wallet top-up.
+        Please wait while we verify your job fees payment.
       </p>
 
       <div
@@ -74,15 +74,11 @@
         class="hidden w-full bg-gray-50 border border-gray-100 rounded-xl p-4 mb-6 text-left text-sm"
       >
         <p>
-          <span class="text-gray-500">Amount:</span> <span id="amount">₱0</span>
+          <span class="text-gray-500">Total Amount:</span> <span id="amount">₱0</span>
         </p>
         <p>
-          <span class="text-gray-500">Transaction ID:</span>
-          <span id="transactionId">-</span>
-        </p>
-        <p>
-          <span class="text-gray-500">Type:</span>
-          <span id="type">topup</span>
+          <span class="text-gray-500">Transaction IDs:</span>
+          <span id="transactionIds">-</span>
         </p>
         <p>
           <span class="text-gray-500">Status:</span>
@@ -105,6 +101,6 @@
     <script>
       window.TOKEN = '%%JWT_TOKEN%%';
     </script>
-    <script src="../../js/wallet-payment.js"></script>
+    <script src="../../js/job-fees-payment.js"></script>
   </body>
 </html>

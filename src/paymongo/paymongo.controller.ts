@@ -190,6 +190,56 @@ export class PaymongoController {
     res.send(html);
   }
 
+  @Get('job-fees-payment-complete')
+  async jobFeesPaymentcompleteOutside(
+    @Query('ids') ids: string,
+    @Query('payment_intent_id') payment_intent_id: string,
+    @Res() res: Response,
+  ) {
+    // Set ngrok header to bypass warning page
+    res.setHeader('ngrok-skip-browser-warning', 'true');
+
+    this.logger.log(
+      `job-fees-payment-complete called with ids: ${ids}, payment_intent_id: ${payment_intent_id}`,
+    );
+
+    // Handle case where payment_intent_id might have a comma (duplicate)
+    let cleanPaymentIntentId = payment_intent_id;
+    if (payment_intent_id && payment_intent_id.includes(',')) {
+      // Take the first one if there's a comma
+      cleanPaymentIntentId = payment_intent_id.split(',')[0];
+      this.logger.log(`Cleaned payment_intent_id: ${cleanPaymentIntentId}`);
+    }
+
+    // Convert dashes back to commas for the service
+    const idsWithCommas = ids.replace(/-/g, ',');
+
+    const result = await this.paymongoService.jobFeesPaymentCompleteOutside(
+      idsWithCommas,
+      cleanPaymentIntentId, // Use the cleaned version
+    );
+
+    if (!result) {
+      return res.status(400).send('Payment verification failed.');
+    }
+
+    // Generate a short-lived JWT token for the frontend
+    const token = result.token;
+
+    // Read static HTML
+    const filePath = join(
+      process.cwd(),
+      'public',
+      'job-fees-payment-successful.html',
+    );
+    let html = readFileSync(filePath, 'utf-8');
+
+    // Inject token into HTML
+    html = html.replace('%%JWT_TOKEN%%', token);
+
+    res.send(html);
+  }
+
   // @UseGuards(JwtAuthGuard)
   // @Post('create-customer')
   // async createCustomer(@Body() dto: CreateCustomerDto) {

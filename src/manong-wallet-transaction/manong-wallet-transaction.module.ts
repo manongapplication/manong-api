@@ -7,6 +7,7 @@ import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
 import { AppMaintenanceService } from 'src/app-maintenance/app-maintenance.service';
 import { UserModule } from 'src/user/user.module';
 import { ManongWalletModule } from 'src/manong-wallet/manong-wallet.module';
+import { PaymongoModule } from 'src/paymongo/paymongo.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ManongWalletModule } from 'src/manong-wallet/manong-wallet.module';
     AuthModule,
     UserModule,
     forwardRef(() => ManongWalletModule),
+    forwardRef(() => PaymongoModule),
   ],
   providers: [
     ManongWalletTransactionService,

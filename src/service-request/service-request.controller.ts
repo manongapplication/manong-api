@@ -152,8 +152,14 @@ export class ServiceRequestController {
   }
 
   @Get(':id')
-  async show(@Param('id', ParseIntPipe) id: number) {
-    const request = await this.serviceRequestService.showServiceRequest(id);
+  async show(
+    @CurrentUserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    const request = await this.serviceRequestService.showServiceRequest(
+      userId,
+      id,
+    );
 
     return { success: true, data: request };
   }

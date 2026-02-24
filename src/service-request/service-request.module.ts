@@ -12,6 +12,8 @@ import { AppMaintenanceGuard } from 'src/common/guards/app-maintenance.guard';
 import { AppMaintenanceService } from 'src/app-maintenance/app-maintenance.service';
 import { PaymentTransactionModule } from 'src/payment-transaction/payment-transaction.module';
 import { RefundRequestModule } from 'src/refund-request/refund-request.module';
+import { ManongWalletModule } from 'src/manong-wallet/manong-wallet.module';
+import { ServiceSettingsModule } from 'src/service-settings/service-settings.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { RefundRequestModule } from 'src/refund-request/refund-request.module';
     FcmModule,
     PaymentTransactionModule,
     forwardRef(() => RefundRequestModule),
+    ManongWalletModule,
+    ServiceSettingsModule,
   ],
   controllers: [ServiceRequestController],
   providers: [

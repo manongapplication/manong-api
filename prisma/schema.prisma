@@ -749,6 +749,7 @@ model ManongWallet {
 
 enum WalletTransactionType {
   topup // Manong loaded wallet
+  earning // Actual money earned
   job_fee // Platform fee deduction
   payout // Cashout to Manong
   adjustment // Manual adjustment / correction

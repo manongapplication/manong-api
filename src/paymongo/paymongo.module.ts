@@ -15,7 +15,7 @@ import { ManongWalletTransactionModule } from 'src/manong-wallet-transaction/man
     AuthModule,
     forwardRef(() => ServiceRequestModule),
     UserModule,
-    ManongWalletTransactionModule,
+    forwardRef(() => ManongWalletTransactionModule),
   ],
   providers: [PaymongoService],
   controllers: [PaymongoController],

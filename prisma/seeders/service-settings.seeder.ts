@@ -9,7 +9,7 @@ export class ServiceSettingsSeeder {
     if (!existing) {
       await prisma.serviceSettings.create({
         data: {
-          serviceTax: 0.12, // 12%
+          serviceTax: 0.15, // 12%
           maxDistanceFee: 400, // capped distance fee
         },
       });
