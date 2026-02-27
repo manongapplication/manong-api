@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   ParseIntPipe,
   Post,
@@ -449,6 +450,33 @@ export class ServiceRequestController {
       success: true,
       data: result,
       message: 'Service request updated successfully',
+    };
+  }
+
+  @Post(':id/mark-arrived')
+  async markAsArrived(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUserId() userId: number,
+  ) {
+    const serviceRequest = await this.serviceRequestService.findById(id);
+
+    if (!serviceRequest) {
+      throw new NotFoundException('Service request not found');
+    }
+
+    // Check if user is the assigned manong
+    if (serviceRequest.manongId !== userId) {
+      throw new BadRequestException(
+        'Only the assigned manong can mark as arrived',
+      );
+    }
+
+    const result = await this.serviceRequestService.markAsArrived(id);
+
+    return {
+      success: true,
+      data: result,
+      message: 'Service request marked as arrived successfully',
     };
   }
 }

@@ -18,6 +18,8 @@ export class TrackingGateway {
   ) {}
 
   private readonly logger = new Logger('Tracking');
+  private readonly ARRIVAL_THRESHOLD = 50;
+
   @WebSocketServer()
   server: Server;
 
@@ -94,5 +96,81 @@ export class TrackingGateway {
 
     this.server.to(room).emit('tracking:update', payload);
     this.logger.log(`Location update for ${room}: ${JSON.stringify(payload)}`);
+
+    await this.checkArrival(data);
+  }
+
+  private async checkArrival(data: {
+    manongId: string;
+    serviceRequestId: string;
+    lat: number;
+    lng: number;
+  }) {
+    try {
+      const requestId = parseInt(data.serviceRequestId, 10);
+      const serviceRequest =
+        await this.serviceRequestService.findById(requestId);
+
+      if (!serviceRequest) return;
+
+      // Skip if already arrived
+      if (serviceRequest.arrivedAt) return;
+
+      // Calculate distance using Haversine formula
+      const distance = this.calculateDistance(
+        data.lat,
+        data.lng,
+        Number(serviceRequest.customerLat),
+        Number(serviceRequest.customerLng),
+      );
+
+      this.logger.debug(
+        `Distance to destination: ${distance.toFixed(2)} meters`,
+      );
+
+      // If within threshold, mark as arrived
+      if (distance <= this.ARRIVAL_THRESHOLD) {
+        await this.serviceRequestService.markAsArrived(requestId);
+
+        const room = `tracking:${data.manongId}-${data.serviceRequestId}`;
+        this.server.to(room).emit('arrival:detected', {
+          serviceRequestId: data.serviceRequestId,
+          manongId: data.manongId,
+          arrivedAt: new Date().toISOString(),
+          distance: distance,
+          message: 'Manong has arrived at the location',
+        });
+
+        this.logger.log(
+          `✅ Arrival detected for request ${requestId} (${distance.toFixed(2)}m)`,
+        );
+      }
+    } catch (error) {
+      this.logger.error(`Error checking arrival: ${error.message}`);
+    }
+  }
+
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = this.toRadians(lat1);
+    const φ2 = this.toRadians(lat2);
+    const Δφ = this.toRadians(lat2 - lat1);
+    const Δλ = this.toRadians(lon2 - lon1);
+
+    const a =
+      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  }
+
+  private toRadians(degrees: number): number {
+    return (degrees * Math.PI) / 180;
   }
 }

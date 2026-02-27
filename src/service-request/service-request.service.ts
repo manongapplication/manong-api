@@ -1876,4 +1876,112 @@ export class ServiceRequestService {
       transaction,
     );
   }
+
+  async markAsArrived(id: number) {
+    try {
+      this.logger.log(`Marking service request ${id} as arrived`);
+
+      // Find the service request
+      const serviceRequest = await this.prisma.serviceRequest.findUnique({
+        where: { id },
+        include: {
+          user: true,
+          manong: true,
+        },
+      });
+
+      if (!serviceRequest) {
+        throw new NotFoundException(`Service request with id ${id} not found`);
+      }
+
+      // Check if already arrived
+      if (serviceRequest.arrivedAt) {
+        this.logger.log(
+          `Service request ${id} already marked as arrived at ${serviceRequest.arrivedAt.toISOString()}`,
+        );
+        return serviceRequest;
+      }
+
+      // Check if service is in progress
+      if (serviceRequest.status !== ServiceRequestStatus.inProgress) {
+        throw new BadRequestException(
+          `Cannot mark as arrived: service request is ${serviceRequest.status}. Only in-progress requests can be marked as arrived.`,
+        );
+      }
+
+      const now = new Date();
+
+      // Update the service request with arrivedAt timestamp
+      const updated = await this.prisma.serviceRequest.update({
+        where: { id },
+        data: {
+          arrivedAt: now,
+        },
+        include: {
+          user: true,
+          manong: true,
+          serviceItem: true,
+          subServiceItem: true,
+        },
+      });
+
+      this.logger.log(
+        `✅ Service request ${id} marked as arrived at ${now.toISOString()}`,
+      );
+
+      // Send notification to customer that manong has arrived
+      if (updated.user?.fcmToken) {
+        const notificationDto: CreateNotificationDto = {
+          token: updated.user.fcmToken,
+          title: 'Manong has arrived! 🎉',
+          body: `Your Manong ${updated.manong?.firstName || ''} has arrived at your location. Please meet them at the provided address.`,
+          userId: updated.userId,
+          serviceRequestId: updated.id.toString(),
+          status: updated.status!,
+          paymentStatus: updated.paymentStatus,
+        };
+
+        try {
+          await this.fcmService.sendPushNotification(notificationDto);
+          this.logger.log(
+            `Arrival notification sent to user ${updated.userId}`,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to send arrival notification: ${error.message}`,
+          );
+        }
+      }
+
+      if (updated.manong?.fcmToken) {
+        const manongNotificationDto: CreateNotificationDto = {
+          token: updated.manong.fcmToken,
+          title: 'You have arrived! 🎯',
+          body: `You have arrived at the customer's location. You can now complete the service when finished.`,
+          userId: updated.manongId!,
+          serviceRequestId: updated.id.toString(),
+          status: updated.status!,
+          paymentStatus: updated.paymentStatus,
+        };
+
+        try {
+          await this.fcmService.sendPushNotification(manongNotificationDto);
+          this.logger.log(
+            `Arrival confirmation sent to manong ${updated.manongId}`,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to send arrival confirmation to manong: ${error.message}`,
+          );
+        }
+      }
+
+      return updated;
+    } catch (error) {
+      this.logger.error(
+        `Error marking service request as arrived: ${error.message}`,
+      );
+      throw error;
+    }
+  }
 }
