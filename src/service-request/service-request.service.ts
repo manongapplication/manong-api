@@ -1950,8 +1950,10 @@ export class ServiceRequestService {
             `Arrival notification sent to user ${updated.userId}`,
           );
         } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
           this.logger.error(
-            `Failed to send arrival notification: ${error.message}`,
+            `Failed to send arrival notification: ${errorMessage}`,
           );
         }
       }
@@ -1973,16 +1975,20 @@ export class ServiceRequestService {
             `Arrival confirmation sent to manong ${updated.manongId}`,
           );
         } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
           this.logger.error(
-            `Failed to send arrival confirmation to manong: ${error.message}`,
+            `Failed to send arrival confirmation to manong: ${errorMessage}`,
           );
         }
       }
 
       return updated;
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       this.logger.error(
-        `Error marking service request as arrived: ${error.message}`,
+        `Error marking service request as arrived: ${errorMessage}`,
       );
       throw error;
     }
