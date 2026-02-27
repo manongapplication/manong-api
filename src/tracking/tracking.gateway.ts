@@ -146,7 +146,9 @@ export class TrackingGateway {
         );
       }
     } catch (error) {
-      this.logger.error(`Error checking arrival: ${error.message}`);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error checking arrival: ${errorMessage}`);
     }
   }
 

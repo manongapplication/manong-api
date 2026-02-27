@@ -531,7 +531,9 @@ export class ServiceRequestService {
 
       updateData.paymentStatus = PaymentStatus.failed;
       updateData.status = 'failed';
-      updateData.notes = paymongoError?.errors?.[0]?.detail ?? 'Payment failed';
+
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      updateData.notes = paymongoError?.errors?.[0]?.detail ?? errorMessage;
     }
   }
 
@@ -946,8 +948,12 @@ export class ServiceRequestService {
               };
             }
           } catch (eligibilityError) {
+            const errorMessage =
+              eligibilityError instanceof Error
+                ? eligibilityError.message
+                : String(eligibilityError);
             this.logger.error(
-              `Error checking refund eligibility: ${eligibilityError}`,
+              `Error checking refund eligibility: ${errorMessage}`,
             );
           }
         }
@@ -1061,9 +1067,10 @@ export class ServiceRequestService {
           "Refund request submitted successfully! Please wait for admin review. We'll notify you once it is processed..",
       };
     } catch (error) {
-      // Handle the specific Paymongo same-day partial refund error
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      if (error.message?.includes('same_day_partial_refund_not_allowed')) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
+      if (errorMessage.includes('same_day_partial_refund_not_allowed')) {
         console.log(
           'Paymongo Error: Cannot partially refund for payments done on the same day',
         );
@@ -1102,17 +1109,14 @@ export class ServiceRequestService {
       }
 
       if (
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        error.message?.includes('available_balance_insufficient') ||
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        error.message?.includes('Funds will be available')
+        errorMessage.includes('available_balance_insufficient') ||
+        errorMessage.includes('Funds will be available')
       ) {
         // Extract date from error message
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, prettier/prettier, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        const dateMatch = error.message.match(
+        const dateMatch = errorMessage.match(
           /available for refund on (.+?) \(/,
         );
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+
         const availableDate = dateMatch ? dateMatch[1] : 'in 3-7 days';
 
         // Update service request
@@ -1155,8 +1159,7 @@ export class ServiceRequestService {
       }
 
       // Log unexpected errors and throw
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      this.logger.error(`Error cancelling service request: ${error.message}`);
+      this.logger.error(`Error cancelling service request: ${errorMessage}`);
       throw new BadGatewayException(
         'Failed to cancel service request due to payment processing error',
       );
