@@ -5,6 +5,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateManongWalletDto } from './dto/create-manong-wallet.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -47,7 +48,7 @@ export class ManongWalletService {
     });
 
     if (!wallet) {
-      throw new BadGatewayException('Wallet not found!');
+      throw new NotFoundException('Wallet not found!');
     }
 
     return wallet;
@@ -61,7 +62,7 @@ export class ManongWalletService {
     });
 
     if (!wallet) {
-      throw new BadGatewayException('Wallet not found!');
+      throw new NotFoundException('Wallet not found!');
     }
 
     return wallet;
