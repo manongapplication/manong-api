@@ -46,6 +46,7 @@ jobs:
               rm -rf /root/manong-api
               git clone https://github.com/manongapplication/manong-api.git /root/manong-api
             fi
+            
             cd /root/manong-api
             git reset --hard
             git pull origin main
@@ -63,5 +64,15 @@ jobs:
             # Build
             npm run build
 
-            # Start or restart app
-            pm2 start dist/main.js --name manong-api --update-env || pm2 restart manong-api --update-env
+            # Debug: Check if main.js exists in the correct location
+            echo "Checking for main.js files:"
+            find dist -name "main.js" -type f
+
+            # Start or restart app using ecosystem.config.js
+            pm2 start ecosystem.config.js --update-env || pm2 restart ecosystem.config.js --update-env
+            
+            # Save PM2 process list
+            pm2 save
+            
+            # Display status
+            pm2 status
